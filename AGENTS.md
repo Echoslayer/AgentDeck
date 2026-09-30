@@ -1,0 +1,38 @@
+# AGENTS.md
+
+本專案用 LLM 產出網頁簡報；人只做現場小修。背景與理由見 `docs/adr/`，下列為執行規則。
+
+## 檔案所有權
+
+| 路徑 | 擁有者 | LLM 可否修改 |
+| --- | --- | --- |
+| `resources/<topic>/story.js`、`story.css`、`index.html` | LLM | 可，自由刪改（[0004](docs/adr/0004-component-template-strategy.md)） |
+| `resources/<topic>/edits.js` | 人（現場修正） | **不可**；人明確指示時才吸收回 `story.js`（[0002](docs/adr/0002-content-layers.md)） |
+| `assets/`（含 `assets/deck/components/`）、`templates/` | 預設模板 | **不可**，除非人明確要求（[0004](docs/adr/0004-component-template-strategy.md)、[0006](docs/adr/0006-fork-story-reader.md)） |
+
+## 建立或改版主題
+
+1. 新主題：複製 `templates/visual-story/`（最小骨架：封面、一頁內容、結尾）為 `resources/<topic>/`，`edits.js` 保持 `window.storyEdits = {};`。
+2. 先寫分鏡：每頁要表達什麼關係。分鏡資料契約與頁面模式（預測題、互動頁）見 `README.md`；互動頁需提供 `previewArt` 與清理函式。
+3. 頁型固定用核心：`deck.cover({ title, meta })`、`deck.end()`（`assets/deck/deck-core.js`）。
+4. 內容元件**按需查找**（[0009](docs/adr/0009-components-as-extensions.md)）：只讀 `assets/deck/components/CATALOG.md`。
+   - 有合適元件：讀該元件的 `README.md`，在主題 `index.html` 加 css 與 js 兩行引用，呼叫 `deck.<name>(key, …)`；守住 README「必須保留」的約束。標記由元件自動加上。
+   - 沒有：在主題 `story.js`／`story.css` 自製，class 加主題前綴，依下方「標記規範」手動加標記。不要硬套不合適的元件。
+   - 同一種自製元件在第二個主題再次出現時，向人提議升級為共用元件（依 CATALOG「新增元件」）。
+5. 每個獨立元件在 `art` 中做成**單一第一層元素**（畫布版面則為畫布內單一元素），出錯時才能在現場單獨隱藏（[0003](docs/adr/0003-hide-as-live-fallback.md)）。
+6. 現場可能需要修改的文字（主題、姓名、日期、清單、卡片文字等）標為可編輯；封面／結尾的絕對定位元素可再開放拖曳。
+7. 若主題的 `edits.js` 非空，改版時保留它引用到的元件 key，除非人要求吸收或捨棄。元件子項目 key 預設依序號產生，調整已被引用項目的順序時要給明確的 `key`。
+
+## 標記規範（自製元件）
+
+- `data-key="x"`：元件身分，每頁唯一。每個第一層元件（畫布版面為畫布內每個元件）都要加；`edits.js` 以此對應（[0005](docs/adr/0005-data-key-attribute-model.md)）。
+- 開關不帶值：`data-edit` 可編輯文字；`data-move` 可拖曳（僅絕對定位版面）；`data-hide` 開放子元件單獨隱藏（例如單張卡片），該子元件也要加 `data-key`；`data-canvas` 加在絕對定位的畫布根元素上，讓畫布內元件可逐一隱藏（[0008](docs/adr/0008-decouple-editor-reader.md)）。
+- key 取 `title` 等欄位名時，會同步改寫該頁欄位，例如封面標題 `<h2 data-key="title" data-edit data-move>`。
+- 改版時不要更改既有 key；漏加 key 會退回位置 key，元件順序一變就會對錯。編輯模式下缺 key 或重複 key 的元件會顯示橘框。
+- `mount` 內以 `root.querySelector('[data-key="x"]')` 取得元件。
+
+## 不做的事
+
+- 不修改或清空 `edits.js`、不自行合併現場修正。
+- 不為單一主題修改 `assets/`、`templates/`。
+- 不引入建置流程或外部依賴；必須維持雙擊 `index.html` 即可播放。
