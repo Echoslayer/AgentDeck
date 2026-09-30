@@ -1,0 +1,20 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>AgentDeck 簡報範本</title>
+<link rel="stylesheet" href="../../assets/story-reader/reader.css">
+<link rel="stylesheet" href="../../assets/deck/deck.css">
+<!-- 元件樣式放這裡（見 assets/deck/components/CATALOG.md），例如：
+<link rel="stylesheet" href="../../assets/deck/components/cards/cards.css"> -->
+<link rel="stylesheet" href="story.css"></head>
+<body>
+<header><span id="story-label"></span><a id="story-back"></a></header>
+<main id="page" aria-live="polite"></main>
+<details class="index" id="index"><summary>投影片</summary><button class="pin" id="pin" aria-pressed="false">釘選</button><div class="index-list" id="index-list" aria-label="所有解說頁面"></div></details>
+<nav aria-label="解說翻頁"><div class="nav-inner"><div class="progress"><span id="position"></span><progress id="progress" max="1"></progress></div><button id="zoom" type="button" aria-pressed="false" title="放大投影片">🔍</button><button id="prev">上一步</button><button id="next">下一步 →</button></div></nav>
+<script src="../../assets/deck/deck-core.js"></script>
+<!-- 元件程式放這裡，與上方樣式成對，例如：
+<script src="../../assets/deck/components/cards/cards.js"></script> -->
+<script src="story.js"></script>
+<script src="edits.js"></script>
+<script src="../../assets/deck/deck-editor.js"></script>
+<script src="../../assets/story-reader/reader.js"></script></body></html>
