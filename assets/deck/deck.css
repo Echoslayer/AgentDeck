@@ -1,0 +1,77 @@
+/* 主題層：載入於 reader.css 之後、元件 css 與主題 story.css 之前。
+   只覆寫 reader 的色票 token 與外殼外觀，不改翻頁／索引行為；類別一律用 deck- 前綴。
+   換品牌時只改本檔上半部（token、頁首、封面／結尾）與 img/，元件與編輯層不受影響。 */
+:root{
+  --deck-primary:#1e3a5f;    /* 標題、強調文字 */
+  --deck-accent:#3a9fb5;     /* 箭頭、橫條、重點線、頁碼 */
+  --deck-highlight:#d98c3f;  /* 突顯項目 */
+  --deck-gradient:linear-gradient(90deg,#1e3a5f 0%,#3a9fb5 100%);
+  /* 對應 reader token */
+  --paper:#ffffff;--card:#ffffff;--ink:#374151;--muted:#6b7280;--accent:var(--deck-primary);
+  --line:#d6dde5;--tint:#eef6f9;--pane:#f3f6f9;--orange:var(--deck-highlight);
+}
+body{font-family:"Microsoft JhengHei","微軟正黑體","Noto Sans TC",system-ui,sans-serif}
+
+/* 頁首：漸層標題列 + 右側 logo */
+body>header{max-width:none;margin:0;padding:18px 32px;align-items:center;background:var(--deck-gradient);color:#fff;font-size:16px;font-weight:700;min-height:72px}
+body>header::after{content:"";order:3;flex:0 0 132px;height:34px;background:url(img/logo-white.svg) right center/contain no-repeat}
+body>header #story-label{flex:1}
+body>header a{color:#fff}
+body:not(:has(#pin[aria-pressed=true]))>header{padding-left:64px}
+.index summary{background:var(--deck-primary);color:#fff}
+
+/* 內容頁 */
+h1{color:var(--deck-primary)}
+.chapter{color:var(--deck-accent)}
+.point{border-left-color:var(--deck-accent)}
+.stage{border-radius:6px}
+
+/* 底部導覽：頁碼圓 */
+nav{background:#fffffff5}
+#position{display:inline-grid;place-items:center;min-width:52px;height:52px;padding:0 8px;border-radius:50%;background:var(--deck-accent);color:#fff;font-size:15px;font-weight:700}
+progress{margin:8px auto 0;accent-color:var(--deck-accent)}
+#next.preview{border-color:var(--line)}
+
+/* ── 頁型（deck-core.js 的 deck.cover／deck.end）──────────
+   內容元件的樣式放在 components/<name>/<name>.css，按需引用。 */
+
+/* 封面／結尾頁：隱藏 reader 的章節、標題、引言、重點，只顯示整張版面。
+   story.js 的 title 仍需填寫，供索引與縮圖文字使用。 */
+:is(main,.mini-page):has(>.stage .deck-cover,>.stage .deck-end)>:is(.chapter,h1,.lead,.point,.detail){display:none}
+.stage:has(>.deck-cover,>.deck-end){padding:0;border:0;min-height:0;background:none;overflow:hidden}
+.deck-cover,.deck-end{position:relative;aspect-ratio:16/9;width:100%;background:var(--deck-gradient) center/cover no-repeat;color:#fff}
+.deck-cover{background-image:url(img/cover-bg.svg)}
+.deck-end{background-image:url(img/end-bg.svg)}
+.deck-cover-logo{position:absolute;left:8%;top:10%;width:22%}
+.deck-cover-title{position:absolute;left:8%;right:8%;top:38%;font-size:clamp(32px,5.4vw,60px);font-weight:700;line-height:1.2;margin:0}
+.deck-cover-meta{position:absolute;left:8%;top:64%;font-size:clamp(15px,2vw,22px);line-height:1.6;opacity:.9}
+.deck-end-title{position:absolute;left:0;right:0;top:36%;text-align:center;font-size:clamp(40px,8vw,96px);font-weight:700;margin:0}
+.deck-end-logo{position:absolute;left:50%;bottom:10%;width:18%;translate:-50% 0}
+/* ── 編輯層（deck-editor.js） ──────────────── */
+/* 舞台作為容器：拖曳位移以 cqw 保存，放大、全螢幕、縮圖都維持相對位置。 */
+.stage{container-type:inline-size}
+.deck-edit-bar{order:2;display:flex;gap:8px}
+.deck-edit-bar button{padding:6px 12px;font-size:14px;background:#ffffffe6;color:var(--deck-primary);border-color:#fff}
+.deck-edit-bar button[aria-pressed=true]{background:var(--deck-primary);color:#fff;border-color:var(--deck-primary)}
+body.is-editing #page .deck-editable{outline:1px dashed var(--deck-accent);outline-offset:3px;cursor:text}
+body.is-editing #page .deck-editable:focus{outline:2px solid var(--deck-blue)}
+body.is-editing #story-label.deck-editable{outline:1px dashed #fff;outline-offset:3px;cursor:text}
+.deck-rel{position:relative}
+.deck-move-handle{position:absolute;top:-26px;left:0;width:24px;height:24px;display:grid;place-items:center;font-size:14px;font-weight:400;line-height:1;background:var(--deck-primary);color:#fff;border-radius:50%;cursor:move;touch-action:none;user-select:none;z-index:5;text-shadow:none}
+/* 隱藏元件：播放與縮圖不顯示；編輯模式下半透明，方便再次顯示。 */
+.mini-page [data-hidden],.mini-page>:has(>[data-field-hidden]),
+body:not(.is-editing) #page [data-hidden],body:not(.is-editing) #page>:has(>[data-field-hidden]){display:none!important}
+body.is-editing #page [data-hidden],body.is-editing #page>:has(>[data-field-hidden]){opacity:.35;outline:1px dashed #c0392b;outline-offset:3px}
+.deck-hide-toggle{position:absolute;translate:-50% -50%;width:26px;height:26px;padding:0;display:grid;place-items:center;font-size:13px;font-weight:400;line-height:1;border-radius:50%;background:#fff;color:var(--deck-primary);border:1px solid var(--deck-primary);z-index:6;text-shadow:none;letter-spacing:0;text-align:center;cursor:pointer;user-select:none;font-style:normal}
+.deck-hide-toggle:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.deck-hide-toggle[aria-pressed=true]{background:#c0392b;color:#fff;border-color:#c0392b}
+body.deck-bar-hidden .deck-edit-bar{display:none}
+/* 缺 data-key 或 key 重複：只在編輯模式標示（docs/adr/0007）。用 box-shadow 以免與可編輯外框衝突。 */
+body.is-editing #page .deck-keywarn{box-shadow:0 0 0 3px #e67e22}
+.deck-hide-toggle.deck-keywarn-toggle{border:2px solid #e67e22}
+
+@media(max-width:700px){
+body>header{padding:14px 20px;min-height:56px}
+body>header::after{flex-basis:96px;height:26px}
+#position{min-width:40px;height:40px;font-size:13px}
+}
