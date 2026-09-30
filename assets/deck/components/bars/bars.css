@@ -1,0 +1,8 @@
+/* deck.bars 樣式；結構由 bars.js 產生，說明見 README.md。 */
+.deck-bars{display:grid;gap:10px}
+.deck-bar{display:grid;grid-template-columns:minmax(6em,max-content) minmax(0,1fr);align-items:center;gap:4px 14px;font-size:17px}
+.deck-bar>i{grid-column:2;grid-row:1;display:flex;height:22px;border-left:1px solid var(--ink)}
+.deck-bar>i::before{content:"";width:calc(var(--r) * (100% - 5.5em));background:var(--deck-accent)}
+.deck-bar>b{grid-column:2;grid-row:1;justify-self:start;margin-left:calc(var(--r) * (100% - 5.5em) + 8px);font-weight:600;font-variant-numeric:tabular-nums;white-space:nowrap}
+.deck-bar small{margin-left:3px;font-size:.7em;font-weight:400;color:var(--muted)}
+.deck-bar.deck-hl>i::before{background:var(--deck-highlight)}

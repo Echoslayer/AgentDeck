@@ -1,0 +1,6 @@
+/* deck.figure 樣式；結構由 figure.js 產生，說明見 README.md。 */
+.deck-figure{margin:0}
+.deck-kicker{margin:0 0 14px;font-size:16px;color:var(--muted)}
+.deck-figure figcaption{border-top:1px solid var(--line);padding-top:12px;margin-top:18px;color:var(--muted);font-size:15px;line-height:1.7}
+.deck-legend{display:flex;flex-wrap:wrap;gap:6px 20px;margin:12px 0 0;color:var(--muted);font-size:14px}
+.deck-legend i{display:inline-block;width:1.2em;height:.8em;margin-right:6px;vertical-align:-1px}

@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>AgentDeck 元件庫</title>
+<link rel="stylesheet" href="../../story-reader/reader.css">
+<link rel="stylesheet" href="../deck.css">
+<!-- 新增元件時在這裡加上 css 與下方 js 各一行；展示頁依註冊順序自動產生。 -->
+<link rel="stylesheet" href="list/list.css">
+<link rel="stylesheet" href="cards/cards.css">
+<link rel="stylesheet" href="steps/steps.css">
+<link rel="stylesheet" href="focus/focus.css">
+<link rel="stylesheet" href="compare/compare.css">
+<link rel="stylesheet" href="metrics/metrics.css">
+<link rel="stylesheet" href="bars/bars.css">
+<link rel="stylesheet" href="figure/figure.css">
+</head>
+<body>
+<header><span id="story-label"></span><a id="story-back"></a></header>
+<main id="page" aria-live="polite"></main>
+<details class="index" id="index"><summary>元件</summary><button class="pin" id="pin" aria-pressed="false">釘選</button><div class="index-list" id="index-list" aria-label="所有元件"></div></details>
+<nav aria-label="元件翻頁"><div class="nav-inner"><div class="progress"><span id="position"></span><progress id="progress" max="1"></progress></div><button id="zoom" type="button" aria-pressed="false" title="放大投影片">🔍</button><button id="prev">上一步</button><button id="next">下一步 →</button></div></nav>
+<script src="../deck-core.js"></script>
+<script src="list/list.js"></script>
+<script src="cards/cards.js"></script>
+<script src="steps/steps.js"></script>
+<script src="focus/focus.js"></script>
+<script src="compare/compare.js"></script>
+<script src="metrics/metrics.js"></script>
+<script src="bars/bars.js"></script>
+<script src="figure/figure.js"></script>
+<script src="gallery.js"></script>
+<script src="../deck-editor.js"></script>
+<script src="../../story-reader/reader.js"></script></body></html>

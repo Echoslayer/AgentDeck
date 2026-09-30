@@ -1,0 +1,4 @@
+/* deck.steps 樣式；結構由 steps.js 產生，說明見 README.md。 */
+.deck-steps{display:flex;flex-wrap:wrap;gap:12px;align-items:center;font-size:22px}
+.deck-steps>div{flex:1;min-width:140px;padding:18px 20px;border-radius:8px;background:var(--tint);text-align:center}
+.deck-steps>i{font-style:normal;color:var(--deck-accent);font-size:26px}

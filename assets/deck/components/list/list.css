@@ -1,0 +1,8 @@
+/* deck.list 樣式；結構由 list.js 產生，說明見 README.md。 */
+.deck-list,.deck-list ul,.deck-list ol{margin:0;padding-left:1.4em;line-height:1.6}
+.deck-list{font-size:clamp(20px,2.4vw,26px);padding-left:1.1em;list-style:"● "}
+.deck-list>li>ul{font-size:.9em;list-style:"–  "}
+.deck-list>li>ul>li>ol{font-size:.9em;list-style:decimal}
+.deck-list>li>ul>li>ol>li>ol{font-size:.9em}
+.deck-list>li>ul>li>ol>li>ol>li::marker{content:counter(list-item) ")  "}
+.deck-list li::marker{color:#404040}
