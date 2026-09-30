@@ -11,7 +11,7 @@
    key 為 section／title／lead／point／detail 時，同時改寫該頁欄位，索引與縮圖文字會同步。
    預設不保存：未另存的修改在重新整理後消失。
    與閱讀器只透過 window.storyReader 與 story:render 事件溝通（docs/adr/0008）。
-   載入順序：deck-core.js → [元件 js] → story.js → edits.js → deck-editor.js → reader.js */
+   載入順序：deck-core.js → theme.js → [元件 js] → story.js → edits.js → deck-editor.js → reader.js */
 'use strict';
 (() => {
   const FIELDS = { section: '.chapter', title: 'h1', lead: '.lead', point: '.point', detail: '.detail' };

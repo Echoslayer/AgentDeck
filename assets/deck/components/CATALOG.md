@@ -20,8 +20,8 @@
 在主題的 `index.html` 加兩行（`<name>` 換成元件名）：
 
 ```html
-<link rel="stylesheet" href="../../assets/deck/components/<name>/<name>.css">   <!-- deck.css 之後、story.css 之前 -->
-<script src="../../assets/deck/components/<name>/<name>.js"></script>           <!-- deck-core.js 之後、story.js 之前 -->
+<link rel="stylesheet" href="../../assets/deck/components/<name>/<name>.css">   <!-- theme.css 之後、story.css 之前 -->
+<script src="../../assets/deck/components/<name>/<name>.js"></script>           <!-- theme.js 之後、story.js 之前 -->
 ```
 
 呼叫一律是 `deck.<name>(key, …)`，第一個參數是 `data-key`（每頁唯一）。回傳 HTML 字串，可用 `+` 串接。忘了引用時，呼叫會直接報錯並提示路徑；只引用 js 沒引用 css，主控台會出錯誤訊息。
@@ -35,7 +35,7 @@
 1. 建立 `<name>/`，內含 `<name>.js`、`<name>.css`、`README.md`。名稱為小寫英數。
 2. `<name>.js` 以 `deck.define('<name>', (key, …) => html, { summary, demo })` 註冊。核心會檢查：key 格式正確、只產生單一根元素、根元素的 `data-key` 等於 key。
 3. 編輯標記由元件自己加：現場要改的文字加 `data-edit`，可單獨隱藏的子項目加 `data-key` 與 `data-hide`，子項目 key 用 `deck.util.itemKey`。
-4. `<name>.css` 的類別一律用 `.deck-<name>` 前綴，只用 `deck.css`／`reader.css` 的色票 token。
+4. `<name>.css` 的類別一律用 `.deck-<name>` 前綴，只用 `--deck-*`／`reader.css` 的色票 token，不寫死品牌色與圖片。
 5. 元件之間不互相呼叫；需要組合時，讓使用者把其他元件的輸出當內容傳入（如 `compare` 欄內放 `metrics`）。
 6. `README.md` 固定四段：用途、API、必須保留、範例。
 7. 在上表加一行，並在本資料夾 `index.html` 加上 css 與 js 兩行引用。

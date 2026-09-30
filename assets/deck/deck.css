@@ -1,6 +1,6 @@
-/* 主題層：載入於 reader.css 之後、元件 css 與主題 story.css 之前。
-   只覆寫 reader 的色票 token 與外殼外觀，不改翻頁／索引行為；類別一律用 deck- 前綴。
-   換品牌時只改本檔上半部（token、頁首、封面／結尾）與 img/，元件與編輯層不受影響。 */
+/* 外殼層：載入於 reader.css 之後、theme.css 之前。
+   提供預設 token、外殼外觀、頁型版面與編輯層樣式；類別一律用 deck- 前綴。
+   不含任何品牌圖片。換品牌只改 assets/theme/（theme.css 覆寫 token 與版面、theme.js 提供 logo），不改本檔（docs/adr/0010）。 */
 :root{
   --deck-primary:#1e3a5f;    /* 標題、強調文字 */
   --deck-accent:#3a9fb5;     /* 箭頭、橫條、重點線、頁碼 */
@@ -12,9 +12,8 @@
 }
 body{font-family:"Microsoft JhengHei","微軟正黑體","Noto Sans TC",system-ui,sans-serif}
 
-/* 頁首：漸層標題列 + 右側 logo */
+/* 頁首：漸層標題列（右側 logo 由 theme.css 以 body>header::after 加上） */
 body>header{max-width:none;margin:0;padding:18px 32px;align-items:center;background:var(--deck-gradient);color:#fff;font-size:16px;font-weight:700;min-height:72px}
-body>header::after{content:"";order:3;flex:0 0 132px;height:34px;background:url(img/logo-white.svg) right center/contain no-repeat}
 body>header #story-label{flex:1}
 body>header a{color:#fff}
 body:not(:has(#pin[aria-pressed=true]))>header{padding-left:64px}
@@ -40,13 +39,9 @@ progress{margin:8px auto 0;accent-color:var(--deck-accent)}
 :is(main,.mini-page):has(>.stage .deck-cover,>.stage .deck-end)>:is(.chapter,h1,.lead,.point,.detail){display:none}
 .stage:has(>.deck-cover,>.deck-end){padding:0;border:0;min-height:0;background:none;overflow:hidden}
 .deck-cover,.deck-end{position:relative;aspect-ratio:16/9;width:100%;background:var(--deck-gradient) center/cover no-repeat;color:#fff}
-.deck-cover{background-image:url(img/cover-bg.svg)}
-.deck-end{background-image:url(img/end-bg.svg)}
-.deck-cover-logo{position:absolute;left:8%;top:10%;width:22%}
 .deck-cover-title{position:absolute;left:8%;right:8%;top:38%;font-size:clamp(32px,5.4vw,60px);font-weight:700;line-height:1.2;margin:0}
 .deck-cover-meta{position:absolute;left:8%;top:64%;font-size:clamp(15px,2vw,22px);line-height:1.6;opacity:.9}
 .deck-end-title{position:absolute;left:0;right:0;top:36%;text-align:center;font-size:clamp(40px,8vw,96px);font-weight:700;margin:0}
-.deck-end-logo{position:absolute;left:50%;bottom:10%;width:18%;translate:-50% 0}
 /* ── 編輯層（deck-editor.js） ──────────────── */
 /* 舞台作為容器：拖曳位移以 cqw 保存，放大、全螢幕、縮圖都維持相對位置。 */
 .stage{container-type:inline-size}
@@ -72,6 +67,5 @@ body.is-editing #page .deck-keywarn{box-shadow:0 0 0 3px #e67e22}
 
 @media(max-width:700px){
 body>header{padding:14px 20px;min-height:56px}
-body>header::after{flex-basis:96px;height:26px}
 #position{min-width:40px;height:40px;font-size:13px}
 }
