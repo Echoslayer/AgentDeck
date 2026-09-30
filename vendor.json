@@ -1,0 +1,15 @@
+{
+  "$comment": "第三方套件清單（docs/adr/0010）。本檔進 git；套件本體下載到 vendor/<name>/，不進 git。新增套件需經人同意。執行 tools\\setup.cmd 下載。",
+  "packages": {
+    "three": {
+      "version": "0.160.0",
+      "license": "MIT",
+      "homepage": "https://threejs.org/",
+      "note": "r160 是最後一個附 UMD 版的版本；ES module 在 file:// 下無法載入。載入時的棄用警告屬預期。",
+      "files": [
+        { "path": "three.min.js", "url": "https://unpkg.com/three@0.160.0/build/three.min.js", "sha256": "170C6789F43217C96B3170F4B42FAFE135DE7F7CD48497A4218F9757EE1D49FA" },
+        { "path": "LICENSE", "url": "https://unpkg.com/three@0.160.0/LICENSE", "sha256": "852E0E8699169BF9F6FDC6BDA3E682D078DCBC738B5D33E74DF594721BFF271D" }
+      ]
+    }
+  }
+}

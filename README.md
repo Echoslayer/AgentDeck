@@ -30,8 +30,12 @@ AgentDeck/
 │   ├── story.js
 │   ├── edits.js             人工編輯結果（預設為空）
 │   └── story.css
-├── playground/              候選元件研究（three.js 與零依賴對照，主題不得引用，見 playground/README.md）
-└── resources/<topic>/       正式主題放這裡
+├── playground/              候選元件研究（本機試驗，不進 git；主題不得引用）
+├── resources/<topic>/       正式主題放這裡
+├── vendor.json              第三方套件清單（版本、網址、SHA-256；見 docs/adr/0011）
+├── vendor/                  套件本體，由 tools\setup.cmd 下載（不進 git）
+├── tools/                   setup.cmd 下載套件、pack.cmd 打包交付
+└── dist/                    打包輸出的 zip（不進 git）
 ```
 
 載入順序固定：`reader.css` → `deck.css` → `theme.css` → 元件 css → `story.css` → `deck-core.js` → `theme.js` → 元件 js → `story.js` → `edits.js` → `deck-editor.js` → `reader.js`。
@@ -142,6 +146,15 @@ git remote add origin <你的私有 repo>
 ```
 
 框架更新：`git fetch upstream && git merge upstream/main`。只要沒改 `assets/deck/`、`assets/story-reader/`、`templates/`，合併不會衝突。下游做出的通用元件或修正，回饋到上游（[ADR 0010](docs/adr/0010-theme-layer-and-downstream.md)）。
+
+## 第三方套件與交付
+
+第三方套件（例如 `playground/` 用的 three.js）**不進 git**：`vendor.json` 記錄版本、網址與 SHA-256，本體下載到 `vendor/<name>/`（[ADR 0011](docs/adr/0011-vendor-manifest-and-packing.md)）。
+
+- **準備環境**：clone 後雙擊 `tools\setup.cmd`，依清單下載並驗證雜湊；重跑會略過已就緒的檔案。`tools\setup.cmd -Check` 只檢查不下載。沒下載時，用到套件的元件顯示靜態後備。
+- **引用**：頁面直接以相對路徑引用，例如主題 `index.html` 的 `<script src="../../vendor/three/three.min.js"></script>`。只收能在 `file://` 下以 `<script>` 載入的檔案（UMD／IIFE、css、字型、圖片），不走 CDN。
+- **新增套件**：經人同意後在 `vendor.json` 加一項；`sha256` 先留空，執行 `tools\setup.cmd` 會印出實際雜湊，確認來源後填回。
+- **交付給別人**：`tools\pack.cmd resources\<topic>` 產生 `dist\<topic>-<時間>.zip`，內含簡報資料夾、`assets/` 與該簡報引用到的 `vendor/<name>/`（含授權檔），缺少的套件會先下載。對方解壓縮後雙擊最上層的 `index.html` 即可播放，不需要網路或任何工具。不帶參數執行會列出 `resources\` 下的簡報供選擇。
 
 ## 更新閱讀器
 

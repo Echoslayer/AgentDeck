@@ -11,6 +11,8 @@
 | `assets/theme/` | 品牌（下游專案） | **不可**，除非人明確要求；品牌規則見 `assets/theme/README.md`（[0010](docs/adr/0010-theme-layer-and-downstream.md)） |
 | `assets/deck/`（含 `components/`）、`assets/story-reader/`、`templates/` | 框架（上游） | **不可**，除非人明確要求（[0004](docs/adr/0004-component-template-strategy.md)、[0006](docs/adr/0006-fork-story-reader.md)） |
 | `playground/` | LLM（候選元件研究） | 可，自由刪改；主題不得引用（見 `playground/README.md`） |
+| `vendor.json`、`tools/` | 框架（上游） | **不可**，除非人明確要求；新增套件只提議，不自行加入（[0011](docs/adr/0011-vendor-manifest-and-packing.md)） |
+| `vendor/`、`dist/` | 下載與打包產物 | 不手改、不 commit（已列入 `.gitignore`） |
 
 ## 建立或改版主題
 
@@ -37,4 +39,5 @@
 
 - 不修改或清空 `edits.js`、不自行合併現場修正。
 - 不為單一主題修改 `assets/`、`templates/`。
-- 不引入建置流程或外部依賴；必須維持雙擊 `index.html` 即可播放。
+- 不引入建置流程；必須維持雙擊 `index.html` 即可播放。
+- 不走 CDN、不把第三方套件本體 commit 進 git；套件只能經 `vendor.json` 引入，用到套件的元件要有靜態後備（[0011](docs/adr/0011-vendor-manifest-and-packing.md)）。

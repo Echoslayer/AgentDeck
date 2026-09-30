@@ -14,3 +14,4 @@
 | [0008](0008-decouple-editor-reader.md) | 編輯層與閱讀器、元件解耦 | 已接受 |
 | [0009](0009-components-as-extensions.md) | 元件改為按需引用的擴充，範本縮為最小骨架 | 已接受 |
 | [0010](0010-theme-layer-and-downstream.md) | 品牌抽成主題層，品牌版本以下游 repo 維護 | 已接受 |
+| [0011](0011-vendor-manifest-and-packing.md) | 第三方套件以清單管理，下載不進 git，交付時打包 | 已接受 |
