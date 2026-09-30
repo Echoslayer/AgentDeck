@@ -9,7 +9,7 @@
 
 ## 決策
 
-- **預設層不變**：`assets/`（含 `deck/`、`story-reader/`）與 `templates/` 屬於預設模板。LLM 不得修改，除非人明確要求。
+- **預設層不變**：`assets/`（含 `deck/`、`theme/`、`story-reader/`）與 `templates/` 屬於預設模板。LLM 不得修改，除非人明確要求。
 - 預設層只提供基本模板作為參考：
   - `.deck-list`、`.deck-cards`、`.deck-steps`、`.deck-focus`
   - 封面 `.deck-cover`、結尾 `.deck-end`

@@ -8,7 +8,9 @@
 | --- | --- | --- |
 | `resources/<topic>/story.js`、`story.css`、`index.html` | LLM | 可，自由刪改（[0004](docs/adr/0004-component-template-strategy.md)） |
 | `resources/<topic>/edits.js` | 人（現場修正） | **不可**；人明確指示時才吸收回 `story.js`（[0002](docs/adr/0002-content-layers.md)） |
-| `assets/`（含 `assets/deck/components/`）、`templates/` | 預設模板 | **不可**，除非人明確要求（[0004](docs/adr/0004-component-template-strategy.md)、[0006](docs/adr/0006-fork-story-reader.md)） |
+| `assets/theme/` | 品牌（下游專案） | **不可**，除非人明確要求；品牌規則見 `assets/theme/README.md`（[0010](docs/adr/0010-theme-layer-and-downstream.md)） |
+| `assets/deck/`（含 `components/`）、`assets/story-reader/`、`templates/` | 框架（上游） | **不可**，除非人明確要求（[0004](docs/adr/0004-component-template-strategy.md)、[0006](docs/adr/0006-fork-story-reader.md)） |
+| `playground/` | LLM（候選元件研究） | 可，自由刪改；主題不得引用（見 `playground/README.md`） |
 
 ## 建立或改版主題
 

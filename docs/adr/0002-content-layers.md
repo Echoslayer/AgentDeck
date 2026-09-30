@@ -1,6 +1,6 @@
 # 0002. 內容分層：story.js（LLM）與 edits.js（人工）
 
-- 狀態：已接受（載入順序由 [0007](0007-builders-over-markup-rules.md) 補充產生函式，[0009](0009-components-as-extensions.md) 改為 `deck-core.js` 與按需引用的元件）
+- 狀態：已接受（載入順序由 [0007](0007-builders-over-markup-rules.md) 補充產生函式，[0009](0009-components-as-extensions.md) 改為 `deck-core.js` 與按需引用的元件，[0010](0010-theme-layer-and-downstream.md) 加入 `theme.css`／`theme.js`）
 - 日期：2026-09-30
 
 ## 背景

@@ -14,22 +14,27 @@ AgentDeck/
 │   ├── story-reader/        閱讀器（fork 自 D:\book\docs\assets\story-reader，已加入放大播放，見 docs/adr/0006）
 │   │   ├── reader.css
 │   │   └── reader.js
-│   └── deck/
-│       ├── deck.css         主題層：色票、標題列、頁碼、封面／結尾、編輯層樣式
+│   ├── deck/
+│       ├── deck.css         外殼層：預設 token、標題列、頁碼、封面／結尾版面、編輯層樣式
 │       ├── deck-core.js     核心：頁型 cover／end、元件註冊與契約檢查（見 docs/adr/0009）
 │       ├── deck-editor.js   編輯層：可編輯文字／拖曳、另存 edits.js
 │       ├── components/      按需引用的元件，一個資料夾一個（CATALOG.md 為目錄，index.html 為展示頁）
 │       │   └── <name>/      <name>.js、<name>.css、README.md
-│       └── img/             logo 與封面／結尾底圖（自繪 SVG，CC0）
+│   └── theme/               品牌主題：換品牌只改這裡（見 docs/adr/0010）
+│       ├── theme.css        覆寫 token、頁首 logo、封面／結尾底圖與版面
+│       ├── theme.js         deck.theme({ cover, end })：封面／結尾的 logo
+│       ├── README.md        品牌規則
+│       └── img/             預設為自繪 SVG（CC0）
 ├── templates/visual-story/  編寫起點（最小骨架：封面、一頁內容、結尾）
 │   ├── index.html
 │   ├── story.js
 │   ├── edits.js             人工編輯結果（預設為空）
 │   └── story.css
+├── playground/              候選元件研究（three.js 與零依賴對照，主題不得引用，見 playground/README.md）
 └── resources/<topic>/       正式主題放這裡
 ```
 
-載入順序固定：`reader.css` → `deck.css` → 元件 css → `story.css` → `deck-core.js` → 元件 js → `story.js` → `edits.js` → `deck-editor.js` → `reader.js`。
+載入順序固定：`reader.css` → `deck.css` → `theme.css` → 元件 css → `story.css` → `deck-core.js` → `theme.js` → 元件 js → `story.js` → `edits.js` → `deck-editor.js` → `reader.js`。
 
 ## 可編輯層與鎖定層
 
@@ -119,9 +124,25 @@ AgentDeck/
 
 呼叫方式一律為 `deck.<name>(key, …)`，第一個參數是 `data-key`；`deck-core.js` 在每次呼叫時檢查 key 格式、單一根元素與根元素 key。呼叫未引用的元件會直接報錯並提示路徑；引用 js 卻漏了 css 會在主控台報錯。新增共用元件需經人同意（[ADR 0009](docs/adr/0009-components-as-extensions.md)）。
 
-## 主題 token（`assets/deck/deck.css`）
-色票 token：`--deck-primary`（標題、強調文字）、`--deck-accent`（箭頭、橫條、頁碼）、`--deck-highlight`（突顯項目）、`--deck-gradient`（頁首與封面／結尾）。reader 的 `--accent` 對應 `--deck-primary`。換品牌時只改 `deck.css` 上半部與 `img/`（自繪 SVG，CC0，見 `img/README.md`），元件只使用這些 token。
+## 品牌主題（`assets/theme/`）
+色票 token：`--deck-primary`（標題、強調文字）、`--deck-accent`（箭頭、橫條、頁碼）、`--deck-highlight`（突顯項目）、`--deck-gradient`（頁首與封面／結尾）。reader 的 `--accent` 對應 `--deck-primary`。預設值在 `deck.css`，品牌在 `assets/theme/theme.css` 覆寫；元件只使用這些 token。
+
+封面／結尾的 logo 由 `assets/theme/theme.js` 以 `deck.theme({ cover: img => html, end: img => html })` 提供，每個裝飾需有 `data-key`，現場可逐一隱藏。預設圖片為自繪 SVG（CC0，見 `assets/theme/img/README.md`）。
+
+## 建立品牌版本（下游專案）
+
+AgentDeck 是上游框架；公司或個人的品牌版本以下游 repo 維護，只改 `assets/theme/` 與 `resources/`：
+
+```bash
+git clone https://github.com/Echoslayer/AgentDeck.git MyDeck
+cd MyDeck
+git remote rename origin upstream
+git remote add origin <你的私有 repo>
+# 修改 assets/theme/（theme.css、theme.js、img/、README.md 的品牌規則）
+```
+
+框架更新：`git fetch upstream && git merge upstream/main`。只要沒改 `assets/deck/`、`assets/story-reader/`、`templates/`，合併不會衝突。下游做出的通用元件或修正，回饋到上游（[ADR 0010](docs/adr/0010-theme-layer-and-downstream.md)）。
 
 ## 更新閱讀器
 
-閱讀器已從 `D:\book\docs\assets\story-reader\` fork（[ADR 0006](docs/adr/0006-fork-story-reader.md)），**不要整份重新複製**，否則會覆蓋放大播放等本地修改。上游有需要的修正時，由人挑選後手動移植到 `assets/story-reader/`；外觀全部在 `deck.css`，不受影響。移植時須保留對外介面 `window.storyReader` 與 `story:render` 事件，編輯層只依賴這兩者（[ADR 0008](docs/adr/0008-decouple-editor-reader.md)）。
+閱讀器已從 `D:\book\docs\assets\story-reader\` fork（[ADR 0006](docs/adr/0006-fork-story-reader.md)），**不要整份重新複製**，否則會覆蓋放大播放等本地修改。上游有需要的修正時，由人挑選後手動移植到 `assets/story-reader/`；外觀全部在 `deck.css` 與 `assets/theme/`，不受影響。移植時須保留對外介面 `window.storyReader` 與 `story:render` 事件，編輯層只依賴這兩者（[ADR 0008](docs/adr/0008-decouple-editor-reader.md)）。

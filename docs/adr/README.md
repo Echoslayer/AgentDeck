@@ -13,3 +13,4 @@
 | [0007](0007-builders-over-markup-rules.md) | 以產生函式固化標記規範，模板分三層 | 已接受（部分被 0009 取代） |
 | [0008](0008-decouple-editor-reader.md) | 編輯層與閱讀器、元件解耦 | 已接受 |
 | [0009](0009-components-as-extensions.md) | 元件改為按需引用的擴充，範本縮為最小骨架 | 已接受 |
+| [0010](0010-theme-layer-and-downstream.md) | 品牌抽成主題層，品牌版本以下游 repo 維護 | 已接受 |
