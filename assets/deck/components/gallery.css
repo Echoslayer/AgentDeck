@@ -1,0 +1,9 @@
+/* 元件展示頁的總覽格（gallery.js）。縮圖沿用 reader.css 的 .mini-page（1000px 寬再縮放）。 */
+.deck-gallery h3{margin:0 0 10px;font-size:16px;color:var(--muted)}
+.deck-gallery ul{margin:0 0 24px;padding:0;list-style:none;display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:16px}
+.deck-gallery li{display:grid;gap:2px}
+.deck-gallery b{color:var(--deck-primary);font-size:16px}
+.deck-gallery small{color:var(--muted);font-size:12px}
+.deck-gallery-thumb{position:relative;height:140px;overflow:hidden;border:1px solid var(--line);border-radius:4px;background:var(--paper)}
+.deck-gallery-thumb .mini-page{width:760px;padding:16px;transform:scale(.36)}
+.deck-gallery-thumb .stage{margin:0;min-height:0}

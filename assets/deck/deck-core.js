@@ -60,6 +60,7 @@ window.deck = (() => {
     for (const c of registry.values()) {
       if (!c.live) continue;
       e.detail.root.querySelectorAll(`.deck-${c.name}`).forEach(el => {
+        if (el.closest('.mini-page')) return; // 縮圖（含展示頁總覽）一律用靜態後備
         try {
           const f = c.live(el);
           if (typeof f === 'function') cleanups.push(f);

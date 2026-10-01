@@ -22,7 +22,7 @@
 2. **動態生命週期併入核心**：`deck.define(name, fn, { live })`。核心監聽 `story:render`，對每個 `.deck-<name>` 根元素呼叫 `live(el)`，換頁時先執行上一頁的清理函式；啟動成功加 `.deck-live-on` 隱藏後備，失敗則保留後備並在主控台說明。three.js 外殼（renderer、尺寸、拖曳、`forceContextLoss` 釋放）放在 `deck.util.three`，只在呼叫時檢查 `window.THREE`，核心本身不依賴套件。共用樣式（`.deck-view`、`.deck-fallback`、`.deck-canvas`、`.deck-hint`）放 `deck.css`。
 3. **正式元件可依賴套件**：three.js 經人同意列入 `vendor.json`（[0011](0011-vendor-manifest-and-packing.md)）。用到套件的元件必須有靜態後備；主題自行引用 `vendor/three/three.min.js`，`tools\pack.cmd` 依引用打包。
 4. **目錄即查找入口**：`CATALOG.md` 分「基礎元件」「特殊元件」兩表，另有「依需求查找」把人常用的說法對應到元件，以及「特殊元件規則」（引用套件、每頁最多一個 three.js 元件、講解不依賴互動）。`AGENTS.md` 規定建立主題時讀完目錄、人提出需求時先查目錄並說明取捨。
-5. **展示頁分級**：`components/index.html` 先列基礎、再列特殊，章節標示依賴。
+5. **展示頁分級**：`components/index.html` 先放一頁縮圖總覽，再依基礎、特殊逐一列出，章節標示依賴。總覽與單頁都從 `demo` 自動產生；總覽沿用閱讀器縮圖 `.mini-page`，核心不在縮圖內啟動 `live`，編輯標記也會移除，避免與單頁 key 重複。
 
 ## 後果
 
