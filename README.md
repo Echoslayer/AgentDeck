@@ -1,6 +1,6 @@
 # AgentDeck
 
-由 LLM 撰寫、人在現場微調的網頁簡報框架。簡報是純文字的 HTML／CSS／JS：LLM 寫分鏡 `story.js`，按需引用元件；人在播放時直接修改文字、位置與顯示，存成 `edits.js`。閱讀器 fork 自 `D:\book` 的書籍視覺解說。
+由 LLM 撰寫、人在現場微調的網頁簡報框架。簡報是純文字的 HTML／CSS／JS：LLM 寫分鏡 `story.js`，按需引用元件；人在播放時直接修改文字、位置與顯示，存成 `edits.js`。
 
 直接雙擊 `templates/blank/index.html` 即可預覽，無需安裝、建置或網路。
 
@@ -19,7 +19,7 @@ AgentDeck/
 ├── package.json             CLI 套件描述（不發佈到 npm；以 npx github: 執行，見 docs/adr/0016）
 ├── cli/                     AgentDeck CLI：init、catalog、docs、add、diff、update、new、vendor、pack（check.mjs 為回歸測試）
 ├── assets/
-│   ├── story-reader/        閱讀器（fork 自 D:\book\docs\assets\story-reader，已加入放大播放，見 docs/adr/0006）
+│   ├── story-reader/        閱讀器（本專案獨立維護，含放大播放，見 docs/adr/0006）
 │   │   ├── reader.css
 │   │   └── reader.js
 │   ├── deck/
@@ -132,4 +132,4 @@ AgentDeck 是上游框架；公司、個人或專案的品牌版本是下游工�
 
 ## 更新閱讀器
 
-閱讀器已從 `D:\book\docs\assets\story-reader\` fork（[ADR 0006](docs/adr/0006-fork-story-reader.md)），**不要整份重新複製**，否則會覆蓋放大播放等本地修改。上游有需要的修正時，由人挑選後手動移植到 `assets/story-reader/`；外觀全部在 `deck.css` 與 `assets/theme/`，不受影響。移植時須保留對外介面 `window.storyReader` 與 `story:render` 事件，編輯層只依賴這兩者（[ADR 0008](docs/adr/0008-decouple-editor-reader.md)）。
+閱讀器由本專案獨立維護（[ADR 0006](docs/adr/0006-fork-story-reader.md)），不與外部專案同步；需要修改時經人同意後直接改 `assets/story-reader/`；外觀全部在 `deck.css` 與 `assets/theme/`，不受影響。修改時須保留對外介面 `window.storyReader` 與 `story:render` 事件，編輯層只依賴這兩者（[ADR 0008](docs/adr/0008-decouple-editor-reader.md)）。

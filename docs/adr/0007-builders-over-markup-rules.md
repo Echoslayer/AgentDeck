@@ -17,7 +17,7 @@
 1. **程式固化**（LLM 不用記）：共用外觀與編輯契約這類一定要成立的規則，寫成 單一檔案的產生函式（後由 [0009](0009-components-as-extensions.md) 拆為按需引用的元件），在 `story.js` 之前載入。
    - 頁型：`deck.cover({ title, meta })`、`deck.end()` 回傳完整頁面物件。
    - 基本元件：`deck.list`、`deck.cards`、`deck.steps`、`deck.focus`，第一個參數必為 `data-key`，否則直接報錯；產生單一根元素，並自動加上編輯、隱藏、畫布等標記。
-   - 資料元件：`deck.compare`、`deck.metrics`、`deck.bars`、`deck.figure`。取自 `D:\book` 十個主題中重複出現的結構（對照、KPI、同尺度橫條、圖表外框），經人同意升級（[0004](0004-component-template-strategy.md)）。`bars` 的長度由數值推導，不開放現場編輯。
+   - 資料元件：`deck.compare`、`deck.metrics`、`deck.bars`、`deck.figure`。取自既有簡報主題中重複出現的結構（對照、KPI、同尺度橫條、圖表外框），經人同意升級（[0004](0004-component-template-strategy.md)）。`bars` 的長度由數值推導，不開放現場編輯。
    - 選圖依據（關係 → 元件 → 必須保留的約束）寫在 `AGENTS.md`。
    - 子項目 key 預設為「父 key-序號」（如 `cards-2`）；已被 `edits.js` 引用的項目要調整順序時，由 LLM 給明確的 `key`。
 2. **模板照抄**：`templates/visual-story/` 示範分鏡骨架、題目頁、互動頁（`mount`＋`previewArt`＋清理函式）、原生 HTML 元件。這些是設計上的選擇，不固化。
