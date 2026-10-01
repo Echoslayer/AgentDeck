@@ -82,6 +82,7 @@ const story = {
 ```
 
 - `art` 不限內容：元件輸出、自製 HTML、SVG，或給 canvas／3D 用的容器。標記規則見下方「標記規範」。
+- 文字欄位（`section`、`title`、`lead`、`point`、`detail`）同樣以 HTML 插入，不解析 Markdown：程式碼寫 `<code>`，字面的 `<`、`&` 要跳脫。
 - HTML 字串只接受作者審查過的本地內容，不可塞入網址參數、讀者輸入或遠端文字。
 - 縮圖以約 1000px 寬縮放同一份內容；超長頁面會被裁切，應拆頁。SVG 若用到 `id`，另提供沒有重複 id 的 `previewArt`。
 - **題目（可選）**：`question: { prompt, choices: [{ value, label, feedback }], hideFuturePreviews? }`。`value` 為唯一的英數、`_`、`-`；`hideFuturePreviews: true` 在作答前遮住後續縮圖（不阻止翻頁）。答案保留到重新整理。
