@@ -158,7 +158,7 @@ function docs(args, opts, ws) {
   if (!name) fail('用法：docs <元件｜範例｜指引｜n-to-m>');
   const doc = resolveDoc(name);
   if (!doc) fail(`找不到 ${name}；先用 catalog 查名稱`);
-  const print = (file, title) => { log(`\n===== ${title}（${toPosix(file)}） =====\n`); log(readText(file).trimEnd()); };
+  const print = (file, title) => { log(`\n===== ${title}（上游 ${toPosix(path.relative(UP, file))}） =====\n`); log(readText(file).trimEnd()); };
 
   if (doc.kind === 'guide' || doc.kind === 'migration') return print(doc.file, name);
   print(path.join(doc.dir, 'README.md'), `${name}/README.md`);
@@ -364,7 +364,7 @@ function update(args, opts, ws) {
   if (kept.length) log(`保留本地新增：${kept.join('、')}`);
   if (steps.length) {
     log(`\n契約已從 ${from} 升到 ${up}。接著依下列說明修改元件副本、自製元件與簡報，完成後逐份播放驗證：`);
-    for (const s of steps) { log(`\n===== ${s.name}（${toPosix(s.file)}） =====\n`); log(readText(s.file).trimEnd()); }
+    for (const s of steps) { log(`\n===== ${s.name}（上游 ${toPosix(path.relative(UP, s.file))}） =====\n`); log(readText(s.file).trimEnd()); }
   }
 }
 
