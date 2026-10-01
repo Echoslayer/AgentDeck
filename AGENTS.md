@@ -11,13 +11,14 @@
 | `assets/theme/` | 品牌（下游專案） | **不可**，除非人明確要求；品牌規則見 `assets/theme/README.md`（[0010](docs/adr/0010-theme-layer-and-downstream.md)） |
 | `assets/deck/`（含 `components/`）、`assets/story-reader/`、`templates/` | 框架（上游） | **不可**，除非人明確要求（[0004](docs/adr/0004-component-template-strategy.md)、[0006](docs/adr/0006-fork-story-reader.md)） |
 | `playground/` | LLM（候選元件研究） | 可，自由刪改；主題不得引用（見 `playground/README.md`） |
+| `docs/guides/` | LLM（寫作指引） | 可，經人同意後新增或修改；指引是建議，不得與 ADR 或本檔衝突 |
 | `vendor.json`、`tools/` | 框架（上游） | **不可**，除非人明確要求；新增套件只提議，不自行加入（[0011](docs/adr/0011-vendor-manifest-and-packing.md)） |
 | `vendor/`、`dist/` | 下載與打包產物 | 不手改、不 commit（已列入 `.gitignore`） |
 
 ## 建立或改版主題
 
-1. 新主題：複製 `templates/visual-story/`（最小骨架：封面、一頁內容、結尾）為 `resources/<topic>/`，`edits.js` 保持 `window.storyEdits = {};`。
-2. 先寫分鏡：每頁要表達什麼關係。分鏡資料契約與頁面模式（預測題、互動頁）見 `README.md`；互動頁需提供 `previewArt` 與清理函式。
+1. 新主題：複製 `templates/blank/`（空白骨架：封面、一頁內容、結尾）為 `resources/<topic>/`，`edits.js` 保持 `window.storyEdits = {};`。
+2. 先寫分鏡：每頁要表達什麼關係。欄位規則見 `README.md`「分鏡資料契約」；互動頁需提供 `previewArt` 與清理函式。寫作方式依人指定的 `docs/guides/` 指引；未指定時，講解機制、因果類的簡報預設參考 `docs/guides/visual-story.md`，其他類型不必套用（[0012](docs/adr/0012-template-vs-writing-guide.md)）。
 3. 頁型固定用核心：`deck.cover({ title, meta })`、`deck.end()`（`assets/deck/deck-core.js`）。
 4. 內容元件**按需查找**（[0009](docs/adr/0009-components-as-extensions.md)）：只讀 `assets/deck/components/CATALOG.md`。
    - 有合適元件：讀該元件的 `README.md`，在主題 `index.html` 加 css 與 js 兩行引用，呼叫 `deck.<name>(key, …)`；守住 README「必須保留」的約束。標記由元件自動加上。

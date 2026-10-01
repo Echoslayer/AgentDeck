@@ -1,0 +1,81 @@
+# Visual Story 寫作指引（建議）
+
+這是一種簡報**寫作方式**，不是框架的一部分：AgentDeck 只規定資料契約與標記（見 [README](../../README.md)「分鏡資料契約」），怎麼安排內容由各主題決定。這套做法源自 `D:\book` 的書籍視覺解說，適合「讓聽眾理解一個機制」的簡報；報告、公告、流程宣導等其他類型可以不採用，或另寫一份指引放在本資料夾。
+
+## 什麼時候用
+
+- 要讓聽眾理解因果、機制或取捨，而不只是接收結論。
+- 有一條能逐步推進的理解路徑：現象 → 原因 → 結果 → 應用。
+
+只是列出事項、更新進度或宣布決定時，直接用 `list`、`metrics` 等元件即可，不必套這套流程。
+
+## 工作流程
+
+1. **先寫計畫**：寫下聽眾是誰、聽完應能做到什麼、需要哪些前置知識。
+2. **先寫分鏡**：每頁一個認知步驟。先讓各頁的 `title` 與 `point` 串起來能講清楚，再補圖與互動。
+3. **每頁選一種關係**：依要表達的關係查 `assets/deck/components/CATALOG.md`，沒有就在主題內自製；不要為了用元件而改變要講的關係。
+4. **先做關鍵頁**：挑最能表達機制的一頁先做成真實內容，實際播放確認後再擴展其他頁。
+5. **內容太多就拆頁**：不必固定頁數，不要縮小字體。
+
+## 頁面寫法
+
+| 欄位 | 寫法 |
+| --- | --- |
+| `title` | 這一頁要說清楚的一句話，而不是主題名詞 |
+| `lead` | 這頁要回答的問題或必要背景 |
+| `art` | 呈現因果的圖：位置、路徑、長度或狀態變化，不只是把結論放進文字卡 |
+| `point` | 讀完應帶走的理解 |
+| `detail` | 前提、限制、資料來源 |
+
+## 頁面模式
+
+### 預測題：先讓聽眾預測，再揭曉
+
+適合放在揭露機制之前，或結尾用一個沒示範過的新例子檢查理解。題目針對本篇機制，不考名詞記憶；答案只放在 `feedback`，當頁圖與縮圖不要提前揭露。
+
+```js
+{
+  id: 'predict', section: '04 / 想一想', title: '先讓聽眾預測，再揭曉',
+  lead: '預測題不是考試，而是讓聽眾發現自己尚未掌握的關係。',
+  art: deck.focus('focus', '看見現象 → 理解原因'),   // 需引用 focus 元件，也可換成自製元素
+  question: {
+    prompt: '只有結論，足以理解中間的過程嗎？',
+    hideFuturePreviews: true,
+    choices: [
+      { value: 'steps', label: '還需要中間步驟', feedback: '對，把省略的變化拆開，聽眾才有機會跟上。' },
+      { value: 'more', label: '再加一些專有名詞', feedback: '名詞能命名概念，但不能代替原因與過程。' },
+    ],
+  },
+},
+```
+
+### 互動頁：一次只揭露一個變化
+
+控制項與結果要能同時看到；靜態圖足以解釋的步驟不必加互動。
+
+```js
+{
+  id: 'try', section: '05 / 自己試一次', title: '一次只揭露一個變化',
+  art: deck.focus('result', '', { edit: false }) + '<button data-key="advance">看下一個變化</button>',
+  previewArt: '<p>觀察 → 原因 → 結果</p>',
+  mount(root, state) {
+    const steps = ['先觀察現象', '補上造成變化的原因', '現在可以解釋結果'];
+    state.step ??= 0;
+    const output = root.querySelector('[data-key="result"]');
+    const button = root.querySelector('[data-key="advance"]');
+    const render = () => { output.textContent = steps[state.step]; };
+    const advance = () => { state.step = (state.step + 1) % steps.length; render(); };
+    button.addEventListener('click', advance);
+    render();
+    return () => button.removeEventListener('click', advance);
+  },
+},
+```
+
+## 自我檢查
+
+1. **因果看得見**：能說出「改了什麼 → 哪個中間狀態改變 → 得到什麼結果」，並指出各段由哪張圖呈現；比例與數字不互相矛盾。
+2. **操作對應後果**：互動頁的控制項同步呈現本篇要解釋的結果；使用固定對照時寫明條件。
+3. **新例子先預測**：結尾有一個沒逐步示範過的情境，讓聽眾說出結果與理由。
+
+完成時分開回報作者自查與實際播放檢查；沒有真人試聽時，不宣稱已證明理解成效。
