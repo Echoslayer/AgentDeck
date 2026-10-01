@@ -28,7 +28,8 @@ AgentDeck 本體：`{{AGENTDECK_HOME}}`（安裝時寫入；若路徑不存在�
 1. `AGENTS.md`：檔案所有權、建立主題的步驟、標記規範、不做的事。**全部照做**。
 2. `docs/getting-started.md`：完整流程。
 3. `assets/deck/components/CATALOG.md`：可用元件（基礎／特殊）與「依需求查找」。
-4. 需要時再讀 `docs/guides/` 的寫作指引與個別元件的 `README.md`。
+4. 需要互動組合時查 `examples/README.md`；選定元件或範例後讀其 README 與追加說明。元件按 API 引用，範例在主題內改寫，不直接依賴 examples。
+5. 需要時再讀 `docs/guides/` 的寫作指引。
 
 ## 3. 流程
 

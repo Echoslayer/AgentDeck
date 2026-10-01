@@ -1,0 +1,6 @@
+<!doctype html><html lang="zh-Hant"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>加權評分 · 互動組合</title><link rel="stylesheet" href="../demo.css"></head><body><main>
+<header><a href="../index.html">← 組合範例</a><a href="README.md">實作前必讀</a></header><h1>你重視的項目改變，排名會跟著改嗎？</h1><p>固定分項表格 → 調整權重 → 貢獻分解與排名。三個方案各有所長，試著從速度切換到可靠度。</p>
+<div id="controls" class="ex-controls"></div><div class="ex-controls"><button type="button" id="speed">只看速度</button><button type="button" id="reliability">只看可靠度</button><button type="button" id="reset">還原等權重</button></div>
+<div class="ex-views"><section class="ex-panel ex-scroll"><table><caption>固定輸入 · 分項分數</caption><thead id="head"></thead><tbody id="scores"></tbody></table></section><section class="ex-panel"><h2>加權貢獻 · 共用 0–10 尺度</h2><div id="legend" class="ex-legend"></div><div id="ranking"></div></section></div>
+<p id="summary" class="ex-result" aria-live="polite"></p><p class="ex-note">人工示範資料，三項均為 0–10 且愈高愈好。總分 = Σ（分項分數 × 正規化權重）；權重不是實測結果，也沒有重新評分方案。</p><footer><a href="IMPLEMENTATION.md">計分假設、平手與改寫位置 →</a></footer>
+<script src="compute.js"></script><script src="demo.js"></script></main></body></html>

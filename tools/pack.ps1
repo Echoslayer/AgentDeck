@@ -50,6 +50,7 @@ foreach ($ref in $refs) {
   if ($rel -match '^assets\\') { $needAssets = $true }
   elseif ($rel -match '^vendor\\([^\\]+)\\') { if (-not $packages.Contains($Matches[1])) { $packages.Add($Matches[1]) } }
   elseif ($rel -match '^playground\\') { throw "正式簡報不得引用 playground：$ref" }
+  elseif ($deckRel -match '^resources\\' -and $rel -match '^examples\\') { throw "正式簡報不得引用 examples；請將需要的程式與資料改寫到主題內：$ref" }
   else { Write-Host "注意：帶入非標準位置的檔案 $rel" -ForegroundColor Yellow; $extra.Add($rel) }
 }
 
@@ -72,6 +73,8 @@ try {
     Copy-Item -Recurse -Force $src $dst
   }
   & $copy $deckRel
+  # 範例包供閱讀與改寫，連同實作文件引用的架構說明一起交付。
+  if ($deckRel -eq 'examples') { & $copy 'docs' }
   if ($needAssets) { & $copy 'assets' }
   foreach ($p in $packages) { & $copy "vendor\$p" }
   foreach ($e in $extra) { & $copy $e }

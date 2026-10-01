@@ -1,0 +1,9 @@
+(() => {
+ const labels=['位置一','位置二','位置三','位置四','位置五','位置六'];
+ const series=[{id:'a',label:'來源 A',values:[.9,.6,.2,.1,.7,.4]},{id:'b',label:'來源 B',values:[.8,.4,.3,.6,.8,.2]},{id:'c',label:'來源 C',values:[.7,.5,.8,.2,.3,.6]}];
+ const methods=document.getElementById('methods'),threshold=document.getElementById('threshold'),rule=document.getElementById('rule');
+ methods.insertAdjacentHTML('beforeend',series.map(s=>`<label><input type="checkbox" value="${s.id}" checked> ${s.label}</label>`).join(''));
+ document.getElementById('head').innerHTML=`<tr><th>來源</th>${labels.map(l=>`<th>${l}</th>`).join('')}</tr>`;
+ function render(){const selected=[...methods.querySelectorAll('input:checked')].map(el=>el.value),t=Number(threshold.value)/100,result=consensus(series,selected,t,rule.value);document.getElementById('threshold-value').textContent=t.toFixed(2);document.getElementById('values').innerHTML=series.map(s=>`<tr><th>${s.label}${selected.includes(s.id)?'':'（未投票）'}</th>${s.values.map(v=>`<td style="${v>=t?'background:#d2e8d7;font-weight:bold':''}">${v.toFixed(2)}</td>`).join('')}</tr>`).join('');document.getElementById('vote-title').textContent=result.required===null?'沒有參與來源':`共識結果 · 至少 ${result.required} / ${selected.length} 票`;document.getElementById('votes').innerHTML=labels.map((l,i)=>`<div class="ex-cell" data-pass="${result.pass[i]}">${l}<strong>${result.votes[i]} 票 · ${result.pass[i]?'通過':'未通過'}</strong></div>`).join('');document.getElementById('summary').textContent=result.required===null?'請至少選一組資料；零來源不定義共識。':`${result.pass.filter(Boolean).length} / ${labels.length} 個位置通過。輸入數值不變，改變的是入選門檻與投票規則。`;}
+ threshold.addEventListener('input',render);methods.addEventListener('change',render);rule.addEventListener('change',render);document.getElementById('reset').addEventListener('click',()=>{threshold.value='50';rule.value='majority';methods.querySelectorAll('input').forEach(el=>el.checked=true);render();});render();
+})();

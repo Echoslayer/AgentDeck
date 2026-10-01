@@ -6,6 +6,8 @@
 
 **從這裡開始：[`docs/getting-started.md`](docs/getting-started.md)**（完整流程，以及在其他專案中使用的三種方式）。
 
+**看效果：[`元件與互動範例`](examples/index.html)**。現成元件讀 API 後使用；互動組合範例讀追加說明後在主題內改寫。頁面安排講解順序，一頁可承載完整的互動實驗。
+
 專案目的與設計決策見 [`docs/adr/`](docs/adr/README.md)；LLM agent 的執行規則見 [`AGENTS.md`](AGENTS.md)；寫作方式的建議見 [`docs/guides/`](docs/guides/)。
 
 ## 目錄
@@ -38,6 +40,11 @@ AgentDeck/
 │   ├── adr/                 架構決策紀錄
 │   └── guides/              寫作指引（建議，非強制），例如 visual-story.md
 ├── playground/              候選元件研究（本機試驗，不進 git；主題不得引用）
+├── examples/                互動組合範例（進 git、隨工作區交付；參考改寫，不是執行期依賴）
+│   ├── index.html           現成元件與互動範例的展示入口
+│   ├── resolution-comparison/  解析度比較：矩陣、聚合尺度、細節變化
+│   ├── threshold-consensus/    門檻與共識：對齊數值、篩選、投票
+│   └── weighted-ranking/       加權評分：分項表格、權重、貢獻與排序
 ├── resources/<topic>/       正式主題放這裡
 ├── vendor.json              第三方套件清單（版本、網址、SHA-256；見 docs/adr/0011）
 ├── vendor/                  套件本體，由 tools\setup.cmd 下載（不進 git）

@@ -1,0 +1,6 @@
+<!doctype html><html lang="zh-Hant"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>解析度比較 · 互動組合</title><link rel="stylesheet" href="../demo.css"></head><body><main>
+<header><a href="../index.html">← 組合範例</a><a href="README.md">實作前必讀</a></header><h1>平均之後，還看得出局部差異嗎？</h1><p>同一份矩陣 → 調整聚合尺度 → 對照空間細節。色階固定，不隨右側結果重新縮放。</p>
+<div class="ex-controls"><label>示範資料 <select id="dataset"><option value="peak">局部尖峰</option><option value="checker">交錯分布</option></select></label><label>右側網格 <select id="size"><option>6</option><option selected>3</option><option>2</option><option>1</option></select></label><button id="reset" type="button">還原起始情境</button></div>
+<div class="ex-views"><section class="ex-panel"><h2>固定參照 · 6 × 6</h2><div id="reference"></div></section><section class="ex-panel"><h2 id="scale"></h2><div id="result"></div></section></div><p id="summary" class="ex-result" aria-live="polite"></p>
+<p class="ex-note">人工示範矩陣；0（淺）至 10（深），數字是各格值。右側每格是對應區塊的算術平均，不是加總，也不是重新執行模型。</p><footer><a href="IMPLEMENTATION.md">資料形狀、更新流程與改寫位置 →</a></footer>
+<script src="compute.js"></script><script src="demo.js"></script></main></body></html>

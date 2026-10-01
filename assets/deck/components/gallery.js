@@ -25,6 +25,7 @@ const overview = tier => deck.components().filter(n => deck.info(n).tier === tie
 const story = {
   title: 'AgentDeck 元件庫',
   label: 'AgentDeck 元件庫 / 審核與預覽',
+  back: { href: '../../../examples/index.html', label: '元件與互動範例' },
   pages: [
     deck.cover({ title: 'AgentDeck 元件庫', meta: '基礎元件 → 特殊元件<br>目錄與選用規則：CATALOG.md' }),
     {

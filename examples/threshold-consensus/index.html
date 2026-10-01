@@ -1,0 +1,7 @@
+<!doctype html><html lang="zh-Hant"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>門檻與共識 · 互動組合</title><link rel="stylesheet" href="../demo.css"></head><body><main>
+<header><a href="../index.html">← 組合範例</a><a href="README.md">實作前必讀</a></header><h1>同一份數值，為什麼會得到不同共識？</h1><p>多組對齊數值 → 門檻篩選 → 投票。標示相同位置，使每一票都能追溯到上方數字。</p>
+<div class="ex-controls"><label>入選門檻 <output id="threshold-value"></output><input id="threshold" aria-label="入選門檻" type="range" min="0" max="100" value="50"></label><fieldset id="methods"><legend>參與投票</legend></fieldset><label>規則 <select id="rule"><option value="majority">過半數</option><option value="all">全部同意</option><option value="any">至少一組</option></select></label><button id="reset" type="button">還原起始情境</button></div>
+<section class="ex-panel ex-scroll"><table><caption>固定輸入 · 亮格表示值 ≥ 門檻</caption><thead id="head"></thead><tbody id="values"></tbody></table></section>
+<section class="ex-panel" style="margin-top:20px"><h2 id="vote-title"></h2><div id="votes" class="ex-grid" style="grid-template-columns:repeat(3,minmax(0,1fr))"></div></section><p id="summary" class="ex-result" aria-live="polite"></p>
+<p class="ex-note">人工資料，数值為 0–1 的比較分數；不是機率，也不要求每列加總為 1。三組資料的欄位位置一致，門檻語意一致。共識是規則的產物，並不自動代表正確答案。</p><footer><a href="IMPLEMENTATION.md">資料、投票規則與邊界條件 →</a></footer>
+<script src="compute.js"></script><script src="demo.js"></script></main></body></html>

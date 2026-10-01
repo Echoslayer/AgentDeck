@@ -1,0 +1,10 @@
+<!doctype html>
+<html lang="zh-Hant"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>AgentDeck · 元件與互動範例</title>
+<style>body{margin:0;background:#f4f6f5;color:#23382f;font:17px/1.7 system-ui,"Microsoft JhengHei",sans-serif}main{max-width:1050px;margin:auto;padding:50px 24px}h1{font-size:clamp(28px,5vw,44px);line-height:1.3}h2{margin-top:40px}a{color:#185c52}a:focus-visible{outline:3px solid #bd742b;outline-offset:4px}.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:18px}article,.intro{background:white;border:1px solid #d5dfd9;border-radius:12px;padding:24px}article h3{margin:8px 0}small{color:#52685c}.links{display:flex;gap:18px;flex-wrap:wrap}.note{border-left:4px solid #438572;padding-left:18px}</style></head>
+<body><main><small>AgentDeck / 展示入口</small><h1>選一種能把關係說清楚的方式。</h1><p>先試操作，再看它如何放進一段完整的講解。</p>
+<h2>現成元件 · 直接使用</h2><div class="intro"><p>條列、比較、長條、趨勢與 3D 展示。選定後讀 API，傳入資料使用。</p><div class="links"><a href="../assets/deck/components/index.html">瀏覽元件展示 →</a><a href="../assets/deck/components/CATALOG.md">元件目錄與選用條件</a></div></div>
+<h2>互動組合 · 參考實作</h2><p>以最小人工資料示範關係與更新流程。讀說明後換資料、改規則，放進自己的主題。</p><div class="cards">
+<article><small>01 / 尺度與細節</small><h3>解析度比較</h3><p>同一份矩陣，改變聚合尺度；追蹤局部尖峰如何被平均。</p><div class="links"><a href="resolution-comparison/index.html">試玩 →</a><a href="resolution-comparison/README.md">組合說明</a></div></article>
+<article><small>02 / 門檻與交集</small><h3>門檻與共識</h3><p>多組對齊數值，經門檻篩選與投票；看每個結果如何形成。</p><div class="links"><a href="threshold-consensus/index.html">試玩 →</a><a href="threshold-consensus/README.md">組合說明</a></div></article>
+<article><small>03 / 權重與排名</small><h3>加權評分</h3><p>固定分項表格，調整評分偏好；拆解長條貢獻並比較排名。</p><div class="links"><a href="weighted-ranking/index.html">試玩 →</a><a href="weighted-ranking/README.md">組合說明</a></div></article>
+</div><p class="note">正式主題應持有改寫後的程式與資料，不直接依賴範例檔案。</p><p><a href="README.md">範例使用與維護方式</a></p></main></body></html>

@@ -1,0 +1,38 @@
+# 互動組合範例
+
+這裡進 git，隨工作區一起交付。範例提供可執行程式與實作追加說明，讓 LLM 依主題改寫；不是穩定的共用 API。決策見 [ADR 0015](../docs/adr/0015-interactive-examples.md)。
+
+## 選擇表示方式
+
+| 需要表達 | 試玩 | 實作前必讀 |
+| --- | --- | --- |
+| 聚合尺度如何改變空間細節 | [解析度比較](resolution-comparison/index.html) | [資料與改寫方式](resolution-comparison/IMPLEMENTATION.md) |
+| 多組數值如何經門檻與投票形成結果 | [門檻與共識](threshold-consensus/index.html) | [投票與對齊條件](threshold-consensus/IMPLEMENTATION.md) |
+| 分項、權重與排名的關係 | [加權評分](weighted-ranking/index.html) | [計分與尺度假設](weighted-ranking/IMPLEMENTATION.md) |
+
+三份組合都用小型人工資料，各自有 `compute.js`（計算）、`demo.js`（資料與畫面）、README 與實作追加說明；不依賴任何 XAI 檔案。抽象的是關係與更新流程，示範仍保留可驗證的具體數字。
+
+人可雙擊 [展示入口](index.html)。需要現成函式時，使用 [正式元件目錄](../assets/deck/components/CATALOG.md)。
+
+## 使用方式
+
+1. 先讀上方選用摘要，選定後只讀該範例的 README、必要的追加說明與程式；不要掃描整個 examples 或預先載入所有範例。
+2. 在 `resources/<topic>/` 裡改寫需要的 HTML、CSS、JS 與資料，保留來源說明及語意限制。從 `templates/blank/` 建立主題；不要把範例整包當成正式主題骨架。
+3. 主題不得以 script、stylesheet、圖片或其他執行期方式引用 `examples/` 或 `playground/`。範例之間可共用檔案，正式主題必須自行持有需要的實作。
+4. 檢查掛載後與互動更新後的結果、文字換行、窄版面、返回狀態與靜態預覽。
+
+## 新增與維護
+
+- 每份組合以表示關係命名，附 README、追加說明、可離線執行的最小資料與運算檢查。領域專屬試驗留在不進 git 的 playground，examples 只保留最小人工資料與一般組合。
+- README 標明適用關係、操作、限制、需要改寫的部分及驗收方式；較長細節放同目錄 `IMPLEMENTATION.md`，必要時附術語表。
+- 在本表與展示入口新增連結。現成元件與參考範例保持標示清楚。
+- 出現第二個實際主題後，再判斷哪些不變部分適合抽成正式元件；升級仍需人同意。
+- 下游工作區的 `examples/` 由上游更新整份取代；自己的內容放 `resources/`。
+
+## 檢查與交付
+
+`node examples/check.cjs` 執行三種組合檢查，確認範例的本機引用。這不是瀏覽器排版驗收。
+
+`powershell -NoProfile -ExecutionPolicy Bypass -File tools/check-examples.ps1` 驗證工作區建立／更新、使用者內容保留、引用邊界與解壓後的示範。測試使用暫存目錄，完成後清理。
+
+`tools\workspace.cmd <目標>` 會帶入整份 examples。若要寄送示範，使用 `tools\pack.cmd examples` 打包整個展示入口。

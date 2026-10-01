@@ -1,0 +1,12 @@
+(() => {
+ const criteria=[{id:'speed',label:'速度',color:'#236b57'},{id:'reliability',label:'可靠度',color:'#4987b8'},{id:'economy',label:'成本效益',color:'#c48941'}];
+ const items=[{id:'a',label:'方案 A',scores:[9,4,6]},{id:'b',label:'方案 B',scores:[5,9,5]},{id:'c',label:'方案 C',scores:[6,6,9]}];
+ const controls=document.getElementById('controls');
+ controls.innerHTML=criteria.map(c=>`<label>${c.label} <output id="weight-${c.id}"></output><input aria-label="${c.label}權重" data-criterion="${c.id}" type="range" min="0" max="100" value="1"></label>`).join('');
+ document.getElementById('head').innerHTML=`<tr><th>方案</th>${criteria.map(c=>`<th>${c.label}</th>`).join('')}</tr>`;
+ document.getElementById('scores').innerHTML=items.map(item=>`<tr><th>${item.label}</th>${item.scores.map(v=>`<td>${v}</td>`).join('')}</tr>`).join('');
+ document.getElementById('legend').innerHTML=criteria.map(c=>`<span><i style="background:${c.color}"></i>${c.label}</span>`).join('');
+ function render(){const weights=[...controls.querySelectorAll('input')].map(el=>Number(el.value)),result=rank(items,weights,10);criteria.forEach((c,i)=>document.getElementById('weight-'+c.id).textContent=result.rows[0].total===null?'—':(result.normalized[i]*100).toFixed(1)+'%');document.getElementById('ranking').innerHTML=result.rows.map(item=>`<div class="ex-rowhead"><strong>${item.label}</strong><span>${item.total===null?'未定義':item.total.toFixed(2)+' / 10'}</span></div><div class="ex-track" role="img" aria-label="${item.label}各項貢獻：${criteria.map((c,i)=>c.label+' '+item.contributions[i].toFixed(2)+' 分').join('，')}">${item.contributions.map((v,i)=>`<span class="ex-segment" title="${criteria[i].label} ${v.toFixed(2)} 分" style="width:${v/10*100}%;background:${criteria[i].color}"></span>`).join('')}</div>`).join('');const best=result.rows[0].total,winners=result.rows.filter(item=>best!==null&&Math.abs(item.total-best)<1e-9).map(item=>item.label);document.getElementById('summary').textContent=best===null?'權重總和為 0，無法定義加權平均。':`${winners.length>1?'並列第一':'目前第一'}：${winners.join('、')}（${best.toFixed(2)} 分）。表格保持固定，長條的各段隨權重重新計算。`;}
+ const preset=values=>{controls.querySelectorAll('input').forEach((el,i)=>el.value=values[i]);render();};
+ controls.addEventListener('input',render);document.getElementById('speed').addEventListener('click',()=>preset([100,0,0]));document.getElementById('reliability').addEventListener('click',()=>preset([0,100,0]));document.getElementById('reset').addEventListener('click',()=>preset([1,1,1]));render();
+})();

@@ -2,7 +2,7 @@
 .SYNOPSIS
   在其他專案中建立（或更新）一份 AgentDeck 工作區，讓簡報跟著該專案一起版本控制（docs/adr/0014）。
 .DESCRIPTION
-  複製框架：assets\、templates\、tools\、docs\、vendor.json、AGENTS.md、README.md、.gitignore，並建立空的 resources\。
+  複製框架與範例：assets\、templates\、examples\、tools\、docs\、vendor.json、AGENTS.md、README.md、.gitignore，並建立空的 resources\。
   不帶入 .git、vendor\、dist\、playground\ 與本專案的 resources\ 內容；套件在工作區內以 tools\setup.cmd 下載。
   -Update 只更新框架：保留工作區的 assets\theme\（品牌）、resources\（簡報）與 docs\ 中自行新增的檔案。
 .EXAMPLE
@@ -32,9 +32,10 @@ if ($Update) {
 New-Item -ItemType Directory -Force $Target | Out-Null
 
 # 整份取代的框架資料夾（工作區不該修改這些）
-$mirror = @('assets\deck', 'assets\story-reader', 'templates', 'tools')
+$mirror = @('assets\deck', 'assets\story-reader', 'templates', 'examples', 'tools')
 foreach ($rel in $mirror) {
-  $dst = Join-Path $Target $rel
+  $dst = [IO.Path]::GetFullPath((Join-Path $Target $rel))
+  if (-not $dst.StartsWith($Target + '\', [StringComparison]::OrdinalIgnoreCase)) { throw "更新路徑超出工作區：$dst" }
   if (Test-Path $dst) { Remove-Item -Recurse -Force $dst }
   New-Item -ItemType Directory -Force (Split-Path -Parent $dst) | Out-Null
   Copy-Item -Recurse (Join-Path $root $rel) $dst
