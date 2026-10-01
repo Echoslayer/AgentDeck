@@ -1,6 +1,6 @@
 # 0011. 第三方套件以清單管理，下載不進 git，交付時打包
 
-- 狀態：已接受
+- 狀態：已接受（下載與打包另由 [0016](0016-registry-copy-and-contract-version.md) 的 `agentdeck vendor`／`pack` 提供；製作端可能需要 Node）
 - 日期：2026-09-30
 - 修訂：[0001](0001-llm-authored-web-slides.md)（「不需要安裝、建置或網路」改為指播放端）
 

@@ -13,10 +13,10 @@
 | [0007](0007-builders-over-markup-rules.md) | 以產生函式固化標記規範，模板分三層 | 已接受（部分被 0009 取代） |
 | [0008](0008-decouple-editor-reader.md) | 編輯層與閱讀器、元件解耦 | 已接受 |
 | [0009](0009-components-as-extensions.md) | 元件改為按需引用的擴充，範本縮為最小骨架 | 已接受 |
-| [0010](0010-theme-layer-and-downstream.md) | 品牌抽成主題層，品牌版本以下游 repo 維護 | 已接受 |
-| [0011](0011-vendor-manifest-and-packing.md) | 第三方套件以清單管理，下載不進 git，交付時打包 | 已接受 |
+| [0010](0010-theme-layer-and-downstream.md) | 品牌抽成主題層，品牌版本以下游 repo 維護 | 已接受（部分被 0016 修訂） |
+| [0011](0011-vendor-manifest-and-packing.md) | 第三方套件以清單管理，下載不進 git，交付時打包 | 已接受（0016 補充 CLI） |
 | [0012](0012-template-vs-writing-guide.md) | 範本只留空白骨架，寫作方式改為建議指引 | 已接受 |
 | [0013](0013-component-tiers.md) | 元件分為基礎與特殊兩級，候選元件升級 | 已接受 |
-| [0014](0014-portable-usage.md) | 從其他專案使用：入口文件、企劃範本、工作區與 skill | 已接受 |
-| [0015](0015-interactive-examples.md) | 互動組合範例隨專案交付，與正式元件分開 | 已接受 |
+| [0014](0014-portable-usage.md) | 從其他專案使用：入口文件、企劃範本、工作區與 skill | 已接受（工作區被 0016 取代） |
+| [0015](0015-interactive-examples.md) | 互動組合範例隨專案交付，與正式元件分開 | 已接受（交付方式被 0016 修訂） |
 | [0016](0016-registry-copy-and-contract-version.md) | 其他專案改以「複製即擁有」取用框架，契約以版本號與遷移說明管理 | 已接受 |

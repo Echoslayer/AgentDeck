@@ -1,5 +1,5 @@
 {
-  "$comment": "第三方套件清單（docs/adr/0010）。本檔進 git；套件本體下載到 vendor/<name>/，不進 git。新增套件需經人同意。執行 tools\\setup.cmd 下載。",
+  "$comment": "第三方套件清單（docs/adr/0011）。本檔進 git；套件本體下載到 vendor/<name>/，不進 git。新增套件需經人同意。執行 agentdeck vendor（或 tools\\setup.cmd）下載。",
   "packages": {
     "three": {
       "version": "0.160.0",

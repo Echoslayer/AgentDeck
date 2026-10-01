@@ -22,7 +22,7 @@
 
 - 下游經 CLI 取得：核心（`AGENTDECK.md`、`assets/deck/` 的 `deck-core.js`／`deck-editor.js`／`deck.css`、`assets/story-reader/`、`templates/blank/`）、主題範本 `assets/theme/`（僅 `init`）、元件 `assets/deck/components/<name>/`（`add`）。改動這些路徑的結構時同步改 `cli/lib/registry.mjs`。
 - 元件 manifest 自動推導：資料夾內檔案全收；套件依賴取自 `deck.define` 的 `vendor: [...]` 與 `vendor/<name>/` 引用。元件需要的檔案都放在自己的資料夾內，不引用其他元件。
-- 索引由 CLI 解析：`CATALOG.md` 的「基礎元件」「特殊元件」「依需求查找」表格（第一欄為 `[名稱](名稱/README.md)`），`examples/README.md`「選擇表示方式」表格（第二欄為 `[標題](名稱/index.html)`），`docs/guides/*.md` 的第一個標題。修改這些表格時保持欄位順序。
+- 索引由 CLI 解析：`CATALOG.md` 的「基礎元件」「特殊元件」「依需求查找」表格（第一欄連到 `<名稱>/README.md`），`examples/README.md`「選擇表示方式」表格（第二欄連到 `<名稱>/index.html`），`docs/guides/*.md` 的第一個標題。修改這些表格時保持欄位順序。
 - `docs <名稱>` 輸出 README 與它連到的同資料夾 `.md`，元件另附 CATALOG「引用方式」與「特殊元件規則」。追加說明一律從 README 連結，否則下游讀不到。
 - `AGENTDECK.md` 會複製到下游：不得連結只在上游的檔案，改寫成 CLI 指令或「ADR 編號」純文字。
 

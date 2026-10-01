@@ -1,6 +1,6 @@
-# 第三方套件本體：由 tools\setup.cmd 依 vendor.json 下載（docs/adr/0011）
+# 第三方套件本體：由 agentdeck vendor 或 tools\setup.cmd 依 vendor.json 下載（docs/adr/0011）
 /vendor/
-# 匯出的簡報包：由 tools\pack.cmd 產生
+# 匯出的簡報包：由 agentdeck pack 或 tools\pack.cmd 產生
 /dist/
 # 候選元件研究區：本機試驗用，不進 git
 /playground/
