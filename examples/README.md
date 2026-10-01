@@ -9,8 +9,9 @@
 | 聚合尺度如何改變空間細節 | [解析度比較](resolution-comparison/index.html) | [資料與改寫方式](resolution-comparison/IMPLEMENTATION.md) |
 | 多組數值如何經門檻與投票形成結果 | [門檻與共識](threshold-consensus/index.html) | [投票與對齊條件](threshold-consensus/IMPLEMENTATION.md) |
 | 分項、權重與排名的關係 | [加權評分](weighted-ranking/index.html) | [計分與尺度假設](weighted-ranking/IMPLEMENTATION.md) |
+| 同一案例的參照、不同結果與來源同步回放 | [同案例結果回放](case-replay/index.html) | [資料對齊與編輯範圍](case-replay/IMPLEMENTATION.md) |
 
-三份組合都用小型人工資料，各自有 `compute.js`（計算）、`demo.js`（資料與畫面）、README 與實作追加說明；不依賴任何 XAI 檔案。抽象的是關係與更新流程，示範仍保留可驗證的具體數字。
+組合都用小型人工資料，各自有 `compute.js`（計算或結果選取）、`demo.js`（資料與畫面）、README 與實作追加說明；不依賴任何 XAI 檔案。抽象的是關係與更新流程，示範仍保留可驗證的具體數字。
 
 人可雙擊 [展示入口](index.html)。需要現成函式時，使用 [正式元件目錄](../assets/deck/components/CATALOG.md)。
 

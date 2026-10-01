@@ -2,6 +2,7 @@ const assert=require('node:assert/strict');
 const aggregate=require('./resolution-comparison/compute.js');
 const consensus=require('./threshold-consensus/compute.js');
 const rank=require('./weighted-ranking/compute.js');
+const replay=require('./case-replay/compute.js');
 assert.deepEqual(aggregate([[1,3],[5,7]],1,1),[[4]]);
 assert.deepEqual(aggregate([[1,3],[5,7]],2,2),[[1,3],[5,7]]);
 assert.deepEqual(aggregate([[1,3,5],[7,9,11]],1,2),[[4,7]]);
@@ -22,4 +23,27 @@ for(const row of weighted.rows)assert.ok(Math.abs(row.contributions.reduce((a,b)
 const equal=rank([{id:'a',scores:[3,3]},{id:'b',scores:[3,3]}],[4,6],10).rows;assert.equal(equal[0].total,equal[1].total);
 for(const weights of [[0,1],[1,0],[3,7]])assert.equal(rank([{id:'a',scores:[4,5]},{id:'b',scores:[3,4]}],weights,10).rows[0].id,'a');
 assert.throws(()=>rank(items,[-1,1,1],10));assert.throws(()=>rank(items,[1],10));assert.throws(()=>rank(items,[1,1,1],5));
-console.log('PASS: generic aggregation, threshold voting, weighted ranking and invalid input boundaries');
+// Replay must use the selected case's own baseline, never a previous case's record.
+const cases=[{id:'a',variants:[{id:'baseline',values:[2,8],timeMs:100},{id:'tuned',values:[2,5],timeMs:75}]},{id:'b',variants:[{id:'baseline',values:[6,2],timeMs:80},{id:'tuned',values:[5,2],timeMs:90}]}];
+assert.equal(replay(cases,'a','tuned').deltaMs,-25);
+assert.equal(replay(cases,'b','tuned').deltaMs,10);
+assert.deepEqual(replay(cases,'b','tuned').evidenceRefs,['b/baseline','b/tuned']);
+assert.equal(replay(cases,'a','baseline').deltaMs,0);
+const unchanged=JSON.stringify(cases);replay(cases,'a','tuned');assert.equal(JSON.stringify(cases),unchanged);
+assert.throws(()=>replay(cases,'missing','tuned'));assert.throws(()=>replay(cases,'a','missing'));
+for(const invalid of [[],[cases[0],cases[0]],[{id:'a',variants:[cases[0].variants[1]]}],[{id:'a',variants:[cases[0].variants[0],cases[0].variants[0]]}]])assert.throws(()=>replay(invalid,'a','baseline'));
+for(const invalid of [{values:[NaN,2]},{values:[-1,2]},{values:[11,2]},{values:[]},{values:[2]},{values:Array(2)},{timeMs:-1},{timeMs:Infinity}])assert.throws(()=>replay([{id:'a',variants:[cases[0].variants[0],{...cases[0].variants[1],...invalid}]}],'a','tuned'));
+// Exercise the actual demo controls and every linked output without a browser dependency.
+const vm=require('node:vm'),fs=require('node:fs'),path=require('node:path'),nodes=new Map();
+const node=id=>{if(!nodes.has(id))nodes.set(id,{value:id==='case'?'case-a':'setting-a',textContent:'',innerHTML:'',listeners:{},get selectedOptions(){return [{textContent:this.value==='case-a'?'案例 A':'案例 B'}];},addEventListener(event,fn){this.listeners[event]=fn;}});return nodes.get(id);};
+vm.runInNewContext(fs.readFileSync(path.join(__dirname,'case-replay/demo.js'),'utf8'),{replay,document:{getElementById:node}});
+assert.equal(node('reference-time').textContent,'100 ms');assert.equal(node('result-time').textContent,'75 ms');
+node('case').value='case-b';node('case').listeners.change();
+assert.equal(node('reference-time').textContent,'80 ms');assert.equal(node('result-time').textContent,'90 ms');
+assert.equal(node('result-title').textContent,'案例 B / 設定 A');assert.match(node('summary').textContent,/\+10 ms/);
+assert.equal(node('evidence').textContent,'case-b/baseline ↔ case-b/setting-a');assert.deepEqual(JSON.parse(node('export-preview').textContent).baseline.values,[6,2,7,3]);
+node('variant').value='setting-b';node('variant').listeners.change();assert.equal(node('result-time').textContent,'65 ms');
+assert.match(node('reference').innerHTML,/>6<\/td>/);assert.match(node('result').innerHTML,/>8<\/td>/);
+node('reset').listeners.click();assert.equal(node('case').value,'case-a');assert.equal(node('variant').value,'setting-a');assert.equal(node('result-time').textContent,'75 ms');
+assert(!nodes.has('scope-note'),'Replay must leave fixed author text outside its update targets');
+console.log('PASS: aggregation, threshold voting, weighted ranking, case replay controls and invalid input boundaries');

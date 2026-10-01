@@ -1,0 +1,9 @@
+<!doctype html><html lang="zh-Hant"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>同案例結果回放 · 互動組合</title><link rel="stylesheet" href="../demo.css"></head><body><main>
+<header><a href="../index.html">← 組合範例</a><a href="README.md">實作前必讀</a></header><h1>切換案例，兩側結果仍然對齊</h1><p>選同一案例的已保存結果，連動參照、位置數值、耗時與來源 ID。</p>
+<div class="ex-controls"><label>案例 <select id="case"><option value="case-a">案例 A</option><option value="case-b">案例 B</option></select></label><label>右側結果 <select id="variant"><option value="baseline">基線</option><option value="setting-a" selected>設定 A</option><option value="setting-b">設定 B</option></select></label><button id="reset" type="button">還原起始情境</button></div>
+<div class="ex-views"><section class="ex-panel"><h2>同案例固定參照 / 基線</h2><div id="reference"></div><p>示意耗時：<strong id="reference-time"></strong></p></section><section class="ex-panel"><h2 id="result-title"></h2><div id="result"></div><p>示意耗時：<strong id="result-time"></strong></p></section></div>
+<p id="summary" class="ex-result" aria-live="polite"></p><p>對應紀錄：<code id="evidence"></code></p>
+<p class="ex-note" data-key="scope-note" data-edit>人工示範資料、預先計算結果回放。耗時與位置值均為手工設定，位置值不是機率。操作不重跑模型，也不能推論設定對真實效能的影響。此段為固定作者說明，更新結果時不替換它。</p>
+<details><summary>查看所選案例的結果包</summary><pre id="export-preview" style="white-space:pre-wrap;overflow-wrap:anywhere"></pre></details>
+<footer><a href="IMPLEMENTATION.md">資料對齊、更新流程、編輯範圍與驗收 →</a></footer>
+<script src="compute.js"></script><script src="demo.js"></script></main></body></html>
