@@ -61,13 +61,15 @@
 {
   "contract": 1,
   "source": "github:Echoslayer/AgentDeck",
-  "core": { "commit": "abc1234" },
-  "components": { "globe": { "commit": "abc1234" } }
+  "cli": "npx -y github:Echoslayer/AgentDeck",
+  "core": { "commit": "abc1234", "files": { "assets/deck/deck-core.js": "<sha256 前 16 碼>" } },
+  "theme": { "commit": "abc1234" },
+  "components": { "globe": { "commit": "abc1234", "files": { "…": "…" } } }
 }
 ```
 
-- `source` 可為 GitHub 或本機路徑；不得只依賴作者本機路徑。
-- 來源版本一律記錄 commit，`diff` 以此為基準。契約遞增時在上游打 tag（例如 `contract-2`），僅供人閱讀與指定，不取代 commit。
+- `source` 可為 GitHub 或本機路徑；不得只依賴作者本機路徑。`cli` 記錄 agent 執行 CLI 的指令。
+- 來源版本一律記錄 commit；另記錄每個副本檔案取得時的雜湊（文字檔先統一為 LF），`diff` 以「取得時／本地／上游」三方比對判斷本地已改、上游已更新或兩邊都改，不需取回舊版上游。工作區有未 commit 變更時 commit 加 `-dirty`。契約遞增時在上游打 tag（例如 `contract-2`），僅供人閱讀與指定，不取代 commit。
 - agent 在下游動工前先比對 `contract`：
   - 與上游相同：直接工作。
   - 下游較舊：讀遷移說明自行升級（先核心、再元件、再簡報），完成後更新記錄。
@@ -77,13 +79,15 @@
 
 - 以 Node 撰寫、跨平台，**只用於製作端**；播放與交付的 zip 仍不需要任何工具（[0001](0001-llm-authored-web-slides.md) 不變）。
 - 前期不發佈 npm：上游根目錄放 `package.json`（`bin`），以 `npx github:Echoslayer/AgentDeck <指令>` 或本機路徑執行。契約穩定一段時間後再評估發佈。
-- 第一階段只做：
+- 第一階段：
   - `init`：建立下游結構、核心副本、主題範本、`agentdeck.json`、`AGENTDECK.md`。
+  - `status`：契約版本、副本差異摘要、套件狀態；契約不同時列出需讀的遷移說明。
   - `catalog [關鍵字]`：輸出元件與範例的一行索引。
   - `docs <name>`：輸出指定元件或範例的 README 與實作前必讀，不複製檔案。
   - `add <component>`：複製元件並把用到的套件寫入下游 `vendor.json`。
   - `diff [core|<component>]`：顯示下游副本相對於記錄來源版本與上游最新版的差異。
-- 後續視需要再加：`new <topic>`、`update core`、`pack`、`vendor`（取代對應 `.ps1`）。CLI 穩定前，現有 `.ps1` 工具保留。
+  - `new <topic>`、`update core`（`--migrate` 跨契約版本、`--force` 覆蓋本地修改）、`vendor`、`pack`：原計畫後續再做，但下游不再帶 `tools/`，缺少它們就無法建立主題、下載套件與交付，因此併入第一階段。
+- 上游自用的 `.ps1`（`setup`、`pack`、`install-skill`）保留；`workspace` 標為淘汰。
 - CLI 只做複製與記錄，不做自動合併或版本解析；合併由 agent 依 `diff` 處理。
 
 ### 6. 第三方套件

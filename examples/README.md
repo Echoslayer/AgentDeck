@@ -1,6 +1,6 @@
 # 互動組合範例
 
-這裡進 git，隨工作區一起交付。範例提供可執行程式與實作追加說明，讓 LLM 依主題改寫；不是穩定的共用 API。決策見 [ADR 0015](../docs/adr/0015-interactive-examples.md)。
+這裡進 git，留在上游；下游工作區不複製，以 `agentdeck docs <名稱> --code` 讀取（[ADR 0016](../docs/adr/0016-registry-copy-and-contract-version.md)）。範例提供可執行程式與實作追加說明，讓 LLM 依主題改寫；不是穩定的共用 API。決策見 [ADR 0015](../docs/adr/0015-interactive-examples.md)。
 
 ## 選擇表示方式
 
@@ -27,7 +27,7 @@
 - README 標明適用關係、操作、限制、需要改寫的部分及驗收方式；較長細節放同目錄 `IMPLEMENTATION.md`，必要時附術語表。
 - 在本表與展示入口新增連結。現成元件與參考範例保持標示清楚。
 - 出現第二個實際主題後，再判斷哪些不變部分適合抽成正式元件；升級仍需人同意。
-- 下游工作區的 `examples/` 由上游更新整份取代；自己的內容放 `resources/`。
+- 本表由 `agentdeck catalog` 解析：維持「需要表達｜範例連結（指向 `<名稱>/index.html`）｜實作前必讀」的欄位順序。實作前必讀須從範例 README 連結，`docs` 才會輸出。
 
 ## 檢查與交付
 
@@ -35,4 +35,4 @@
 
 `powershell -NoProfile -ExecutionPolicy Bypass -File tools/check-examples.ps1` 驗證工作區建立／更新、使用者內容保留、引用邊界與解壓後的示範。測試使用暫存目錄，完成後清理。
 
-`tools\workspace.cmd <目標>` 會帶入整份 examples。若要寄送示範，使用 `tools\pack.cmd examples` 打包整個展示入口。
+`node cli/check.mjs` 驗證下游工作區不帶入 examples、`docs` 能輸出範例說明與程式。若要寄送示範，使用 `tools\pack.cmd examples` 打包整個展示入口。

@@ -5,43 +5,36 @@ description: Make web slide decks (簡報、投影片、deck、presentation、sl
 
 # AgentDeck 簡報
 
-AgentDeck 由 LLM 寫分鏡、人在播放時微調。規則的唯一來源是 AgentDeck 的 `AGENTS.md`；這份 skill 只負責找到框架、決定在哪裡做、照流程走。
+AgentDeck 由 LLM 寫分鏡、人在播放時微調。規則的唯一來源是工作區內的 `AGENTDECK.md`；這份 skill 只負責找到或建立工作區（ADR 0016）。
 
-AgentDeck 本體：`{{AGENTDECK_HOME}}`（安裝時寫入；若路徑不存在，請使用者提供 AgentDeck 的位置）。
+AgentDeck CLI（製作端用，播放不需要）：
 
-## 1. 決定工作位置
+- 預設：`npx -y github:Echoslayer/AgentDeck <指令>`
+- 本機有 AgentDeck 時：`node "{{AGENTDECK_HOME}}/cli/agentdeck.mjs" <指令>`（安裝 skill 時寫入；路徑不存在就用預設）
 
-先判斷簡報要放哪裡，有疑問就問使用者：
+## 1. 決定工作區
 
-| 情況 | 工作區 | 做法 |
-| --- | --- | --- |
-| 目前專案已有工作區（某層有 `agentdeck.json`） | 該工作區 | 直接使用 |
-| 簡報要跟著目前專案版本控制 | 目前專案內新建，例如 `<repo>\slides` | 執行 `{{AGENTDECK_HOME}}\tools\workspace.cmd <路徑>` |
-| 只是拿目前專案當素材 | AgentDeck 本體 | 在 `{{AGENTDECK_HOME}}\resources\<topic>\` 製作 |
+| 情況 | 做法 |
+| --- | --- |
+| 目前專案某層已有 `agentdeck.json` | 用該資料夾；CLI 改用其中 `cli` 欄位的指令 |
+| 簡報要跟著目前專案版本控制 | `<CLI> init <repo>/slides`（宿主有 `AGENTS.md` 時，問使用者是否加 `--agents-hint`） |
+| 只拿目前專案當素材、簡報不需跟著它 | 問使用者放哪個資料夾，在那裡 `init` |
+| 目前專案就是 AgentDeck 本身 | 讀其 `AGENTS.md`（上游只用於試做與驗證） |
 
-以下的「工作區」指上表選定的資料夾。
+位置有疑問就問使用者。舊版 `workspace.cmd` 建立的工作區（`agentdeck.json` 沒有 `contract`）：先執行 `status`，依 `docs 0-to-1` 轉換。
 
-## 2. 讀規則
+## 2. 照 AGENTDECK.md 做
 
-依序讀工作區內的：
+讀工作區的 `AGENTDECK.md`，**全部照做**。重點：
 
-1. `AGENTS.md`：檔案所有權、建立主題的步驟、標記規範、不做的事。**全部照做**。
-2. `docs/getting-started.md`：完整流程。
-3. `assets/deck/components/CATALOG.md`：可用元件（基礎／特殊）與「依需求查找」。
-4. 需要互動組合時查 `examples/README.md`；選定元件或範例後讀其 README 與追加說明。元件按 API 引用，範例在主題內改寫，不直接依賴 examples。
-5. 需要時再讀 `docs/guides/` 的寫作指引。
-
-## 3. 流程
-
-1. 複製工作區的 `templates/blank/` 為 `resources/<topic>/`（`<topic>` 用英文小寫與連字號）。
-2. **先填 `resources/<topic>/plan.md`**：對象、目的、素材路徑、逐頁分鏡與選用元件。交給使用者確認後才寫程式。
-3. 素材在其他專案時只讀不改；把內容摘錄進 `story.js`，不要讓簡報引用工作區以外的檔案（打包會失敗）。
-4. 寫 `story.js`／`story.css`／`index.html`，元件依 CATALOG 引用。
-5. 用瀏覽器開 `resources/<topic>/index.html` 檢查；告訴使用者可按頁首「✎ 編輯」現場修改並另存 `edits.js`。
-6. 交付：`tools\pack.cmd resources\<topic>` 產生 `dist\<topic>-<時間>.zip`，對方解壓後雙擊最上層 `index.html`。
+1. 動工前 `status` 檢查契約版本；不一致時依遷移說明處理，無法遷移就停下來說明。
+2. `new <topic>` 建立主題，先填 `plan.md` 交使用者確認，再寫程式。
+3. `catalog [關鍵字]` 選表示方式，`docs <名稱>` 只讀選中的項目，`add <元件>` 取得元件。不整份讀取上游文件。
+4. 素材在其他位置時只讀不改，內容摘錄進 `story.js`；簡報只引用工作區內的檔案。
+5. 雙擊 `resources/<topic>/index.html` 檢查；交付用 `pack resources/<topic>`。
 
 ## 不要做
 
-- 不改 `edits.js`、`assets/`、`templates/`、`tools/`、`vendor.json`（除非使用者明確要求）。
+- 不改 `edits.js`、核心副本（`assets/deck/` 核心檔、`assets/story-reader/`、`templates/`、`AGENTDECK.md`）、`assets/theme/`、`agentdeck.json`（除非使用者明確要求）。
 - 不引入建置流程、不走 CDN、不把 `vendor/`、`dist/` 加入 git。
-- 不在 AgentDeck 本體以外另起一套簡報框架；需要的元件不存在時，依 `AGENTS.md` 在主題內自製。
+- 不在工作區以外另起一套簡報框架；需要的元件不存在時，依 `AGENTDECK.md` 在主題內自製。

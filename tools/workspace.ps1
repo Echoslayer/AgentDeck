@@ -1,6 +1,6 @@
 ﻿<#
 .SYNOPSIS
-  在其他專案中建立（或更新）一份 AgentDeck 工作區，讓簡報跟著該專案一起版本控制（docs/adr/0014）。
+  【已淘汰，改用 agentdeck init（docs/adr/0016）】在其他專案中建立（或更新）一份 AgentDeck 工作區，讓簡報跟著該專案一起版本控制（docs/adr/0014）。
 .DESCRIPTION
   複製框架與範例：assets\、templates\、examples\、tools\、docs\、vendor.json、AGENTS.md、README.md、.gitignore，並建立空的 resources\。
   不帶入 .git、vendor\、dist\、playground\ 與本專案的 resources\ 內容；套件在工作區內以 tools\setup.cmd 下載。
@@ -15,6 +15,7 @@ param(
   [switch]$Update
 )
 $ErrorActionPreference = 'Stop'
+Write-Warning 'workspace.cmd 已淘汰：新工作區請改用 agentdeck init（npx -y github:Echoslayer/AgentDeck init <路徑>，見 docs/getting-started.md）。'
 $root = (Split-Path -Parent $PSScriptRoot).TrimEnd('\')
 if (-not $Target) { $Target = Read-Host '工作區要建立在哪裡（例如 D:\other-repo\slides）' }
 if (-not $Target) { throw '未指定位置' }
@@ -49,7 +50,7 @@ Get-ChildItem -Recurse -File (Join-Path $root 'docs') | ForEach-Object {
   New-Item -ItemType Directory -Force (Split-Path -Parent $dst) | Out-Null
   Copy-Item -Force $_.FullName $dst
 }
-foreach ($f in @('vendor.json', 'AGENTS.md', 'README.md', '.gitignore')) { Copy-Item -Force (Join-Path $root $f) (Join-Path $Target $f) }
+foreach ($f in @('vendor.json', 'AGENTS.md', 'AGENTDECK.md', 'README.md', '.gitignore')) { Copy-Item -Force (Join-Path $root $f) (Join-Path $Target $f) }
 $res = Join-Path $Target 'resources'
 if (-not (Test-Path $res)) { New-Item -ItemType Directory $res | Out-Null; New-Item -ItemType File (Join-Path $res '.gitkeep') | Out-Null }
 

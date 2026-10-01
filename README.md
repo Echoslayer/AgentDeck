@@ -4,16 +4,20 @@
 
 直接雙擊 `templates/blank/index.html` 即可預覽，無需安裝、建置或網路。
 
-**從這裡開始：[`docs/getting-started.md`](docs/getting-started.md)**（完整流程，以及在其他專案中使用的三種方式）。
+**從這裡開始：[`docs/getting-started.md`](docs/getting-started.md)**（完整流程、CLI，以及在其他專案中使用的方式）。
 
 **看效果：[`元件與互動範例`](examples/index.html)**。現成元件讀 API 後使用；互動組合範例讀追加說明後在主題內改寫。頁面安排講解順序，一頁可承載完整的互動實驗。
 
-專案目的與設計決策見 [`docs/adr/`](docs/adr/README.md)；LLM agent 的執行規則見 [`AGENTS.md`](AGENTS.md)；寫作方式的建議見 [`docs/guides/`](docs/guides/)。
+專案目的與設計決策見 [`docs/adr/`](docs/adr/README.md)；製作簡報的規則見 [`AGENTDECK.md`](AGENTDECK.md)（上下游共用）；上游維護規則見 [`AGENTS.md`](AGENTS.md)；寫作方式的建議見 [`docs/guides/`](docs/guides/)。
 
 ## 目錄
 
 ```text
 AgentDeck/
+├── AGENTDECK.md             製作簡報的規則（init 時複製到下游工作區）
+├── AGENTS.md                上游維護規則
+├── package.json             CLI 套件描述（不發佈到 npm；以 npx github: 執行，見 docs/adr/0016）
+├── cli/                     AgentDeck CLI：init、catalog、docs、add、diff、update、new、vendor、pack（check.mjs 為回歸測試）
 ├── assets/
 │   ├── story-reader/        閱讀器（fork 自 D:\book\docs\assets\story-reader，已加入放大播放，見 docs/adr/0006）
 │   │   ├── reader.css
@@ -38,18 +42,19 @@ AgentDeck/
 ├── docs/
 │   ├── getting-started.md   入口：流程與在其他專案中使用（見 docs/adr/0014）
 │   ├── adr/                 架構決策紀錄
+│   ├── migrations/          契約版本的遷移說明（<n>-to-<m>.md）
 │   └── guides/              寫作指引（建議，非強制），例如 visual-story.md
 ├── playground/              候選元件研究（本機試驗，不進 git；主題不得引用）
-├── examples/                互動組合範例（進 git、隨工作區交付；參考改寫，不是執行期依賴）
+├── examples/                互動組合範例（進 git、留在上游，以 cli docs --code 讀取；參考改寫，不是執行期依賴）
 │   ├── index.html           現成元件與互動範例的展示入口
 │   ├── resolution-comparison/  解析度比較：矩陣、聚合尺度、細節變化
 │   ├── threshold-consensus/    門檻與共識：對齊數值、篩選、投票
 │   └── weighted-ranking/       加權評分：分項表格、權重、貢獻與排序
 ├── resources/<topic>/       正式主題放這裡
 ├── vendor.json              第三方套件清單（版本、網址、SHA-256；見 docs/adr/0011）
-├── vendor/                  套件本體，由 tools\setup.cmd 下載（不進 git）
+├── vendor/                  套件本體，由 cli vendor 或 tools\setup.cmd 下載（不進 git）
 ├── skills/agentdeck/        可攜 skill，讓其他專案的 agent 照本專案規則做簡報（tools\install-skill.cmd 安裝）
-├── tools/                   setup.cmd 下載套件、pack.cmd 打包交付、workspace.cmd 在其他專案建立工作區
+├── tools/                   上游用：setup.cmd 下載套件、pack.cmd 打包交付、install-skill.cmd 安裝 skill；workspace.cmd 已淘汰（改用 cli init）
 └── dist/                    打包輸出的 zip（不進 git）
 ```
 
@@ -76,37 +81,13 @@ AgentDeck/
 
 ## 建立新主題
 
-1. 複製 `templates/blank/` 為 `resources/<topic>/`。兩者同為兩層深度，`../../assets/...` 路徑不用改。先填 `plan.md`（企劃與逐頁分鏡），確認後再動工。
+1. 執行 `node cli/agentdeck.mjs new <topic>`（或複製 `templates/blank/` 為 `resources/<topic>/`）。兩者同為兩層深度，`../../assets/...` 路徑不用改。先填 `plan.md`（企劃與逐頁分鏡），確認後再動工。
 2. 改 `story.js` 的 `title`、`label`、封面文字與分鏡，並改 HTML `<title>`。寫作方式可參考 [`docs/guides/`](docs/guides/)，例如講解機制時用 [visual-story](docs/guides/visual-story.md)。
 3. 需要元件時查 [`assets/deck/components/CATALOG.md`](assets/deck/components/CATALOG.md)，在 `index.html` 的註解處引用；沒有合適的就在 `story.js`／`story.css` 自製，class 加主題前綴。不要改 `assets/`。
 
 ## 分鏡資料契約
 
-`story.js` 定義全域 `story`，閱讀器載入時會檢查，不符合就直接報錯：
-
-```js
-const story = {
-  title: '簡報名稱',                 // 瀏覽器標題
-  label: '作者或單位 / 主題名稱',     // 頁首文字；省略時用 title，現場可編輯
-  // back: { href: '../../index.html', label: '返回目錄' },
-  pages: [{
-    id: 'stable-id',                // 必填，整份唯一；重排時不要改，題目與互動狀態以它索引
-    section: '01 / 章節',            // 以下四個欄位必須是字串（可為空字串）
-    title: '頁面標題',
-    lead: '引言',
-    art: '<div class="topic-x" data-key="x">內容</div>',
-    point: '重點',
-    detail: '可選：前提、限制、來源',
-  }],
-};
-```
-
-- `art` 不限內容：元件輸出、自製 HTML、SVG，或給 canvas／3D 用的容器。標記規則見上方「可編輯層與鎖定層」。
-- HTML 字串只接受作者審查過的本地內容，不可塞入網址參數、讀者輸入或遠端文字。
-- 縮圖以約 1000px 寬縮放同一份內容；超長頁面會被裁切，應拆頁。SVG 若用到 `id`，另提供沒有重複 id 的 `previewArt`。
-- **題目（可選）**：`question: { prompt, choices: [{ value, label, feedback }], hideFuturePreviews? }`。`value` 為唯一的英數、`_`、`-`；`hideFuturePreviews: true` 在作答前遮住後續縮圖（不阻止翻頁）。答案保留到重新整理。
-- **互動（可選）**：`mount(root, state)` 在當頁渲染後呼叫，`root` 是主閱讀區，`state` 是此頁專用、保留到重新整理的物件；必須同步回傳清理函式或 `undefined`，換頁時先清理再移除舊內容。有 `mount` 的頁面必須提供靜態 `previewArt` 供縮圖使用。範例見 [visual-story 指引](docs/guides/visual-story.md#頁面模式)。
-- 外掛層（如編輯器）只透過 `window.storyReader` 與 `story:render` 事件取用閱讀器狀態（[ADR 0008](docs/adr/0008-decouple-editor-reader.md)）。
+`story.js` 定義全域 `story`（`title`、`label`、`pages`：`id`、`section`、`title`、`lead`、`art`、`point`、`detail`，可選 `question`、`mount`、`previewArt`），閱讀器載入時會檢查，不符合就直接報錯。完整欄位、規則與載入順序見 [`AGENTDECK.md`](AGENTDECK.md#分鏡資料契約)；它屬於契約版本的涵蓋範圍，核心以 `deck.contract` 公開目前版本（[ADR 0016](docs/adr/0016-registry-copy-and-contract-version.md)）。外掛層（如編輯器）只透過 `window.storyReader` 與 `story:render` 事件取用閱讀器狀態（[ADR 0008](docs/adr/0008-decouple-editor-reader.md)）。
 
 ## 版面對照
 
@@ -138,26 +119,16 @@ const story = {
 
 ## 建立品牌版本（下游專案）
 
-AgentDeck 是上游框架；公司或個人的品牌版本以下游 repo 維護，只改 `assets/theme/` 與 `resources/`：
-
-```bash
-git clone https://github.com/Echoslayer/AgentDeck.git MyDeck
-cd MyDeck
-git remote rename origin upstream
-git remote add origin <你的私有 repo>
-# 修改 assets/theme/（theme.css、theme.js、img/、README.md 的品牌規則）
-```
-
-框架更新：`git fetch upstream && git merge upstream/main`。只要沒改 `assets/deck/`、`assets/story-reader/`、`templates/`，合併不會衝突。下游做出的通用元件或修正，回饋到上游（[ADR 0010](docs/adr/0010-theme-layer-and-downstream.md)）。
+AgentDeck 是上游框架；公司、個人或專案的品牌版本是下游工作區：`npx -y github:Echoslayer/AgentDeck init <資料夾>` 後，`assets/theme/`、`resources/` 歸下游所有，核心與元件是可比對的副本，以 `diff`、`update core` 跟進上游（[ADR 0010](docs/adr/0010-theme-layer-and-downstream.md)、[ADR 0016](docs/adr/0016-registry-copy-and-contract-version.md)）。下游做出的通用元件或修正，回饋到上游。
 
 ## 第三方套件與交付
 
 第三方套件（例如特殊元件用的 three.js）**不進 git**：`vendor.json` 記錄版本、網址與 SHA-256，本體下載到 `vendor/<name>/`（[ADR 0011](docs/adr/0011-vendor-manifest-and-packing.md)）。
 
-- **準備環境**：clone 後雙擊 `tools\setup.cmd`，依清單下載並驗證雜湊；重跑會略過已就緒的檔案。`tools\setup.cmd -Check` 只檢查不下載。沒下載時，用到套件的元件顯示靜態後備。
+- **準備環境**：clone 後雙擊 `tools\setup.cmd`（下游工作區用 `agentdeck vendor`），依清單下載並驗證雜湊；重跑會略過已就緒的檔案。`tools\setup.cmd -Check` 只檢查不下載。沒下載時，用到套件的元件顯示靜態後備。
 - **引用**：頁面直接以相對路徑引用，例如主題 `index.html` 的 `<script src="../../vendor/three/three.min.js"></script>`。只收能在 `file://` 下以 `<script>` 載入的檔案（UMD／IIFE、css、字型、圖片），不走 CDN。
 - **新增套件**：經人同意後在 `vendor.json` 加一項；`sha256` 先留空，執行 `tools\setup.cmd` 會印出實際雜湊，確認來源後填回。
-- **交付給別人**：`tools\pack.cmd resources\<topic>` 產生 `dist\<topic>-<時間>.zip`，內含簡報資料夾、`assets/` 與該簡報引用到的 `vendor/<name>/`（含授權檔），缺少的套件會先下載。對方解壓縮後雙擊最上層的 `index.html` 即可播放，不需要網路或任何工具。不帶參數執行會列出 `resources\` 下的簡報供選擇。
+- **交付給別人**：`tools\pack.cmd resources\<topic>`（下游工作區用 `agentdeck pack resources/<topic>`） 產生 `dist\<topic>-<時間>.zip`，內含簡報資料夾、`assets/` 與該簡報引用到的 `vendor/<name>/`（含授權檔），缺少的套件會先下載。對方解壓縮後雙擊最上層的 `index.html` 即可播放，不需要網路或任何工具。不帶參數執行會列出 `resources\` 下的簡報供選擇。
 
 ## 更新閱讀器
 
