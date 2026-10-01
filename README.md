@@ -4,6 +4,8 @@
 
 直接雙擊 `templates/blank/index.html` 即可預覽，無需安裝、建置或網路。
 
+**從這裡開始：[`docs/getting-started.md`](docs/getting-started.md)**（完整流程，以及在其他專案中使用的三種方式）。
+
 專案目的與設計決策見 [`docs/adr/`](docs/adr/README.md)；LLM agent 的執行規則見 [`AGENTS.md`](AGENTS.md)；寫作方式的建議見 [`docs/guides/`](docs/guides/)。
 
 ## 目錄
@@ -29,15 +31,18 @@ AgentDeck/
 │   ├── index.html
 │   ├── story.js
 │   ├── edits.js             人工編輯結果（預設為空）
-│   └── story.css
+│   ├── story.css
+│   └── plan.md              企劃範本（先填、人確認後才動工；不打包）
 ├── docs/
+│   ├── getting-started.md   入口：流程與在其他專案中使用（見 docs/adr/0014）
 │   ├── adr/                 架構決策紀錄
 │   └── guides/              寫作指引（建議，非強制），例如 visual-story.md
 ├── playground/              候選元件研究（本機試驗，不進 git；主題不得引用）
 ├── resources/<topic>/       正式主題放這裡
 ├── vendor.json              第三方套件清單（版本、網址、SHA-256；見 docs/adr/0011）
 ├── vendor/                  套件本體，由 tools\setup.cmd 下載（不進 git）
-├── tools/                   setup.cmd 下載套件、pack.cmd 打包交付
+├── skills/agentdeck/        可攜 skill，讓其他專案的 agent 照本專案規則做簡報（tools\install-skill.cmd 安裝）
+├── tools/                   setup.cmd 下載套件、pack.cmd 打包交付、workspace.cmd 在其他專案建立工作區
 └── dist/                    打包輸出的 zip（不進 git）
 ```
 
@@ -64,7 +69,7 @@ AgentDeck/
 
 ## 建立新主題
 
-1. 複製 `templates/blank/` 為 `resources/<topic>/`。兩者同為兩層深度，`../../assets/...` 路徑不用改。
+1. 複製 `templates/blank/` 為 `resources/<topic>/`。兩者同為兩層深度，`../../assets/...` 路徑不用改。先填 `plan.md`（企劃與逐頁分鏡），確認後再動工。
 2. 改 `story.js` 的 `title`、`label`、封面文字與分鏡，並改 HTML `<title>`。寫作方式可參考 [`docs/guides/`](docs/guides/)，例如講解機制時用 [visual-story](docs/guides/visual-story.md)。
 3. 需要元件時查 [`assets/deck/components/CATALOG.md`](assets/deck/components/CATALOG.md)，在 `index.html` 的註解處引用；沒有合適的就在 `story.js`／`story.css` 自製，class 加主題前綴。不要改 `assets/`。
 

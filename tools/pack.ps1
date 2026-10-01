@@ -3,7 +3,7 @@
   把一份簡報打包成可離線播放的 zip，交給別人雙擊 index.html 即可觀看（docs/adr/0010）。
 .DESCRIPTION
   依簡報 index.html 的 src／href 找出引用：簡報資料夾整份、assets\ 整份、用到的 vendor\<name>\ 套件整份。
-  缺少的套件會依 vendor.json 自動下載並驗證。其他專案檔（例如 playground\）不會被帶入。
+  缺少的套件會依 vendor.json 自動下載並驗證。其他專案檔（例如 playground\）與簡報的企劃 plan.md 不會被帶入。
 .EXAMPLE
   tools\pack.ps1 resources\my-topic
   tools\pack.ps1 playground -Out D:\share
@@ -76,6 +76,7 @@ try {
   foreach ($p in $packages) { & $copy "vendor\$p" }
   foreach ($e in $extra) { & $copy $e }
   Get-ChildItem -Recurse -File $top -Filter '*.download' | Remove-Item -Force
+  Remove-Item -Force -ErrorAction SilentlyContinue (Join-Path $top "$deckRel\plan.md")
 
   $target = ($deckRel -replace '\\', '/') + '/index.html'
   $launcher = @"

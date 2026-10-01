@@ -1,6 +1,6 @@
 # AGENTS.md
 
-本專案用 LLM 產出網頁簡報；人只做現場小修。背景與理由見 `docs/adr/`，下列為執行規則。
+本專案用 LLM 產出網頁簡報；人只做現場小修。背景與理由見 `docs/adr/`，完整流程與在其他專案中使用見 `docs/getting-started.md`，下列為執行規則。
 
 ## 檔案所有權
 
@@ -12,13 +12,14 @@
 | `assets/deck/`（含 `components/`）、`assets/story-reader/`、`templates/` | 框架（上游） | **不可**，除非人明確要求（[0004](docs/adr/0004-component-template-strategy.md)、[0006](docs/adr/0006-fork-story-reader.md)） |
 | `playground/` | LLM（候選元件研究） | 可，自由刪改；主題不得引用（見 `playground/README.md`） |
 | `docs/guides/` | LLM（寫作指引） | 可，經人同意後新增或修改；指引是建議，不得與 ADR 或本檔衝突 |
-| `vendor.json`、`tools/` | 框架（上游） | **不可**，除非人明確要求；新增套件只提議，不自行加入（[0011](docs/adr/0011-vendor-manifest-and-packing.md)） |
+| `resources/<topic>/plan.md` | LLM（企劃） | 可；動工前先填並交人確認（[0014](docs/adr/0014-portable-usage.md)） |
+| `vendor.json`、`tools/`、`skills/` | 框架（上游） | **不可**，除非人明確要求；新增套件只提議，不自行加入（[0011](docs/adr/0011-vendor-manifest-and-packing.md)） |
 | `vendor/`、`dist/` | 下載與打包產物 | 不手改、不 commit（已列入 `.gitignore`） |
 
 ## 建立或改版主題
 
 1. 新主題：複製 `templates/blank/`（空白骨架：封面、一頁內容、結尾）為 `resources/<topic>/`，`edits.js` 保持 `window.storyEdits = {};`。
-2. 先寫分鏡：每頁要表達什麼關係。欄位規則見 `README.md`「分鏡資料契約」；互動頁需提供 `previewArt` 與清理函式。寫作方式依人指定的 `docs/guides/` 指引；未指定時，講解機制、因果類的簡報預設參考 `docs/guides/visual-story.md`，其他類型不必套用（[0012](docs/adr/0012-template-vs-writing-guide.md)）。
+2. 先填 `plan.md`（對象、目的、素材、逐頁分鏡與元件），交人確認後再寫程式；素材在其他專案時只讀不改，內容摘錄進 `story.js`。分鏡：每頁要表達什麼關係。欄位規則見 `README.md`「分鏡資料契約」；互動頁需提供 `previewArt` 與清理函式。寫作方式依人指定的 `docs/guides/` 指引；未指定時，講解機制、因果類的簡報預設參考 `docs/guides/visual-story.md`，其他類型不必套用（[0012](docs/adr/0012-template-vs-writing-guide.md)）。
 3. 頁型固定用核心：`deck.cover({ title, meta })`、`deck.end()`（`assets/deck/deck-core.js`）。
 4. 內容元件**按需查找**（[0009](docs/adr/0009-components-as-extensions.md)、[0013](docs/adr/0013-component-tiers.md)）：目錄是 `assets/deck/components/CATALOG.md`，元件分基礎與特殊兩級。
    - **建立或改版主題時**：讀完 CATALOG（兩級都看），逐頁依「表達的關係」挑選；基礎元件能表達時優先用基礎。
