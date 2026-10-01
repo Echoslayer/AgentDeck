@@ -22,7 +22,7 @@
 | [cards](cards/README.md) | 並列 | 同粒度的 2–4 個項目 | 項目有數值要比大小 → `bars`／`metrics` |
 | [steps](steps/README.md) | 單向流程 | 先後順序、單一路徑 | 有分支、判斷、回圈 → 自製 |
 | [focus](focus/README.md) | 單句結論 | 一頁只講一句話 | 多個重點 → `list` |
-| [compare](compare/README.md) | 對照 | 改善前後、方案 A／B | 三個以上同類項目 → `cards` |
+| [compare](compare/README.md) | 對照 | 改善前後、方案 A／B 比較 | 三個以上同類項目 → `cards` |
 | [metrics](metrics/README.md) | 關鍵數字 | KPI、結果數字 | 多個數量要比長短 → `bars` |
 | [bars](bars/README.md) | 數量比較 | 同單位數值比大小、分布 | 隨時間變化 → `trend` |
 | [trend](trend/README.md) | 趨勢 | 時間序列、1–5 條線、事件標記 | 只比較單一時間點 → `bars` |

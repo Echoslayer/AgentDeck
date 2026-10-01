@@ -32,7 +32,8 @@ try {
   const host = path.join(tmp, 'host');
   const ws = path.join(host, 'slides');
   fs.mkdirSync(host);
-  fs.writeFileSync(path.join(host, 'AGENTS.md'), '# Host\n');
+  spawnSync('git', ['init', '-q'], { cwd: host });
+  fs.writeFileSync(path.join(host, 'AGENTS.md'), '# Host\r\n');
 
   step('init 建立只含播放與客製所需的工作區', () => {
     run(['init', ws, '--source', UP, '--agents-hint'], tmp);
@@ -48,7 +49,9 @@ try {
     assert.equal(cfg.contract, contract);
     assert.ok(cfg.core.files['assets/deck/deck-core.js']);
     assert.match(cfg.cli, /agentdeck\.mjs/);
-    assert.match(fs.readFileSync(path.join(host, 'AGENTS.md'), 'utf8'), /slides\/AGENTDECK\.md/);
+    const hint = fs.readFileSync(path.join(host, 'AGENTS.md'), 'utf8');
+    assert.match(hint, /`slides\/AGENTDECK\.md`/, '宿主指引應為相對路徑 slides/AGENTDECK.md');
+    assert.doesNotMatch(hint, /[^\r]\n/, '宿主指引應沿用宿主的 CRLF');
     assert.match(fs.readFileSync(path.join(ws, '.gitignore'), 'utf8'), /\/vendor\//);
   });
 
@@ -68,11 +71,12 @@ try {
     const out = run(['add', 'list', 'globe'], ws);
     assert.match(out, /components\/list\/list\.css/);
     assert.match(out, /vendor\/three\/three\.min\.js/);
+    assert.match(run(['add', 'trend'], ws), /提到搭配 figure/);
     assert.ok(has(ws, 'assets/deck/components/list/README.md') && has(ws, 'assets/deck/components/globe/globe.js'));
     const vendor = JSON.parse(fs.readFileSync(path.join(ws, 'vendor.json'), 'utf8'));
     assert.ok(vendor.packages.three?.files?.length);
     const cfg = JSON.parse(fs.readFileSync(path.join(ws, 'agentdeck.json'), 'utf8'));
-    assert.deepEqual(Object.keys(cfg.components).sort(), ['globe', 'list']);
+    assert.deepEqual(Object.keys(cfg.components).sort(), ['globe', 'list', 'trend']);
     run(['add', 'list'], ws, true);
     run(['add', 'nope'], ws, true);
   });

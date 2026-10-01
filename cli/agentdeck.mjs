@@ -94,9 +94,11 @@ async function init(args, opts) {
   log('  3. catalog 選表示方式，docs <名稱> 讀文件，add <元件> 取得元件');
 }
 
-async function agentsHint(target, opts) {
+async function agentsHint(dir, opts) {
+  // realpath 統一 Windows 短檔名（EDISON~1）與 git 回傳的長路徑，相對路徑才算得對。
+  const target = fs.realpathSync.native(dir);
   const top = git(['rev-parse', '--show-toplevel'], path.dirname(target));
-  const host = top ? path.resolve(top) : path.dirname(target);
+  const host = top ? fs.realpathSync.native(path.resolve(top)) : path.dirname(target);
   const agents = path.join(host, 'AGENTS.md');
   if (!exists(agents) || host === target) return;
   if (readText(agents).includes('AGENTDECK.md')) return;
@@ -108,8 +110,10 @@ async function agentsHint(target, opts) {
     rl.close();
   }
   if (add) {
-    const text = readText(agents);
-    fs.writeFileSync(agents, `${text}${text.endsWith('\n') ? '' : '\n'}\n## 簡報\n\n簡報在 \`${rel(host, target)}/\`（AgentDeck 工作區）：製作或修改前先讀 \`${entry}\`。\n`);
+    const text = fs.readFileSync(agents, 'utf8');
+    const eol = text.includes('\r\n') ? '\r\n' : '\n';
+    const block = `\n## 簡報\n\n簡報在 \`${rel(host, target)}/\`（AgentDeck 工作區）：製作或修改前先讀 \`${entry}\`。\n`.replace(/\n/g, eol);
+    fs.writeFileSync(agents, `${text}${text.endsWith('\n') ? '' : eol}${block}`);
     log(`已在 ${agents} 加入指引`);
   } else {
     log(`提示：可在 ${agents} 加一行「製作簡報前先讀 ${entry}」，或執行 init 時加 --agents-hint。`);
@@ -215,6 +219,15 @@ function add(args, opts, ws) {
   for (const v of lines.vendor) for (const f of upVendor[v].files.filter(f => f.path.endsWith('.js'))) log(`  <script src="../../vendor/${v}/${f.path}"></script>   <!-- 套件，每份簡報一次，元件 js 之前 -->`);
   for (const l of lines.js) log(`  ${l}`);
   if (lines.vendor.size) log(`\n已登記套件 ${[...lines.vendor].join('、')}；執行 vendor 下載（pack 也會自動下載）。`);
+  const compDir = path.join(UP, 'assets', 'deck', 'components');
+  const known = new Set(fs.readdirSync(compDir).filter(n => exists(path.join(compDir, n, `${n}.js`))));
+  for (const m of manifests) {
+    const readme = path.join(m.dir, 'README.md');
+    if (!exists(readme)) continue;
+    const mentioned = [...new Set([...readText(readme).matchAll(/deck\.([a-z0-9]+)\b/g)].map(x => x[1]))]
+      .filter(n => n !== m.name && known.has(n) && !ws.config.components[n]);
+    if (mentioned.length) log(`\n${m.name} 的 README 提到搭配 ${mentioned.join('、')}（尚未取得）；需要時 add ${mentioned.join(' ')}。`);
+  }
 }
 
 // ---- diff / status ----
