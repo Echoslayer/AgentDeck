@@ -16,3 +16,4 @@
 | [0010](0010-theme-layer-and-downstream.md) | 品牌抽成主題層，品牌版本以下游 repo 維護 | 已接受 |
 | [0011](0011-vendor-manifest-and-packing.md) | 第三方套件以清單管理，下載不進 git，交付時打包 | 已接受 |
 | [0012](0012-template-vs-writing-guide.md) | 範本只留空白骨架，寫作方式改為建議指引 | 已接受 |
+| [0013](0013-component-tiers.md) | 元件分為基礎與特殊兩級，候選元件升級 | 已接受 |

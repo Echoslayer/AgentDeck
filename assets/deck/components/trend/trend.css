@@ -1,0 +1,43 @@
+/* deck.trend 樣式；結構由 trend.js 產生。 */
+.deck-trend{display:grid;gap:10px}
+.deck-trend-plot{position:relative}
+.deck-trend svg{display:block;width:100%;height:auto;overflow:visible}
+.deck-trend-grid line{stroke:var(--line);stroke-width:1}
+.deck-trend-grid text{fill:var(--muted);font-size:13px;font-variant-numeric:tabular-nums}
+.deck-trend-grid .y{text-anchor:end}
+.deck-trend-grid .x{text-anchor:middle}
+.deck-trend-s path{fill:none;stroke:var(--c);stroke-width:3;stroke-linejoin:round;stroke-linecap:round;stroke-dasharray:1;stroke-dashoffset:0}
+.deck-trend-s.deck-hl path{stroke-width:4.5}
+.deck-trend-s circle{fill:var(--c);stroke:#fff;stroke-width:2}
+.deck-trend-s text{fill:var(--c);font-size:15px;font-weight:700;font-variant-numeric:tabular-nums}
+.deck-trend-markline{stroke:var(--deck-highlight);stroke-width:1.5;stroke-dasharray:5 4}
+.deck-trend-mark{position:absolute;top:0;transform:translateX(6px);padding:2px 8px;border-radius:3px;background:var(--deck-highlight);color:#fff;font-size:14px;white-space:nowrap}
+.deck-trend-legend{margin:0;padding:0;list-style:none;display:flex;flex-wrap:wrap;gap:6px 20px;font-size:15px}
+.deck-trend-legend li{display:flex;align-items:center;gap:8px}
+.deck-trend-legend li::before{content:"";width:22px;height:4px;border-radius:2px;background:var(--c)}
+
+/* 進場動畫：線條依序畫出，端點與數字隨後出現。縮圖與減少動態時不播放。 */
+@keyframes deck-trend-draw{from{stroke-dashoffset:1}}
+@keyframes deck-trend-fade{from{opacity:0}}
+#page .deck-trend-s path{animation:deck-trend-draw 1.2s ease-out var(--d) backwards}
+#page .deck-trend-s :is(circle,text){animation:deck-trend-fade .3s ease-out calc(var(--d) + 1.1s) backwards}
+@media (prefers-reduced-motion:reduce){#page .deck-trend-s :is(path,circle,text){animation:none}}
+
+/* 圖例被隱藏時，對應的線一起隱藏（縮圖同步）；編輯模式下改為半透明。 */
+body:not(.is-editing) #page .deck-trend:has(>.deck-trend-legend>li:nth-child(1)[data-hidden]) .deck-trend-s1,
+body:not(.is-editing) #page .deck-trend:has(>.deck-trend-legend>li:nth-child(2)[data-hidden]) .deck-trend-s2,
+body:not(.is-editing) #page .deck-trend:has(>.deck-trend-legend>li:nth-child(3)[data-hidden]) .deck-trend-s3,
+body:not(.is-editing) #page .deck-trend:has(>.deck-trend-legend>li:nth-child(4)[data-hidden]) .deck-trend-s4,
+body:not(.is-editing) #page .deck-trend:has(>.deck-trend-legend>li:nth-child(5)[data-hidden]) .deck-trend-s5,
+body:not(.is-editing) #page .deck-trend:has(.deck-trend-mark[data-hidden]) .deck-trend-markline,
+.mini-page .deck-trend:has(>.deck-trend-legend>li:nth-child(1)[data-hidden]) .deck-trend-s1,
+.mini-page .deck-trend:has(>.deck-trend-legend>li:nth-child(2)[data-hidden]) .deck-trend-s2,
+.mini-page .deck-trend:has(>.deck-trend-legend>li:nth-child(3)[data-hidden]) .deck-trend-s3,
+.mini-page .deck-trend:has(>.deck-trend-legend>li:nth-child(4)[data-hidden]) .deck-trend-s4,
+.mini-page .deck-trend:has(>.deck-trend-legend>li:nth-child(5)[data-hidden]) .deck-trend-s5,
+.mini-page .deck-trend:has(.deck-trend-mark[data-hidden]) .deck-trend-markline{display:none}
+body.is-editing #page .deck-trend:has(>.deck-trend-legend>li:nth-child(1)[data-hidden]) .deck-trend-s1,
+body.is-editing #page .deck-trend:has(>.deck-trend-legend>li:nth-child(2)[data-hidden]) .deck-trend-s2,
+body.is-editing #page .deck-trend:has(>.deck-trend-legend>li:nth-child(3)[data-hidden]) .deck-trend-s3,
+body.is-editing #page .deck-trend:has(>.deck-trend-legend>li:nth-child(4)[data-hidden]) .deck-trend-s4,
+body.is-editing #page .deck-trend:has(>.deck-trend-legend>li:nth-child(5)[data-hidden]) .deck-trend-s5{opacity:.3}

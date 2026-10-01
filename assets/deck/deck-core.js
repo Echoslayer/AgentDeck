@@ -4,11 +4,13 @@
    2. deck.define(name, fn, meta)：元件註冊器。元件放在 assets/deck/components/<name>/，按需引用。
       註冊後以 deck.<name>(key, …) 呼叫；核心在每次呼叫時強制元件契約：
       key 格式正確、只產生單一根元素、根元素 data-key 等於 key。
-   3. deck.util：元件共用的小工具。
+   3. deck.util：元件共用的小工具，含特殊元件用的 three.js 外殼 deck.util.three。
+   另外負責特殊元件的動態內容生命週期（deck.define 的 live 選項，docs/adr/0013）。
    呼叫未載入的元件會直接報錯並說明如何引用；沒有合適元件時，在主題 story.js／story.css 自行實作。 */
 'use strict';
 window.deck = (() => {
   const KEY = /^[\w-]+$/;
+  const TIERS = ['basic', 'special'];
   const NAME = /^[a-z][a-z0-9]*$/;
   const registry = new Map();
 
@@ -28,11 +30,16 @@ window.deck = (() => {
     if (nodes[0].dataset.key !== key) throw new Error(`deck.${name}(${key}): 根元素的 data-key 必須等於 ${key}`);
   }
 
-  // meta：{ summary: 一句用途（展示頁用）, demo: () => 範例 HTML, css: 是否有同名 .css（預設 true） }
-  function define(name, fn, { summary = '', demo, css = true } = {}) {
+  // meta：{ summary: 一句用途（展示頁用）, demo: () => 範例 HTML, css: 是否有同名 .css（預設 true）,
+  //         tier: 'basic'｜'special'（見 CATALOG.md）, vendor: 用到的 vendor.json 套件名稱,
+  //         live: el => 清理函式（動態內容；見下方 story:render） }
+  function define(name, fn, { summary = '', demo, css = true, tier = 'basic', vendor = [], live } = {}) {
     if (!NAME.test(name)) throw new Error(`deck.define: 元件名稱需為小寫英數，收到 ${JSON.stringify(name)}`);
     if (name in api || registry.has(name)) throw new Error(`deck.define: ${name} 已存在`);
     if (typeof fn !== 'function') throw new Error(`deck.define(${name}): 需要產生函式`);
+    if (!TIERS.includes(tier)) throw new Error(`deck.define(${name}): tier 需為 ${TIERS.join('／')}`);
+    if ((live || vendor.length) && tier !== 'special') throw new Error(`deck.define(${name}): 有 live 或 vendor 的元件必須是 special`);
+    if (live !== undefined && typeof live !== 'function') throw new Error(`deck.define(${name}): live 需為函式`);
     const call = (key, ...args) => {
       checkKey(name, key);
       const html = fn(key, ...args);
@@ -40,7 +47,98 @@ window.deck = (() => {
       return html;
     };
     const src = document.currentScript?.src;
-    registry.set(name, Object.freeze({ name, call, summary, demo, css: css && src ? src.replace(/\.js$/, '.css') : null }));
+    registry.set(name, Object.freeze({ name, call, summary, demo, tier, vendor: Object.freeze([...vendor]), live, css: css && src ? src.replace(/\.js$/, '.css') : null }));
+  }
+
+  // 動態內容（WebGL、canvas）：產生函式只回傳 HTML（含靜態後備，供縮圖與失敗時顯示）；
+  // 頁面渲染後核心對每個 .deck-<name> 根元素呼叫 live(el)，換頁時先執行上一頁的清理函式。
+  // 啟動成功的元素加上 .deck-live-on，deck.css 據此隱藏後備。
+  let cleanups = [];
+  document.addEventListener('story:render', e => {
+    cleanups.forEach(f => { try { f(); } catch (err) { console.error(err); } });
+    cleanups = [];
+    for (const c of registry.values()) {
+      if (!c.live) continue;
+      e.detail.root.querySelectorAll(`.deck-${c.name}`).forEach(el => {
+        try {
+          const f = c.live(el);
+          if (typeof f === 'function') cleanups.push(f);
+          el.classList.add('deck-live-on');
+        } catch (err) {
+          console.error(`deck.${c.name}: 動態內容啟動失敗，保留靜態後備`, err);
+        }
+      });
+    }
+  });
+
+  // three.js 共用外殼（vendor.json 的 three）：renderer、尺寸、動畫迴圈、拖曳旋轉、釋放資源。
+  // setup(ctx) 建好場景後回傳 update(t)；ctx.drag 為累積拖曳角度 { x, y }，ctx.token(name) 讀色票。
+  function three(host, setup) {
+    if (!window.THREE) throw new Error('three.js 未載入：在 index.html 引用 vendor/three/three.min.js，並執行 tools\\setup.cmd 下載（docs/adr/0011）');
+    const T = window.THREE;
+    const renderer = new T.WebGLRenderer({ antialias: true, alpha: true });
+    renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+    renderer.domElement.className = 'deck-canvas';
+    host.appendChild(renderer.domElement);
+    const scene = new T.Scene();
+    const camera = new T.PerspectiveCamera(35, 1, 0.1, 100);
+    const drag = { x: 0, y: 0 };
+    const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const ctx = { T, scene, camera, renderer, drag, reduced, token: name => getComputedStyle(host).getPropertyValue(name).trim() };
+    let update;
+    try {
+      update = setup(ctx) || (() => {});
+    } catch (err) {
+      renderer.dispose();
+      renderer.domElement.remove();
+      throw err;
+    }
+
+    const resize = () => {
+      const w = host.clientWidth, h = host.clientHeight;
+      if (!w || !h) return;
+      renderer.setSize(w, h, false);
+      camera.aspect = w / h;
+      camera.updateProjectionMatrix();
+    };
+    const ro = new ResizeObserver(resize);
+    ro.observe(host);
+    resize();
+
+    let last = null;
+    const down = e => { last = [e.clientX, e.clientY]; host.setPointerCapture(e.pointerId); };
+    const move = e => {
+      if (!last) return;
+      drag.x += (e.clientX - last[0]) * 0.01;
+      drag.y = Math.max(-0.8, Math.min(0.8, drag.y + (e.clientY - last[1]) * 0.01));
+      last = [e.clientX, e.clientY];
+    };
+    const up = () => { last = null; };
+    const events = { pointerdown: down, pointermove: move, pointerup: up, pointercancel: up };
+    for (const [k, f] of Object.entries(events)) host.addEventListener(k, f);
+
+    let raf;
+    const t0 = performance.now();
+    const loop = now => {
+      raf = requestAnimationFrame(loop);
+      if (!host.clientWidth) return; // 被隱藏時不繪製
+      update(reduced ? 0 : (now - t0) / 1000);
+      renderer.render(scene, camera);
+    };
+    raf = requestAnimationFrame(loop);
+
+    return () => {
+      cancelAnimationFrame(raf);
+      ro.disconnect();
+      for (const [k, f] of Object.entries(events)) host.removeEventListener(k, f);
+      scene.traverse(o => {
+        o.geometry?.dispose();
+        [].concat(o.material || []).forEach(m => m.dispose());
+      });
+      renderer.dispose();
+      renderer.forceContextLoss(); // 瀏覽器同時可用的 WebGL context 有上限，換頁一定要釋放
+      renderer.domElement.remove();
+    };
   }
 
   // 主題（assets/theme/theme.js）提供封面／結尾的品牌裝飾，例如 logo；未載入主題時只有標題與說明。
@@ -94,7 +192,7 @@ window.deck = (() => {
 
   const api = {
     define, theme, cover, end,
-    util: Object.freeze({ itemKey, textOf }),
+    util: Object.freeze({ itemKey, textOf, three }),
     components: () => [...registry.keys()],
     info: name => registry.get(name),
   };

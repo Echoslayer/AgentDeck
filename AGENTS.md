@@ -20,8 +20,11 @@
 1. 新主題：複製 `templates/blank/`（空白骨架：封面、一頁內容、結尾）為 `resources/<topic>/`，`edits.js` 保持 `window.storyEdits = {};`。
 2. 先寫分鏡：每頁要表達什麼關係。欄位規則見 `README.md`「分鏡資料契約」；互動頁需提供 `previewArt` 與清理函式。寫作方式依人指定的 `docs/guides/` 指引；未指定時，講解機制、因果類的簡報預設參考 `docs/guides/visual-story.md`，其他類型不必套用（[0012](docs/adr/0012-template-vs-writing-guide.md)）。
 3. 頁型固定用核心：`deck.cover({ title, meta })`、`deck.end()`（`assets/deck/deck-core.js`）。
-4. 內容元件**按需查找**（[0009](docs/adr/0009-components-as-extensions.md)）：只讀 `assets/deck/components/CATALOG.md`。
+4. 內容元件**按需查找**（[0009](docs/adr/0009-components-as-extensions.md)、[0013](docs/adr/0013-component-tiers.md)）：目錄是 `assets/deck/components/CATALOG.md`，元件分基礎與特殊兩級。
+   - **建立或改版主題時**：讀完 CATALOG（兩級都看），逐頁依「表達的關係」挑選；基礎元件能表達時優先用基礎。
+   - **人提出特定需求時**（「放地圖」「做成 3D」「畫趨勢」）：先查 CATALOG「依需求查找」，包含特殊元件；找到就讀該元件 `README.md`，向人說明它能做到什麼、限制是什麼，再決定是否採用。
    - 有合適元件：讀該元件的 `README.md`，在主題 `index.html` 加 css 與 js 兩行引用，呼叫 `deck.<name>(key, …)`；守住 README「必須保留」的約束。標記由元件自動加上。
+   - 用特殊元件：另守 CATALOG「特殊元件規則」（引用 `vendor/` 套件、每頁最多一個 three.js 元件、講解不依賴拖曳）。
    - 沒有：在主題 `story.js`／`story.css` 自製，class 加主題前綴，依下方「標記規範」手動加標記。不要硬套不合適的元件。
    - 同一種自製元件在第二個主題再次出現時，向人提議升級為共用元件（依 CATALOG「新增元件」）。
 5. 每個獨立元件在 `art` 中做成**單一第一層元素**（畫布版面則為畫布內單一元素），出錯時才能在現場單獨隱藏（[0003](docs/adr/0003-hide-as-live-fallback.md)）。

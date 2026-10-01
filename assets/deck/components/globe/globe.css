@@ -1,0 +1,16 @@
+/* deck.globe 樣式；結構由 globe.js 產生。 */
+.deck-globe{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:24px;align-items:center}
+.deck-globe .deck-view{aspect-ratio:1}
+.deck-globe .deck-fallback .o{fill:var(--pane);stroke:var(--line)}
+.deck-globe .deck-fallback .g{fill:none;stroke:var(--line);stroke-width:1}
+.deck-globe .deck-fallback .a{fill:none;stroke:var(--deck-accent);stroke-width:2}
+.deck-globe .deck-fallback .d circle{fill:var(--deck-primary);stroke:#fff;stroke-width:2}
+.deck-globe .deck-fallback .d circle.deck-hl{fill:var(--deck-highlight)}
+.deck-globe-side{display:grid;gap:12px}
+.deck-globe ul{margin:0;padding:0;list-style:none;display:grid;gap:10px}
+.deck-globe li{display:grid;grid-template-columns:auto 1fr;column-gap:10px;align-items:baseline}
+.deck-globe li::before{content:"";grid-row:span 2;width:12px;height:12px;border-radius:50%;background:var(--deck-primary);align-self:center}
+.deck-globe li.deck-hl::before{background:var(--deck-highlight)}
+.deck-globe li b{color:var(--deck-primary);font-size:18px}
+.deck-globe li span{grid-column:2;color:var(--muted);font-size:15px}
+@container (max-width:640px){.deck-globe{grid-template-columns:1fr}}

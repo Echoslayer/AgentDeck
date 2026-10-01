@@ -16,9 +16,9 @@ AgentDeck/
 │   │   └── reader.js
 │   ├── deck/
 │       ├── deck.css         外殼層：預設 token、標題列、頁碼、封面／結尾版面、編輯層樣式
-│       ├── deck-core.js     核心：頁型 cover／end、元件註冊與契約檢查（見 docs/adr/0009）
+│       ├── deck-core.js     核心：頁型 cover／end、元件註冊與契約檢查、特殊元件的動態生命週期（見 docs/adr/0009、0013）
 │       ├── deck-editor.js   編輯層：可編輯文字／拖曳、另存 edits.js
-│       ├── components/      按需引用的元件，一個資料夾一個（CATALOG.md 為目錄，index.html 為展示頁）
+│       ├── components/      按需引用的元件，分基礎／特殊兩級（CATALOG.md 為目錄，index.html 為展示頁）
 │       │   └── <name>/      <name>.js、<name>.css、README.md
 │   └── theme/               品牌主題：換品牌只改這裡（見 docs/adr/0010）
 │       ├── theme.css        覆寫 token、頁首 logo、封面／結尾底圖與版面
@@ -110,9 +110,14 @@ const story = {
 
 ## 元件（`assets/deck/components/`）
 
-元件像擴充套件：範本不預載，用到才引用。清單與選用時機見 [`CATALOG.md`](assets/deck/components/CATALOG.md)，各元件 API 見其 `README.md`。雙擊 [`assets/deck/components/index.html`](assets/deck/components/index.html) 可預覽全部元件並試用編輯。
+元件像擴充套件：範本不預載，用到才引用。清單與選用時機見 [`CATALOG.md`](assets/deck/components/CATALOG.md)，各元件 API 見其 `README.md`。雙擊 [`assets/deck/components/index.html`](assets/deck/components/index.html) 可預覽全部元件，點頁首「✎ 編輯」試用編輯。
 
-呼叫方式一律為 `deck.<name>(key, …)`，第一個參數是 `data-key`；`deck-core.js` 在每次呼叫時檢查 key 格式、單一根元素與根元素 key。呼叫未引用的元件會直接報錯並提示路徑；引用 js 卻漏了 css 會在主控台報錯。新增共用元件需經人同意（[ADR 0009](docs/adr/0009-components-as-extensions.md)）。
+| 分級 | 元件 | 特性 |
+| --- | --- | --- |
+| 基礎 | list、cards、steps、focus、compare、metrics、bars、trend、figure | 靜態 HTML／SVG／CSS，零依賴，任何簡報都能用 |
+| 特殊 | surface、stack3d、globe（three.js）、cube（CSS 3D 動畫） | 動態內容或依賴 `vendor/` 套件；有靜態後備，只用在關鍵頁 |
+
+呼叫方式一律為 `deck.<name>(key, …)`，第一個參數是 `data-key`；`deck-core.js` 在每次呼叫時檢查 key 格式、單一根元素與根元素 key。呼叫未引用的元件會直接報錯並提示路徑；引用 js 卻漏了 css 會在主控台報錯。特殊元件的動態內容由核心在頁面出現時啟動、換頁時釋放，主題不用寫 `mount`（[ADR 0013](docs/adr/0013-component-tiers.md)）。新增共用元件需經人同意（[ADR 0009](docs/adr/0009-components-as-extensions.md)）。
 
 ## 品牌主題（`assets/theme/`）
 色票 token：`--deck-primary`（標題、強調文字）、`--deck-accent`（箭頭、橫條、頁碼）、`--deck-highlight`（突顯項目）、`--deck-gradient`（頁首與封面／結尾）。reader 的 `--accent` 對應 `--deck-primary`。預設值在 `deck.css`，品牌在 `assets/theme/theme.css` 覆寫；元件只使用這些 token。
@@ -135,7 +140,7 @@ git remote add origin <你的私有 repo>
 
 ## 第三方套件與交付
 
-第三方套件（例如 `playground/` 用的 three.js）**不進 git**：`vendor.json` 記錄版本、網址與 SHA-256，本體下載到 `vendor/<name>/`（[ADR 0011](docs/adr/0011-vendor-manifest-and-packing.md)）。
+第三方套件（例如特殊元件用的 three.js）**不進 git**：`vendor.json` 記錄版本、網址與 SHA-256，本體下載到 `vendor/<name>/`（[ADR 0011](docs/adr/0011-vendor-manifest-and-packing.md)）。
 
 - **準備環境**：clone 後雙擊 `tools\setup.cmd`，依清單下載並驗證雜湊；重跑會略過已就緒的檔案。`tools\setup.cmd -Check` 只檢查不下載。沒下載時，用到套件的元件顯示靜態後備。
 - **引用**：頁面直接以相對路徑引用，例如主題 `index.html` 的 `<script src="../../vendor/three/three.min.js"></script>`。只收能在 `file://` 下以 `<script>` 載入的檔案（UMD／IIFE、css、字型、圖片），不走 CDN。

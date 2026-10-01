@@ -1,0 +1,11 @@
+/* deck.surface 樣式；結構由 surface.js 產生。 */
+.deck-surface{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);gap:24px;align-items:center}
+.deck-surface .deck-view{aspect-ratio:1.36}
+.deck-surface .deck-fallback rect{fill:color-mix(in srgb,var(--deck-highlight) var(--v),var(--deck-primary))}
+.deck-surface-side{display:grid;gap:12px}
+.deck-surface ul{margin:0;padding:0;list-style:none;display:grid;gap:10px}
+.deck-surface li{display:grid;gap:2px}
+.deck-surface li small{color:var(--muted);font-size:13px}
+.deck-surface li b{color:var(--deck-primary);font-size:18px}
+.deck-surface-range{margin:0;padding:6px 10px;border-radius:4px;background:linear-gradient(90deg,var(--deck-primary),var(--deck-accent),var(--deck-highlight));color:#fff;font-size:14px;font-variant-numeric:tabular-nums}
+@container (max-width:640px){.deck-surface{grid-template-columns:1fr}}

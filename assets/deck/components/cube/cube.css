@@ -1,0 +1,28 @@
+/* deck.cube 樣式；結構由 cube.js 產生。 */
+.deck-cube{--w:min(420px,80cqw);--h:220px;display:grid;place-items:center;height:calc(var(--h) + 40px);perspective:1200px}
+.deck-cube-spin{position:relative;width:var(--w);height:var(--h);transform-style:preserve-3d;animation:deck-cube-spin var(--t) cubic-bezier(.7,0,.3,1) infinite}
+.deck-cube:hover .deck-cube-spin{animation-play-state:paused}
+.deck-cube-face{position:absolute;inset:0;display:grid;align-content:center;gap:8px;padding:24px 32px;border-radius:8px;background:var(--deck-gradient);color:#fff;backface-visibility:hidden;transform:rotateY(calc(var(--n) * 90deg)) translateZ(calc(var(--w) / 2))}
+.deck-cube-face.deck-hl{background:linear-gradient(90deg,var(--deck-highlight),#e8ab6b)}
+.deck-cube-face small{opacity:.75;font-size:13px}
+.deck-cube-face b{font-size:32px}
+.deck-cube-face p{margin:0;font-size:19px;line-height:1.5}
+@keyframes deck-cube-spin{
+  0%,20%{transform:translateZ(calc(var(--w) / -2)) rotateY(0)}
+  25%,45%{transform:translateZ(calc(var(--w) / -2)) rotateY(-90deg)}
+  50%,70%{transform:translateZ(calc(var(--w) / -2)) rotateY(-180deg)}
+  75%,95%{transform:translateZ(calc(var(--w) / -2)) rotateY(-270deg)}
+  100%{transform:translateZ(calc(var(--w) / -2)) rotateY(-360deg)}
+}
+
+/* 攤平：編輯模式（方便改字、逐面隱藏）、縮圖、減少動態。 */
+:is(body.is-editing #page,.mini-page) .deck-cube{height:auto;perspective:none}
+:is(body.is-editing #page,.mini-page) .deck-cube-spin{width:100%;height:auto;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;animation:none;transform:none}
+:is(body.is-editing #page,.mini-page) .deck-cube-face{position:static;transform:none;padding:16px}
+:is(body.is-editing #page,.mini-page) .deck-cube-face b{font-size:22px}
+:is(body.is-editing #page,.mini-page) .deck-cube-face p{font-size:15px}
+@media (prefers-reduced-motion:reduce){
+  .deck-cube{height:auto;perspective:none}
+  .deck-cube-spin{width:100%;height:auto;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;animation:none;transform:none}
+  .deck-cube-face{position:static;transform:none;padding:16px}
+}

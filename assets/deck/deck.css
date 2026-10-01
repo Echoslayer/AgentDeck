@@ -65,6 +65,14 @@ body.deck-bar-hidden .deck-edit-bar{display:none}
 body.is-editing #page .deck-keywarn{box-shadow:0 0 0 3px #e67e22}
 .deck-hide-toggle.deck-keywarn-toggle{border:2px solid #e67e22}
 
+/* 特殊元件的動態內容（deck.define 的 live，docs/adr/0013）：畫布疊在靜態後備上，啟動成功才隱藏後備。 */
+.deck-view{position:relative;min-height:0}
+.deck-view>.deck-fallback{display:block;width:100%;height:100%}
+.deck-live-on .deck-view>.deck-fallback{visibility:hidden}
+.deck-canvas{position:absolute;inset:0;display:block;width:100%;height:100%;touch-action:none;cursor:grab}
+.deck-canvas:active{cursor:grabbing}
+.deck-hint{margin:0;font-size:13px;color:var(--muted)}
+.mini-page .deck-hint{display:none}
 @media(max-width:700px){
 body>header{padding:14px 20px;min-height:56px}
 #position{min-width:40px;height:40px;font-size:13px}
