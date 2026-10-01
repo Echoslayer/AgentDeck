@@ -33,6 +33,4 @@
 
 `node examples/check.cjs` 執行三種組合檢查，確認範例的本機引用。這不是瀏覽器排版驗收。
 
-`powershell -NoProfile -ExecutionPolicy Bypass -File tools/check-examples.ps1` 驗證已淘汰的 `workspace.cmd` 工作區建立／更新、使用者內容保留、引用邊界與解壓後的示範。測試使用暫存目錄，完成後清理。
-
-`node cli/check.mjs` 驗證下游工作區不帶入 examples、`docs` 能輸出範例說明與程式。若要寄送示範，使用 `tools\pack.cmd examples` 打包整個展示入口。
+`node cli/check.mjs` 驗證下游工作區不帶入 examples、`docs` 能輸出範例說明與程式、examples 打包後引用完整，以及主題引用 examples 時 pack 會拒絕。若要寄送示範，使用 `node cli/agentdeck.mjs pack examples` 打包整個展示入口。

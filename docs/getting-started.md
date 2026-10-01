@@ -13,7 +13,7 @@
 - **A**：`init` 只複製播放必需的核心（`assets/deck` 核心檔、`assets/story-reader/`、`templates/blank/`）、品牌 `assets/theme/`、`AGENTDECK.md` 與 `vendor.json`，並寫入 `agentdeck.json`（契約版本、來源、每個副本的上游 commit 與雜湊）。元件、範例、指引留在上游，用到才取。`vendor/`、`dist/` 預設列入 `.gitignore`。需要 Node.js 18 以上；播放與交付的 zip 不需要。
 - **B**：skill 原始檔在 [`skills/agentdeck/`](../skills/agentdeck/SKILL.md)，安裝到 `~\.copilot\skills\` 與 `~\.claude\skills\`，並寫入本機 AgentDeck 位置，讓 agent 可改用本機 CLI。只想給單一專案用，可加 `-Dest <repo>\.github\skills`。agent 被要求做簡報時會讀到它，找到 `agentdeck.json` 或照 A 建立工作區。
 - **C**：上游本身也可直接當工作區；`add`、`diff`、`update` 在上游內不適用。
-- 舊版以 `tools\workspace.cmd` 建立的工作區已淘汰，轉換方式見 [`migrations/0-to-1.md`](migrations/0-to-1.md)。
+- 舊版以 `workspace.cmd`（已移除）建立的工作區，轉換方式見 [`migrations/0-to-1.md`](migrations/0-to-1.md)。
 
 ## CLI
 

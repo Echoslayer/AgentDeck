@@ -1,6 +1,6 @@
 # 0014. 從其他專案使用 AgentDeck：入口文件、企劃範本、工作區與 skill
 
-- 狀態：已接受（決策 3 工作區被 [0016](0016-registry-copy-and-contract-version.md) 取代，`workspace.cmd` 已淘汰）
+- 狀態：已接受（決策 3 工作區被 [0016](0016-registry-copy-and-contract-version.md) 取代，`workspace.cmd` 已移除）
 - 日期：2026-10-01
 
 ## 背景

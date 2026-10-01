@@ -78,14 +78,14 @@
    ```html
    <script src="../../vendor/three/three.min.js"></script>   <!-- theme.js 之後、元件 js 之前 -->
    ```
-   `vendor/` 不進 git，第一次使用先執行 `agentdeck vendor`（上游內也可雙擊 `tools\setup.cmd`）；交付用 `agentdeck pack` 打包會自動下載並帶上（ADR 0011）。沒下載時顯示靜態後備，主控台提示。
+   `vendor/` 不進 git，第一次使用先執行 `agentdeck vendor`；交付用 `agentdeck pack` 打包會自動下載並帶上（ADR 0011）。沒下載時顯示靜態後備，主控台提示。
 2. **每頁最多一個 three.js 元件**；整份簡報的特殊元件控制在少數關鍵頁。
 3. **現場可講解**：投影時不依賴觀眾親自拖曳；3D 展示的結論仍需清單、`point` 或口述輔助。互動實驗可由講者操作，須有起始情境、操作提示與靜態後備；會後讀者可自行探索。
 4. 不用寫 `mount`／`previewArt`：核心在頁面出現時啟動動態內容、換頁時釋放；縮圖用靜態後備。
 
 ## 預覽
 
-`index.html`（本資料夾）是元件展示頁：第 2 頁為全部元件的縮圖總覽，之後先列基礎元件、再列特殊元件，一頁一個。總覽與單頁都由 `deck.define` 的 `demo` 自動產生，新增元件只要在本資料夾 `index.html` 加引用，可直接雙擊開啟，也可點頁首「✎ 編輯」切到編輯模式檢查可編輯與可隱藏的範圍。特殊元件需先執行 `tools\setup.cmd`（或 `node cli/agentdeck.mjs vendor`），否則顯示靜態後備。
+`index.html`（本資料夾）是元件展示頁：第 2 頁為全部元件的縮圖總覽，之後先列基礎元件、再列特殊元件，一頁一個。總覽與單頁都由 `deck.define` 的 `demo` 自動產生，新增元件只要在本資料夾 `index.html` 加引用，可直接雙擊開啟，也可點頁首「✎ 編輯」切到編輯模式檢查可編輯與可隱藏的範圍。特殊元件需先執行 `node cli/agentdeck.mjs vendor`，否則顯示靜態後備。
 
 ## 新增元件（需經人同意，見 docs/adr/0009）
 

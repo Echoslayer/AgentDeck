@@ -21,7 +21,7 @@ AgentDeck CLI（製作端用，播放不需要）：
 | 只拿目前專案當素材、簡報不需跟著它 | 問使用者放哪個資料夾，在那裡 `init` |
 | 目前專案就是 AgentDeck 本身 | 讀其 `AGENTS.md`（上游只用於試做與驗證） |
 
-位置有疑問就問使用者。舊版 `workspace.cmd` 建立的工作區（`agentdeck.json` 沒有 `contract`）：先執行 `status`，依 `docs 0-to-1` 轉換。
+位置有疑問就問使用者。舊版 `workspace.cmd`（已移除）建立的工作區（`agentdeck.json` 沒有 `contract`）：先執行 `status`，依 `docs 0-to-1` 轉換。
 
 ## 2. 照 AGENTDECK.md 做
 

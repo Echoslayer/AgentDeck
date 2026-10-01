@@ -77,7 +77,7 @@ window.deck = (() => {
   // three.js 共用外殼（vendor.json 的 three）：renderer、尺寸、動畫迴圈、拖曳旋轉、釋放資源。
   // setup(ctx) 建好場景後回傳 update(t)；ctx.drag 為累積拖曳角度 { x, y }，ctx.token(name) 讀色票。
   function three(host, setup) {
-    if (!window.THREE) throw new Error('three.js 未載入：在 index.html 引用 vendor/three/three.min.js，並執行 agentdeck vendor 下載（上游內也可用 tools\\setup.cmd；docs/adr/0011）');
+    if (!window.THREE) throw new Error('three.js 未載入：在 index.html 引用 vendor/three/three.min.js，並執行 agentdeck vendor 下載（docs/adr/0011）');
     const T = window.THREE;
     const renderer = new T.WebGLRenderer({ antialias: true, alpha: true });
     renderer.setPixelRatio(Math.min(devicePixelRatio, 2));

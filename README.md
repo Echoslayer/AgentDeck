@@ -52,9 +52,9 @@ AgentDeck/
 │   └── weighted-ranking/       加權評分：分項表格、權重、貢獻與排序
 ├── resources/<topic>/       正式主題放這裡
 ├── vendor.json              第三方套件清單（版本、網址、SHA-256；見 docs/adr/0011）
-├── vendor/                  套件本體，由 cli vendor 或 tools\setup.cmd 下載（不進 git）
+├── vendor/                  套件本體，由 cli vendor 下載（不進 git）
 ├── skills/agentdeck/        可攜 skill，讓其他專案的 agent 照本專案規則做簡報（tools\install-skill.cmd 安裝）
-├── tools/                   上游用：setup.cmd 下載套件、pack.cmd 打包交付、install-skill.cmd 安裝 skill；workspace.cmd 已淘汰（改用 cli init）
+├── tools/                   install-skill.cmd 安裝 skill（下載套件、打包、建立工作區改用 cli）
 └── dist/                    打包輸出的 zip（不進 git）
 ```
 
@@ -125,10 +125,10 @@ AgentDeck 是上游框架；公司、個人或專案的品牌版本是下游工�
 
 第三方套件（例如特殊元件用的 three.js）**不進 git**：`vendor.json` 記錄版本、網址與 SHA-256，本體下載到 `vendor/<name>/`（[ADR 0011](docs/adr/0011-vendor-manifest-and-packing.md)）。
 
-- **準備環境**：clone 後雙擊 `tools\setup.cmd`（下游工作區用 `agentdeck vendor`），依清單下載並驗證雜湊；重跑會略過已就緒的檔案。`tools\setup.cmd -Check` 只檢查不下載。沒下載時，用到套件的元件顯示靜態後備。
+- **準備環境**：clone 後執行 `node cli/agentdeck.mjs vendor`（下游工作區用 `agentdeck vendor`），依清單下載並驗證雜湊；重跑會略過已就緒的檔案。加 `--check` 只檢查不下載。沒下載時，用到套件的元件顯示靜態後備。
 - **引用**：頁面直接以相對路徑引用，例如主題 `index.html` 的 `<script src="../../vendor/three/three.min.js"></script>`。只收能在 `file://` 下以 `<script>` 載入的檔案（UMD／IIFE、css、字型、圖片），不走 CDN。
-- **新增套件**：經人同意後在 `vendor.json` 加一項；`sha256` 先留空，執行 `tools\setup.cmd` 會印出實際雜湊，確認來源後填回。
-- **交付給別人**：`tools\pack.cmd resources\<topic>`（下游工作區用 `agentdeck pack resources/<topic>`） 產生 `dist\<topic>-<時間>.zip`，內含簡報資料夾、`assets/` 與該簡報引用到的 `vendor/<name>/`（含授權檔），缺少的套件會先下載。對方解壓縮後雙擊最上層的 `index.html` 即可播放，不需要網路或任何工具。不帶參數執行會列出 `resources\` 下的簡報供選擇。
+- **新增套件**：經人同意後在 `vendor.json` 加一項；`sha256` 先留空，執行 `agentdeck vendor` 會印出實際雜湊，確認來源後填回。
+- **交付給別人**：`agentdeck pack resources/<topic>` 產生 `dist/<topic>-<時間>.zip`，內含簡報資料夾、`assets/` 與該簡報引用到的 `vendor/<name>/`（含授權檔），缺少的套件會先下載。對方解壓縮後雙擊最上層的 `index.html` 即可播放，不需要網路或任何工具。
 
 ## 更新閱讀器
 

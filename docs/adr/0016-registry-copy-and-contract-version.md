@@ -87,7 +87,7 @@
   - `add <component>`：複製元件並把用到的套件寫入下游 `vendor.json`。
   - `diff [core|<component>]`：顯示下游副本相對於記錄來源版本與上游最新版的差異。
   - `new <topic>`、`update core`（`--migrate` 跨契約版本、`--force` 覆蓋本地修改）、`vendor`、`pack`：原計畫後續再做，但下游不再帶 `tools/`，缺少它們就無法建立主題、下載套件與交付，因此併入第一階段。
-- 上游自用的 `.ps1`（`setup`、`pack`、`install-skill`）保留；`workspace` 標為淘汰。
+- 上游的 `.ps1`（`workspace`、`setup`、`vendor`、`pack`、`check-examples`）一併移除，避免兩套打包與下載實作分歧；上游也改用 CLI，製作端需要 Node。只保留 `install-skill`（CLI 沒有對應功能）。
 - CLI 只做複製與記錄，不做自動合併或版本解析；合併由 agent 依 `diff` 處理。
 
 ### 6. 第三方套件
@@ -107,8 +107,8 @@
 - 下游可以自由客製元件，成品不被上游版本訂死；舊簡報不會因上游更新而被動改變。
 - 上游可以持續做不相容變更，代價是每次遞增版本並撰寫遷移說明。
 - 上游修正不會自動傳到下游，回饋改為人或 agent 主動以 `diff` 比對；元件副本可能逐漸分歧。
-- 新增 Node 製作端工具需維護；`.ps1` 與 CLI 會並存一段時間。
-- `workspace.cmd` 在 CLI 可用後標為淘汰；既有工作區以 `init` 加遷移說明轉換。
+- 製作端（含上游）改為需要 Node 18 以上；失去 Windows 雙擊 `.cmd` 的便利，換得跨平台與單一實作。
+- `workspace.cmd` 已移除；既有工作區以 `init` 加遷移說明轉換。
 
 ## 上游內的製作
 

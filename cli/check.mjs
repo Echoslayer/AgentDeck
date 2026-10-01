@@ -10,6 +10,7 @@ import { unzip } from './lib/zip.mjs';
 const UP = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const CLI = path.join(UP, 'cli', 'agentdeck.mjs');
 const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'agentdeck-check-'));
+const probe = path.join(UP, 'resources', `agentdeck-check-${process.pid}`);
 let passed = 0;
 
 function run(args, cwd, expectFail = false) {
@@ -145,7 +146,26 @@ try {
     run(['add', 'list'], legacy, true);
   });
 
+  step('上游 pack：examples 可整份打包，主題不得引用 examples', () => {
+    const out = path.join(tmp, 'up-out');
+    run(['pack', 'examples', '--out', out], UP);
+    const [zipFile] = fs.readdirSync(out);
+    const files = unzip(fs.readFileSync(path.join(out, zipFile)));
+    const top = zipFile.replace(/\.zip$/, '');
+    assert.ok(files.has(`${top}/index.html`) && files.has(`${top}/examples/index.html`), 'zip 缺少 examples 入口');
+    for (const [name, buf] of files) {
+      if (!name.startsWith(`${top}/examples/`) || !name.endsWith('.html')) continue;
+      for (const ref of refsOf(buf.toString('utf8'))) {
+        assert.ok(files.has(path.posix.normalize(`${path.posix.dirname(name)}/${ref}`)), `${name} 引用不存在：${ref}`);
+      }
+    }
+    fs.mkdirSync(probe, { recursive: true });
+    fs.writeFileSync(path.join(probe, 'index.html'), '<script src="../../examples/weighted-ranking/compute.js"></script>\n');
+    assert.match(run(['pack', path.relative(UP, probe), '--out', out], UP, true), /examples/);
+  });
+
   console.log(`\n全部通過（${passed} 項）`);
 } finally {
   fs.rmSync(tmp, { recursive: true, force: true });
+  fs.rmSync(probe, { recursive: true, force: true });
 }
