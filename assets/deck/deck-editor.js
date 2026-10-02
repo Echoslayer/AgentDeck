@@ -11,7 +11,7 @@
    key 為 section／title／lead／point／detail 時，同時改寫該頁欄位，索引與縮圖文字會同步。
    講稿與註解：右側「講稿」（N）顯示 page.instruction、page.speech 與 page.explain，「註解」（C）顯示 edits.comments；頁首「🎤 講者」開簡報者視窗（docs/adr/0020）。
    朗讀：R 或口語稿旁的按鈕播放 page.audio；沒有音檔或載入失敗時以瀏覽器內建語音念 page.speech。
-        P 或頁首「⏵ 全部播放」逐頁播放並自動翻頁；語速按鈕切換 0.75×–2×（docs/adr/0022）。
+        P 或頁首「⏵ 全部播放」逐頁播放並自動翻頁；語速按鈕切換 0.75×–2×；S 或 CC 按鈕在朗讀時顯示半透明字幕（docs/adr/0022）。
    預設不保存：未另存的修改在重新整理後消失。
    與閱讀器只透過 window.storyReader 與 story:render 事件溝通（docs/adr/0008）。
    載入順序：deck-core.js → theme.js → [元件 js] → story.js → edits.js → deck-editor.js → reader.js */
@@ -334,7 +334,8 @@
   const speakLabel = p => speaking && !auto ? '■ 停止' : p.audio ? '▶ 播放' : '▶ 朗讀';
   const canSpeak = p => !!(p.audio || (tts && p.speech));
   const controlsHtml = () => `<button type="button" data-autoplay aria-pressed="${auto}" title="從這頁開始逐頁播放口語稿，念完自動翻頁（P）">${auto ? '■ 停止播放' : '⏵ 全部播放'}</button>`
-    + `<button type="button" data-rate title="語速（點擊切換）">${rate}×</button>`;
+    + `<button type="button" data-rate title="語速（點擊切換）">${rate}×</button>`
+    + `<button type="button" data-cc aria-pressed="${cc}" title="朗讀時在畫面下方顯示字幕（S）">CC</button>`;
   const speechHtml = p => p.speech || p.audio
     ? `<h3>🗣 口語稿${canSpeak(p) ? ` <button type="button" data-speak aria-pressed="${speaking && !auto}" title="${p.audio ? '播放音檔' : '朗讀口語稿'}（R）">${speakLabel(p)}</button>${controlsHtml()}` : ''}</h3>`
       + `<div class="deck-speech">${p.speech || '<span class="deck-notes-empty">本頁以音檔播放。</span>'}</div>`
@@ -345,12 +346,33 @@
   //    單頁朗讀（R）在換頁時停止；全部播放（P）念完自動翻到下一頁，沒有口語稿的頁停留 AUTO_DWELL 毫秒，到最後一頁結束。
   //    語速存在講者本機，套用到音檔與內建語音。
   const tts = window.speechSynthesis;
-  const RATES = [0.75, 1, 1.25, 1.5, 2], RATE_KEY = 'agentdeck-speech-rate', AUTO_DWELL = 2000, AUTO_GAP = 600;
+  const RATES = [0.75, 1, 1.25, 1.5, 2], RATE_KEY = 'agentdeck-speech-rate', CC_KEY = 'agentdeck-captions', AUTO_DWELL = 2000, AUTO_GAP = 600;
   let speaking = false, auto = false, speakRun = 0, speakPage = -1, player = null, autoTimer;
   let rate = 1;
   try { rate = RATES.includes(Number(localStorage.getItem(RATE_KEY))) ? Number(localStorage.getItem(RATE_KEY)) : 1; } catch { /* 用預設語速 */ }
   tts?.getVoices(); // 部分瀏覽器第一次呼叫才開始載入語音清單
+  let cc = false, ccBox = null, ccText = '';
+  try { cc = localStorage.getItem(CC_KEY) === '1'; } catch { /* 預設不顯示字幕 */ }
   const plain = h => { const d = document.createElement('div'); d.innerHTML = h.replace(/<br\s*\/?>/gi, '\n'); return d.textContent; };
+  const sentences = p => p.speech ? plain(p.speech).split(/(?<=[。！？!?；;\n])/).map(s => s.trim()).filter(Boolean) : [];
+  // 字幕：朗讀中在畫面下方顯示目前這句。內建語音逐句同步；音檔沒有時間軸，依播放進度按句子字數比例估算。
+  function caption(text = '') {
+    ccText = text;
+    if (!ccBox) {
+      ccBox = document.createElement('div');
+      ccBox.className = 'deck-cc';
+      ccBox.setAttribute('aria-live', 'polite');
+      document.body.append(ccBox);
+    }
+    ccBox.textContent = text;
+    ccBox.hidden = !(cc && text);
+  }
+  function toggleCc() {
+    cc = !cc;
+    try { localStorage.setItem(CC_KEY, cc ? '1' : '0'); } catch { /* 只影響這次播放 */ }
+    caption(ccText);
+    syncSpeak();
+  }
   function pickVoice() {
     const lang = (document.documentElement.lang || 'zh-TW').toLowerCase();
     const want = { 'zh-hant': ['zh-tw', 'zh-hk'], 'zh-hans': ['zh-cn'], zh: ['zh-tw', 'zh-cn'] }[lang] || [lang];
@@ -364,6 +386,7 @@
     if (run !== speakRun) return;
     speaking = false;
     player = null;
+    caption();
     const i = window.storyReader.index;
     if (auto && i < story.pages.length - 1) autoTimer = setTimeout(() => { if (run === speakRun && auto) window.storyReader.go(i + 1); }, AUTO_GAP);
     else auto = false;
@@ -373,6 +396,14 @@
     player = new Audio(p.audio);
     player.playbackRate = rate;
     player.onended = () => finished(run);
+    const parts = sentences(p), ends = [];
+    parts.reduce((n, s) => (ends.push(n + s.length), n + s.length), 0);
+    player.ontimeupdate = () => {
+      if (run !== speakRun || !parts.length || !(player?.duration > 0)) return;
+      const at = player.currentTime / player.duration * ends[ends.length - 1];
+      const i = ends.findIndex(e => at < e);
+      caption(parts[i < 0 ? parts.length - 1 : i]);
+    };
     player.onerror = () => {
       if (run !== speakRun) return;
       console.warn(`${p.id}: 音檔無法播放（${p.audio}），改用內建語音`);
@@ -384,7 +415,7 @@
   }
   function sayText(run, p) {
     // 逐句念：長段落在部分瀏覽器會中途被截斷，且改語速能從下一句生效。
-    const parts = tts && p.speech ? plain(p.speech).split(/(?<=[。！？!?；;\n])/).map(s => s.trim()).filter(Boolean) : [];
+    const parts = tts ? sentences(p) : [];
     if (!parts.length) return false;
     const { lang, voice } = pickVoice();
     const say = i => {
@@ -394,6 +425,7 @@
       u.lang = voice?.lang || lang;
       if (voice) u.voice = voice;
       u.rate = rate;
+      u.onstart = () => caption(parts[i]);
       u.onend = () => say(i + 1);
       u.onerror = e => { if (!['interrupted', 'canceled'].includes(e.error)) finished(run); };
       tts.speak(u);
@@ -407,6 +439,7 @@
     tts?.cancel();
     player?.pause();
     player = null;
+    caption();
     if (!on) auto = false;
     speaking = on && canSpeak(p) && (p.audio ? playAudio(run, p) : sayText(run, p));
     if (on && auto && !speaking) { speaking = true; autoTimer = setTimeout(() => finished(run), AUTO_DWELL); }
@@ -437,12 +470,14 @@
         b.setAttribute('aria-pressed', String(auto));
       });
       doc.querySelectorAll('[data-rate]').forEach(b => { b.textContent = `${rate}×`; });
+      doc.querySelectorAll('[data-cc]').forEach(b => b.setAttribute('aria-pressed', String(cc)));
     }
   }
   function wireSpeak(root) {
     root.querySelectorAll('[data-speak]').forEach(b => b.onclick = () => { auto = false; speak(); });
     root.querySelectorAll('[data-autoplay]').forEach(b => b.onclick = playAll);
     root.querySelectorAll('[data-rate]').forEach(b => b.onclick = cycleRate);
+    root.querySelectorAll('[data-cc]').forEach(b => b.onclick = toggleCc);
   }
   function commentsHtml(id) {
     const list = commentsOf(id);
@@ -544,6 +579,7 @@
       if (e.key === 'ArrowLeft' || e.key === 'PageUp') document.getElementById('prev').click();
       if (e.key.toLowerCase() === 'r' && !e.ctrlKey && !e.metaKey && !e.altKey) { auto = false; speak(); }
       if (e.key.toLowerCase() === 'p' && !e.ctrlKey && !e.metaKey && !e.altKey) playAll();
+      if (e.key.toLowerCase() === 's' && !e.ctrlKey && !e.metaKey && !e.altKey) toggleCc();
     };
     clearInterval(openPresenter.timer);
     openPresenter.timer = setInterval(tick, 1000);
@@ -700,6 +736,7 @@ textarea{flex:1;font:inherit;font-size:16px;background:#2c2e26;color:inherit;bor
       if (!typing && !e.ctrlKey && !e.metaKey && !e.altKey && e.key.toLowerCase() === 'c') togglePanel('comments');
       if (!typing && !e.ctrlKey && !e.metaKey && !e.altKey && e.key.toLowerCase() === 'r') { auto = false; speak(); }
       if (!typing && !e.ctrlKey && !e.metaKey && !e.altKey && e.key.toLowerCase() === 'p') playAll();
+      if (!typing && !e.ctrlKey && !e.metaKey && !e.altKey && e.key.toLowerCase() === 's') toggleCc();
     });
     window.addEventListener('beforeunload', e => { if (dirty) { e.preventDefault(); e.returnValue = ''; } });
   });
