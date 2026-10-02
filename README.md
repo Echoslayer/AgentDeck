@@ -17,7 +17,7 @@ AgentDeck/
 ├── AGENTDECK.md             製作簡報的規則（init 時複製到下游工作區）
 ├── AGENTS.md                上游維護規則
 ├── package.json             CLI 套件描述（不發佈到 npm；以 npx github: 執行，見 docs/adr/0016）
-├── cli/                     AgentDeck CLI：init、catalog、docs、add、diff、update、new、vendor、pack、export（check.mjs 為回歸測試）
+├── cli/                     AgentDeck CLI：init、status、catalog、docs、add、diff、update、new、vendor、pack、export（check.mjs 為回歸測試；完整說明 node cli/agentdeck.mjs --help）
 ├── assets/
 │   ├── story-reader/        閱讀器（本專案獨立維護，含放大播放，見 docs/adr/0006）
 │   │   ├── reader.css
@@ -47,9 +47,7 @@ AgentDeck/
 ├── playground/              本機研究；試驗簡報各自 init 成獨立單位（不進 git）
 ├── examples/                互動組合範例（進 git、留在上游，以 cli docs --code 讀取；參考改寫，不是執行期依賴）
 │   ├── index.html           現成元件與互動範例的展示入口
-│   ├── resolution-comparison/  解析度比較：矩陣、聚合尺度、細節變化
-│   ├── threshold-consensus/    門檻與共識：對齊數值、篩選、投票
-│   └── weighted-ranking/       加權評分：分項表格、權重、貢獻與排序
+│   └── <name>/              每個範例一個資料夾；清單見 examples/README.md 或 cli catalog
 ├── vendor.json              第三方套件清單（版本、網址、SHA-256；見 docs/adr/0011）
 ├── vendor/                  套件本體，由 cli vendor 下載（不進 git）
 ├── skills/agentdeck/        可攜 skill，讓其他專案的 agent 照本專案規則做簡報（tools\install-skill.cmd 安裝）
@@ -57,7 +55,7 @@ AgentDeck/
 └── dist/                    打包輸出的 zip（不進 git）
 ```
 
-載入順序固定：`reader.css` → `deck.css` → `theme.css` → 元件 css → `story.css` → `deck-core.js` → `theme.js` → 元件 js → `story.js` → `edits.js` → `deck-editor.js` → `reader.js`。
+載入順序固定，見 [`AGENTDECK.md`](AGENTDECK.md#分鏡資料契約)「分鏡資料契約」最後一條。
 
 ## 可編輯層與鎖定層
 
@@ -68,25 +66,13 @@ AgentDeck/
 | 可人工編輯 | `edits.js` | 標記 `data-edit` 的文字、標記 `data-move` 的位置、頁首主題名稱、各頁 `section`／`title`／`lead`／`point`／`detail`、元件的顯示／隱藏、各頁註解 | 播放時按頁首「✎ 編輯」直接改；註解在右側「註解」分頁 |
 | 鎖定（需改寫） | `story.js`、`assets/` | logo、底圖、顯示元件的內容與結構、題目、`mount` 互動 | 改程式碼 |
 
-- **識別**：`deck.*` 元件會自動加上 key 與開關；以下規則只在主題自製元件時需要。每個第一層元件（畫布版面為畫布內每個元件）加 `data-key="x"`（每頁唯一），`edits.js` 以 key 對應，調整元件順序不受影響。漏加時退回位置 key（如 `@0.3`），編輯模式下以橘框標示（key 重複也會標示）。`key` 用 `title` 等欄位名時會同步索引與縮圖標題。
-- **開關**（不帶值）：`data-edit` 可編輯文字；`data-move` 可拖曳（位置以舞台寬度百分比保存，放大、全螢幕、縮圖都一致），只建議用在封面／結尾等絕對定位元素；`data-hide` 開放子元件單獨隱藏；`data-canvas` 標示絕對定位畫布，畫布內元件可逐一隱藏。範例：`<h2 data-key="title" data-edit data-move>`。
-- 舊式 `data-edit="x"`／`data-move="x"` 的值仍視為 key，可相容。
-- 編輯支援 Ctrl+B／I／U 與清單換行；貼上一律轉純文字，存檔前會移除所有屬性與非格式標籤。
-- **隱藏元件**：編輯模式下，欄位、舞台第一層元件（封面／結尾則是畫布內的 logo、標題、說明等）與標記 `data-hide` 的子元件（如單張卡片）右上角有 👁，點一下切換顯示。隱藏的元件在編輯時半透明、播放與縮圖時不顯示；鎖定元件（如 logo）也能隱藏，但不能改內容。
-- **講稿與註解**：每頁的講稿（`story.js` 的 `instruction` 講者動作，與二次迭代才寫的 `explain` 補充解釋，都由 LLM 寫）與人留的註解（存進 `edits.js` 的 `comments`）分別顯示在右側「講稿」（`N`）與「註解」（`C`）兩個分頁：滑鼠移上去暫開，點標籤釘選，索引縮圖標出註解數。頁首「🎤 講者」另開簡報者視窗，有計時、講稿、下一頁、翻頁與註解，講稿與註解可個別開關，字級可調，適合雙螢幕上台（[ADR 0020](docs/adr/0020-instructions-and-comments.md)）。
-- **口語稿朗讀**：頁面寫了 `speech`（口語稿）或 `audio`（音檔）時，`R` 念本頁，`P` 或頁首「⏵ 全部播放」從目前這頁逐頁念完並自動翻頁（只念不操作互動）。有音檔播音檔，沒有就用瀏覽器內建語音，不需套件；語速可在 0.75×–2× 切換，`S` 或「CC」開關半透明字幕（[ADR 0022](docs/adr/0022-speech-read-aloud.md)）。`record` 步驟加 `at: 第幾句` 時，朗讀到那句就自動操作元件或畫紅框、箭頭；音檔可附每句起始秒數 `cues` 精準對齊，倍速不影響（[ADR 0024](docs/adr/0024-speech-synced-actions.md)）。
-- **隱藏編輯列**：編輯列的 ✕ 收起整組按鈕與右側欄，按 `E` 重新顯示（Ctrl+S 仍可另存）。
-- **預設不保存**：重新整理即還原。按「另存」（或 Ctrl+S）把全部修改輸出為 `edits.js`，覆蓋 `resources/<topic>/edits.js` 即可永久套用；「捨棄」丟棄未另存的修改。
-
-底部導覽的 🔍 按鈕切換放大播放（全螢幕 + 內容放大），按 Esc 或再按一次還原。
+- 播放、編輯、快捷鍵與另存：[`getting-started.md`「播放與現場編輯」](docs/getting-started.md#播放與現場編輯)。
+- 自製元件的 `data-key`／`data-edit`／`data-move`／`data-hide`／`data-canvas`：[`AGENTDECK.md`「標記規範」](AGENTDECK.md#標記規範自製元件)（[ADR 0005](docs/adr/0005-data-key-attribute-model.md)）。舊式 `data-edit="x"`／`data-move="x"` 的值仍視為 key。
+- 口語稿朗讀、隨朗讀的講者動作與 PPT 匯出是內容確認後的進階內容：[`getting-started.md`「內容確認後的下一輪」](docs/getting-started.md#內容確認後的下一輪)。
 
 ## 建立新主題
 
-1. 執行 `node cli/agentdeck.mjs init <位置>/<topic>` 建立獨立簡報單位，再於其中 `new <topic>` 建立根 `index.html` 與 `resources/<topic>/`。每個主題各有自己的框架、品牌、元件與素材（收在單位內的 `agentdeck/`，第一層只留入口與 `resources/`），整個資料夾可獨立搬移。先填 `resources/<topic>/plan.md`（企劃與逐頁分鏡），確認後再動工。
-2. 改 `story.js` 的 `title`、`label`、封面文字與分鏡，並改 HTML `<title>`。寫作方式可參考 [`docs/guides/`](docs/guides/)，例如講解機制時用 [visual-story](docs/guides/visual-story.md)。
-3. 需要元件時查 [`assets/deck/components/CATALOG.md`](assets/deck/components/CATALOG.md)，以 `add` 取得本單位副本，在根 `index.html` 引用；沒有合適的就在 `story.js`／`story.css` 自製，class 加主題前綴。動態素材路徑依 [`AGENTDECK.md`](AGENTDECK.md#相對路徑) 從 story script 取得。
-
-契約 2 以一個主題、一份 HTML PPT、一個獨立資料夾為單位（[ADR 0017](docs/adr/0017-presentation-entry-layout.md)）。只有明確相關的候選版本／附件可用 `new <name> --related <group>` 放在同一單位的 `<group>/<name>/index.html`，不能用來收納不同主題；探索時可先做候選，稍後建立主入口。既有多主題工作區依 [1-to-2](docs/migrations/1-to-2.md) 拆分，人工 `edits.js` 保留原始位元組。
+流程、CLI 與在其他專案使用的方式見 [`docs/getting-started.md`](docs/getting-started.md)。在上游內只能以 `node cli/agentdeck.mjs init playground/<topic>` 建立試驗單位；正式簡報在目標專案以 `npx -y github:Echoslayer/AgentDeck init <位置>/<topic>` 建立（[ADR 0016](docs/adr/0016-registry-copy-and-contract-version.md)、[0017](docs/adr/0017-presentation-entry-layout.md)）。
 
 ## 分鏡資料契約
 
@@ -134,7 +120,7 @@ AgentDeck 是上游框架；每份簡報以 `npx -y github:Echoslayer/AgentDeck 
 - **引用**：下游根 `index.html` 以相對路徑引用，例如 `<script src="agentdeck/vendor/three/three.min.js"></script>`；相關入口改用 `../../agentdeck/vendor/`。只收能在 `file://` 下以 `<script>` 載入的檔案（UMD／IIFE、css、字型、圖片），不走 CDN。
 - **新增套件**：經人同意後在 `vendor.json` 加一項；`sha256` 先留空，執行 `agentdeck vendor` 會印出實際雜湊，確認來源後填回。
 - **交付給別人**：在簡報單位內 `agentdeck pack`，帶入根 `index.html`、單位資源、相關入口、`agentdeck/` 內的框架與引用的套件（含授權檔），缺少的套件會先下載；排除製作骨架、企劃、CLI 記錄與既有打包產物。解壓後第一層只有 `index.html`、`resources/`、`agentdeck/`（與相關群組），根頁直接播放，不使用跳轉或 `<base>`。`pack <入口資料夾>` 可選某個相關入口作交付首頁；通常打包完整單位。
-- **輸出 PPT（可選，進階）**：內容確認後、需要 pptx 時才用。`agentdeck export` 以無頭瀏覽器播放後輸出 `dist/<名稱>.pptx`：章節、標題、引言、重點是可編輯文字，內容區為截圖，頁面資料有 `record` 步驟的互動頁照步驟錄成 mp4（含模擬游標），講稿寫進備忘稿。需要 Chrome／Edge 與 ffmpeg（沒有 ffmpeg 時互動頁改放截圖）；`export --check` 先檢查環境（[ADR 0021](docs/adr/0021-pptx-export.md)）。動作與錄影轉進 PPT 的方式仍是暫行做法，之後可能另行實作。
+- **輸出 PPT（可選，進階）**：內容確認後才用 `agentdeck export`，輸出 `dist/<名稱>.pptx`；需要 Chrome／Edge，錄影另需 ffmpeg。細節見 [`getting-started.md`「內容確認後的下一輪」](docs/getting-started.md#內容確認後的下一輪)（[ADR 0021](docs/adr/0021-pptx-export.md)、[0025](docs/adr/0025-native-pptx-annotations.md)）。
 
 ## 更新閱讀器
 
