@@ -48,6 +48,8 @@ progress{margin:8px auto 0;accent-color:var(--deck-accent)}
 .deck-edit-bar{order:2;display:flex;gap:8px}
 .deck-edit-bar button{padding:6px 12px;font-size:14px;background:#ffffffe6;color:var(--deck-primary);border-color:#fff}
 .deck-edit-bar button[aria-pressed=true]{background:var(--deck-primary);color:#fff;border-color:var(--deck-primary)}
+.deck-speech-bar{display:contents}
+.deck-edit-bar [data-rate]{min-width:3.4em}
 body.is-editing #page .deck-editable{outline:1px dashed var(--deck-accent);outline-offset:3px;cursor:text}
 body.is-editing #page .deck-editable:focus{outline:2px solid var(--deck-blue)}
 body.is-editing #story-label.deck-editable{outline:1px dashed #fff;outline-offset:3px;cursor:text}

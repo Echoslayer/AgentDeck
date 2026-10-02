@@ -57,8 +57,18 @@
 5. 每個獨立元件在 `art` 中做成**單一第一層元素**（畫布版面則為畫布內單一元素），出錯時才能在現場單獨隱藏（ADR 0003）。
 6. 現場可能需要修改的文字（主題、姓名、日期、清單、卡片文字等）標為可編輯；封面／結尾的絕對定位元素可再開放拖曳。
 7. 若主題的 `edits.js` 非空，改版時保留它引用到的元件 key，除非人要求吸收或捨棄。改版前先讀 `edits.js` 的 `comments`（人對各頁的註解），處理後回報每則怎麼處理；註解由人刪除，不自行清除。元件子項目 key 預設依序號產生，調整已被引用項目的順序時要給明確的 `key`。
-8. 檢查：雙擊根 `index.html` 播放，主控台無錯誤；告訴人可按頁首「✎ 編輯」現場修改，右側「講稿」看講者動作與補充解釋（有口語稿時可按 R 朗讀）、「註解」留意見，「🎤 講者」開簡報者視窗；另存的 `edits.js` 放回對應 `resources/<name>/edits.js`。
+8. 檢查：雙擊根 `index.html` 播放，主控台無錯誤；告訴人可按頁首「✎ 編輯」現場修改，右側「講稿」看講者動作與補充解釋（有口語稿時按 R 朗讀本頁、P 或頁首「⏵ 全部播放」逐頁播放）、「註解」留意見，「🎤 講者」開簡報者視窗；另存的 `edits.js` 放回對應 `resources/<name>/edits.js`。
 9. 交付：於單位內執行 `agentdeck pack` 打包整個簡報單位；對方解壓後雙擊最上層 `index.html` 直接離線播放，入口不是跳轉頁。打包後也要驗證互動、附件、候選版本與素材連結。人要 PPT 時，先跑 `agentdeck export --check` 回報環境缺什麼，為需要示範的互動頁寫 `record`，再以 `agentdeck export` 輸出 `dist/<名稱>.pptx`（ADR 0021）；匯出會列出內容區縮得過小的頁，依提示拆頁或降低高度，再逐頁檢查文字有無溢出。
+
+## 平行製作（環境支援 subagent 時）
+
+宿主能呼叫 subagent（或其他平行 agent）時，可把輸出量大的工作分出去（ADR 0023）。頁數少（約 6 頁以下）或沒有互動頁時不必分：subagent 每次從零讀規則，成本比自己寫高。
+
+1. **主 agent 先做完共用部分**：`status`、`init`／`new`、`plan.md`、所有 `add`、入口的元件引用、`story.js` 骨架（`resource()`、`title`、封面、結尾）與 `story.css` 的共用 token 和版面 class。這些檔案與 `agentdeck/` 內的一切只由主 agent 寫。
+2. **分頁檔**：要分出去的頁寫成 `resources/<主題>/pages/<id>.js`，內容為 `story.pages.splice(-1, 0, { id: '<id>', … });`（插在結尾頁之前），樣式寫 `pages/<id>.css`，class 用 `<主題>-<id>-` 前綴。主 agent 在入口依頁序加引用：js 放 `story.js` 之後、`edits.js` 之前，css 放 `story.css` 之後。分頁檔用 `story.js` 的 `resource()` 取素材路徑，不自己讀 `document.currentScript`；css 的 `url()` 相對於 `pages/`。主 agent 自己寫的頁可以直接留在 `story.js`。
+3. **交給 subagent 的資料**：`plan.md` 中該頁一列與前後頁標題、本檔「分鏡資料契約」與「標記規範」兩節、選定的元件名稱（請它自己跑 `agentdeck docs <名稱>`）、`story.css` 可用的 class。寫入範圍只有自己的分頁檔與 `resources/<主題>/<id>-*` 素材；需要新元件、新套件或改共用檔時回報主 agent，不自己做。
+4. **適合分出去的工作**：互動頁與自製頁；素材多時一個來源一份摘錄（附出處）；獨立的附件與候選版本（各自一個單位，整份交給一個 subagent）；交付前的邏輯審查（交給沒寫過這份的 subagent，只回報問題，由主 agent 修改）；二次迭代的 `explain`、`speech`、`record`（按頁分）。企劃與整合播放留在主 agent。
+5. **整合**：全部回來後主 agent 播放、看主控台錯誤並修正，再執行 `agentdeck join <主題>`，依入口的引用順序把分頁檔併回 `story.js`、`story.css` 並移除 `pages/`；併回後再播放一次。交付與改版都以單一 `story.js` 為準。
 
 ## 簡報單位與相關內容
 
@@ -135,14 +145,14 @@ const story = {
 - 縮圖以約 1000px 寬縮放同一份內容；超長頁面會被裁切，應拆頁。SVG 若用到 `id`，另提供沒有重複 id 的 `previewArt`。
 - **講稿**：只顯示在右側「講稿」分頁與簡報者視窗，不出現在投影畫面（ADR 0020）。分三個欄位，可用 `<b>`、`<br>`；另可附音檔 `audio`。封面與結尾以 `deck.cover({ …, instruction, speech, audio, explain })`、`deck.end({ instruction, speech, audio, explain })` 傳入。
   - `instruction`（講者動作）：實作時每頁都寫。用口語寫這頁怎麼開口、指哪裡、操作什麼、強調什麼、怎麼接到下一頁，不重複畫面上的文字；一頁約二到五句。
-  - `speech`（口語稿）：人要求逐字稿或朗讀時才寫。只寫講者實際說出口的話，照說的順序，不寫動作與括號提示（「指左邊」「停兩秒」留在 `instruction`）；數字、縮寫寫成念得順的樣子。右側「講稿」與簡報者視窗按口語稿旁的按鈕或 R 發聲（ADR 0022）。
+  - `speech`（口語稿）：人要求逐字稿或朗讀時才寫。只寫講者實際說出口的話，照說的順序，不寫動作與括號提示（「指左邊」「停兩秒」留在 `instruction`）；數字、縮寫寫成念得順的樣子。右側「講稿」與簡報者視窗按口語稿旁的按鈕或 R 念本頁；P 或頁首「⏵ 全部播放」從目前這頁逐頁念完並自動翻頁（不執行互動），語速可切換（ADR 0022）。
   - `audio`（口語稿音檔，可選）：人提供錄音或預先產生的語音時才填，檔案放 `resources/<name>/audio/`，以 `resource('audio/<頁面 id>.mp3')` 引用（mp3、m4a、wav、ogg 等瀏覽器能播的格式）。有音檔就播放音檔；沒有音檔或載入失敗時，以瀏覽器內建語音念 `speech`。有音檔時 `speech` 仍建議寫成音檔的逐字稿，供閱讀與匯出備忘稿。
   - `explain`（補充解釋）：第一輪不寫，整份完成後的講稿二次迭代才寫，只寫需要的頁。內容是畫面簡化或省略了什麼（簡化模型、略過的前提、只是代表案例），以及聽眾可能追問的原因與答法，例如「為什麼模型會把這個數字判錯」。每個說法都要回到素材或實測資料查證；查不到的列進 `plan.md`「待確認」，不寫成定論。二次迭代可以和處理註解一起做。
 - **題目（可選）**：`question: { prompt, choices: [{ value, label, feedback }], hideFuturePreviews? }`。`value` 為唯一的英數、`_`、`-`；`hideFuturePreviews: true` 在作答前遮住後續縮圖（不阻止翻頁）。答案保留到重新整理。
 - **互動（可選）**：`mount(root, state)` 在當頁渲染後呼叫，`root` 是主閱讀區，`state` 是此頁專用、保留到重新整理的物件；必須同步回傳清理函式或 `undefined`，換頁時先清理再移除舊內容。有 `mount` 的頁面必須提供靜態 `previewArt` 供縮圖使用。切換狀態（換樣本、換方法）時 `.stage` 高度保持不變：以固定高度或預留最大內容的空間，避免現場版面跳動與錄影裁切錯位。
 - **錄影步驟（可選）**：`record: [{ wait: 毫秒 }, { click: '選擇器' }, { set: '選擇器', value }, { drag: '選擇器', by: [dx, dy] }]`，給 `agentdeck export` 把這頁錄成影片放進 pptx（ADR 0021）。選擇器限定在 `#page` 內，優先用 `data-key`；`set` 用於 `<input>`、`<select>`，會觸發 `input` 與 `change`，拖曳滑桿就寫多個 `set` 漸進取值；`drag` 從元素中心按住移動 `by` 像素，用於旋轉 3D 等畫布。每步之間留 `wait` 讓結果看得清楚，全長約 5 到 10 秒，順序照 `instruction` 的操作。格式錯誤在載入時報錯；`agentdeck export --check` 會逐頁試跑，回報找不到的選擇器。沒有 `record` 的互動頁匯出為目前畫面的截圖。
 - 外掛層（如編輯器）只透過 `window.storyReader` 與 `story:render` 事件取用閱讀器狀態（ADR 0008）。
-- 載入順序固定：`reader.css` → `deck.css` → `theme.css` → 元件 css → `story.css` → `deck-core.js` → `theme.js` → 套件 js → 元件 js → `story.js` → `edits.js` → `deck-editor.js` → `reader.js`。
+- 載入順序固定：`reader.css` → `deck.css` → `theme.css` → 元件 css → `story.css` → `deck-core.js` → `theme.js` → 套件 js → 元件 js → `story.js` →（平行製作時的分頁檔，見「平行製作」）→ `edits.js` → `deck-editor.js` → `reader.js`。
 
 ## 標記規範（自製元件）
 
