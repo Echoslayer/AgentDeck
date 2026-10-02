@@ -24,3 +24,4 @@
 | [0018](0018-plan-to-build-and-teaching-attachments.md) | 企劃到實作可一次完成；主線與教學附件分工 | 已接受 |
 | [0019](0019-theme-templates.md) | 簡報以既有模板為主題：init 選主題，PPT 模板經指引轉成主題 | 已接受 |
 | [0020](0020-instructions-and-comments.md) | 每頁的口頭說明與註解：作者寫進 story.js，人寫進 edits.js | 已接受 |
+| [0021](0021-pptx-export.md) | 匯出 pptx：外框文字可編輯，內容區截圖，互動頁照腳本錄影 | 已接受 |

@@ -17,7 +17,7 @@ AgentDeck/
 ├── AGENTDECK.md             製作簡報的規則（init 時複製到下游工作區）
 ├── AGENTS.md                上游維護規則
 ├── package.json             CLI 套件描述（不發佈到 npm；以 npx github: 執行，見 docs/adr/0016）
-├── cli/                     AgentDeck CLI：init、catalog、docs、add、diff、update、new、vendor、pack（check.mjs 為回歸測試）
+├── cli/                     AgentDeck CLI：init、catalog、docs、add、diff、update、new、vendor、pack、export（check.mjs 為回歸測試）
 ├── assets/
 │   ├── story-reader/        閱讀器（本專案獨立維護，含放大播放，見 docs/adr/0006）
 │   │   ├── reader.css
@@ -133,6 +133,7 @@ AgentDeck 是上游框架；每份簡報以 `npx -y github:Echoslayer/AgentDeck 
 - **引用**：下游根 `index.html` 以相對路徑引用，例如 `<script src="agentdeck/vendor/three/three.min.js"></script>`；相關入口改用 `../../agentdeck/vendor/`。只收能在 `file://` 下以 `<script>` 載入的檔案（UMD／IIFE、css、字型、圖片），不走 CDN。
 - **新增套件**：經人同意後在 `vendor.json` 加一項；`sha256` 先留空，執行 `agentdeck vendor` 會印出實際雜湊，確認來源後填回。
 - **交付給別人**：在簡報單位內 `agentdeck pack`，帶入根 `index.html`、單位資源、相關入口、`agentdeck/` 內的框架與引用的套件（含授權檔），缺少的套件會先下載；排除製作骨架、企劃、CLI 記錄與既有打包產物。解壓後第一層只有 `index.html`、`resources/`、`agentdeck/`（與相關群組），根頁直接播放，不使用跳轉或 `<base>`。`pack <入口資料夾>` 可選某個相關入口作交付首頁；通常打包完整單位。
+- **輸出 PPT**：`agentdeck export` 以無頭瀏覽器播放後輸出 `dist/<名稱>.pptx`：章節、標題、引言、重點是可編輯文字，內容區為截圖，頁面資料有 `record` 步驟的互動頁照步驟錄成 mp4（含模擬游標），講稿寫進備忘稿。需要 Chrome／Edge 與 ffmpeg（沒有 ffmpeg 時互動頁改放截圖）；`export --check` 先檢查環境（[ADR 0021](docs/adr/0021-pptx-export.md)）。
 
 ## 更新閱讀器
 

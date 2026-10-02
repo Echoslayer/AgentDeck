@@ -57,6 +57,7 @@ demo/
 | `new <name> --related <group>` | 明確同主體的候選／附件入口 `<group>/<name>/index.html`，內容在 `resources/<name>/` |
 | `vendor` | 依 `agentdeck/vendor.json` 下載並驗證套件（`--check` 只檢查） |
 | `pack [入口資料夾]` | 預設打包完整單位；可選相關入口作首頁（輸出到 `dist/`） |
+| `export [入口資料夾]` | 輸出 `dist/<名稱>.pptx`：外框文字可編輯、內容區截圖、有 `record` 的頁錄成 mp4、講稿進備忘稿；`--check` 只檢查環境（[ADR 0021](adr/0021-pptx-export.md)） |
 | `diff [core\|<元件>]` | 副本相對於取得時與上游最新版的差異；`--patch` 顯示內容 |
 | `update core` | 以上游核心覆蓋副本；有本地修改需 `--force`，跨契約版本需 `--migrate` |
 
