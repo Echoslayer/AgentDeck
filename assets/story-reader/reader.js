@@ -28,6 +28,9 @@ back.hidden = !story.back;
 if (story.back) { back.textContent = story.back.label; back.setAttribute('href', story.back.href); }
 document.getElementById('progress').max = pages.length;
 
+// 製作署名：只出現在索引窗格底部，不進投影畫面。
+const CREDIT = '<a class="made-with" href="https://github.com/Echoslayer/AgentDeck" target="_blank" rel="noopener">以 AgentDeck 製作</a>';
+
 let current = 0;
 const answers = new Map();
 const states = new Map();
@@ -65,7 +68,7 @@ function renderPreviews() {
   document.getElementById('index-list').innerHTML = pages.map((p, i) => {
     const hidden = hideFuture && i > current;
     return `<button class="index-item" data-page="${i}" ${i === current ? 'aria-current="step"' : ''}><div class="mini" aria-hidden="true">${hidden ? '<span class="mini-placeholder">?</span>' : `<div class="mini-page">${previewMarkup(p)}</div>`}</div><span><small>${i + 1}</small><strong>${hidden ? '繼續閱讀後揭曉' : p.title}</strong></span></button>`;
-  }).join('');
+  }).join('') + CREDIT;
 }
 function feedback() {
   const p = pages[current], el = document.getElementById('feedback');
