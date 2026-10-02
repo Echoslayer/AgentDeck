@@ -57,7 +57,7 @@ try {
 
   step('init 建立只含播放與客製所需的工作區，框架集中在 agentdeck/', () => {
     run(['init', ws, '--source', UP, '--agents-hint'], tmp);
-    for (const p of ['agentdeck.json', 'AGENTDECK.md', 'vendor.json', 'assets/deck/deck-core.js', 'assets/deck/deck-editor.js',
+    for (const p of ['agentdeck.json', 'LICENSE', 'AGENTDECK.md', 'vendor.json', 'assets/deck/deck-core.js', 'assets/deck/deck-editor.js',
       'assets/deck/deck.css', 'assets/story-reader/reader.js', 'assets/theme/theme.css', 'templates/blank/index.html']) {
       assert.ok(has(ws, `agentdeck/${p}`), `缺少 agentdeck/${p}`);
     }
@@ -213,7 +213,7 @@ try {
     const [zipFile] = fs.readdirSync(out);
     const files = unzip(fs.readFileSync(path.join(out, zipFile)));
     const top = zipFile.replace(/\.zip$/, '');
-    for (const p of ['index.html', 'candidates/alt/index.html', 'candidates/alt/detail.html', 'attachments/appendix/index.html', 'resources/demo/edits.js', 'resources/demo/img/probe.png', 'resources/demo/img/dormant.png', 'resources/alt/img/probe.png', 'resources/loose.png', 'agentdeck/vendor/fixture/probe.js', 'agentdeck/assets/deck/components/list/list.js', 'agentdeck/assets/story-reader/reader.js']) {
+    for (const p of ['index.html', 'candidates/alt/index.html', 'candidates/alt/detail.html', 'attachments/appendix/index.html', 'resources/demo/edits.js', 'resources/demo/img/probe.png', 'resources/demo/img/dormant.png', 'resources/alt/img/probe.png', 'resources/loose.png', 'agentdeck/vendor/fixture/probe.js', 'agentdeck/assets/deck/components/list/list.js', 'agentdeck/assets/story-reader/reader.js', 'agentdeck/LICENSE']) {
       assert.ok(files.has(`${top}/${p}`), `zip 缺少 ${p}`);
     }
     assert.deepEqual([...new Set([...files.keys()].map(f => f.split('/')[1]))].sort(), ['agentdeck', 'attachments', 'candidates', 'index.html', 'resources']);

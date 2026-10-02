@@ -11,7 +11,7 @@
 | `playground/<topic>/` 的獨立簡報單位 | 同 `AGENTDECK.md` | 同 `AGENTDECK.md`；`edits.js` **不可** |
 | `assets/theme/` | 品牌（下游專案） | **不可**，除非人明確要求；品牌規則見 `assets/theme/README.md`（[0010](docs/adr/0010-theme-layer-and-downstream.md)） |
 | `assets/deck/`（含 `components/`）、`assets/story-reader/`、`templates/`、`AGENTDECK.md` | 框架（上游，registry 來源） | **不可**，除非人明確要求（[0004](docs/adr/0004-component-template-strategy.md)、[0006](docs/adr/0006-fork-story-reader.md)、[0016](docs/adr/0016-registry-copy-and-contract-version.md)）。上游元件不因單一主題修改；下游副本可改 |
-| `cli/`、`package.json`、`vendor.json`、`tools/`、`skills/` | 框架（上游） | **不可**，除非人明確要求；新增套件只提議，不自行加入（[0011](docs/adr/0011-vendor-manifest-and-packing.md)） |
+| `cli/`、`package.json`、`vendor.json`、`tools/`、`skills/`、`LICENSE` | 框架（上游） | **不可**，除非人明確要求；新增套件只提議，不自行加入（[0011](docs/adr/0011-vendor-manifest-and-packing.md)） |
 | `playground/` | LLM（候選元件研究） | 可，自由刪改；不進 git、不進索引、主題不得引用（見 `playground/README.md`） |
 | `examples/` | 上游（互動組合範例） | 經人同意新增或修改；只讀提供給下游，不複製（[0015](docs/adr/0015-interactive-examples.md)） |
 | `docs/guides/` | LLM（寫作指引） | 可，經人同意後新增或修改；指引是建議，不得與 ADR 或 `AGENTDECK.md` 衝突 |
@@ -20,7 +20,7 @@
 
 ## Registry（[0016](docs/adr/0016-registry-copy-and-contract-version.md)）
 
-- 下游經 CLI 取得：核心（`AGENTDECK.md`、`assets/deck/` 的 `deck-core.js`／`deck-editor.js`／`deck.css`、`assets/story-reader/`、`templates/blank/`）、主題範本 `assets/theme/`（僅 `init`）、元件 `assets/deck/components/<name>/`（`add`）。下游一律放在簡報單位的 `agentdeck/` 內（同一路徑加上前綴，`vendor.json`、`agentdeck.json`、`vendor/`、自製 `components/` 亦同），第一層只留入口與 `resources/`（[0017](docs/adr/0017-presentation-entry-layout.md)）。改動這些路徑的結構時同步改 `cli/lib/registry.mjs`、`cli/lib/util.mjs` 的 `FW`。
+- 下游經 CLI 取得：核心（`LICENSE`、`AGENTDECK.md`、`assets/deck/` 的 `deck-core.js`／`deck-editor.js`／`deck.css`、`assets/story-reader/`、`templates/blank/`）、主題範本 `assets/theme/`（僅 `init`）、元件 `assets/deck/components/<name>/`（`add`）。下游一律放在簡報單位的 `agentdeck/` 內（同一路徑加上前綴，`vendor.json`、`agentdeck.json`、`vendor/`、自製 `components/` 亦同），第一層只留入口與 `resources/`（[0017](docs/adr/0017-presentation-entry-layout.md)）。改動這些路徑的結構時同步改 `cli/lib/registry.mjs`、`cli/lib/util.mjs` 的 `FW`。
 - 元件 manifest 自動推導：資料夾內檔案全收；套件依賴取自 `deck.define` 的 `vendor: [...]` 與 `vendor/<name>/` 引用。元件需要的檔案都放在自己的資料夾內，不引用其他元件。
 - 索引由 CLI 解析：`CATALOG.md` 的「基礎元件」「特殊元件」「依需求查找」表格（第一欄連到 `<名稱>/README.md`），`examples/README.md`「選擇表示方式」表格（第二欄連到 `<名稱>/index.html`），`docs/guides/*.md` 的第一個標題。修改這些表格時保持欄位順序。
 - `docs <名稱>` 輸出 README 與它連到的同資料夾 `.md`，元件另附 CATALOG「引用方式」與「特殊元件規則」。追加說明一律從 README 連結，否則下游讀不到。

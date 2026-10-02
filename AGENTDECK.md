@@ -30,11 +30,11 @@
 | 路徑 | 擁有者 | 可否修改 |
 | --- | --- | --- |
 | `index.html`、`<group>/<name>/index.html`、`resources/<name>/story.js`、`story.css` 與素材 | LLM | 可，自由刪改（ADR 0004、0017） |
-| `resources/<name>/plan.md` | LLM（企劃） | 可；動工前先填並交人確認（ADR 0014） |
+| `resources/<name>/plan.md` | LLM（企劃） | 可；動工前先填，人要求時才等確認（ADR 0014、0018） |
 | `resources/<name>/edits.js` | 人（現場修正） | **不可**；人明確指示時才吸收回 `story.js`（ADR 0002） |
 | `agentdeck/assets/deck/components/<name>/` | 下游：工作區的元件副本 | 下游可依主題需求修改；改過的檔案在 `diff` 顯示為「本地已改」。上游內**不可**，見 `AGENTS.md` |
 | `agentdeck/components/<name>/` | 下游：工作區自製的共用元件 | 可（僅下游） |
-| `agentdeck/assets/deck/` 的核心檔、`agentdeck/assets/story-reader/`、`agentdeck/templates/`、本檔 | 框架核心副本 | **不可**；由 `update core` 整份覆蓋，要改行為回饋上游（ADR 0016） |
+| `agentdeck/assets/deck/` 的核心檔、`agentdeck/assets/story-reader/`、`agentdeck/templates/`、本檔、`agentdeck/LICENSE` | 框架核心副本 | **不可**；由 `update core` 整份覆蓋，要改行為回饋上游（ADR 0016）。`LICENSE` 是框架的 MIT 授權聲明，`pack` 會隨框架帶入，不得刪除 |
 | `agentdeck/assets/theme/` | 品牌 | **不可**，除非人明確要求；品牌規則見 `agentdeck/assets/theme/README.md`（ADR 0010） |
 | `agentdeck/vendor.json` | 套件清單 | 只經 `agentdeck add` 登記；其他套件只提議，經人同意才加入（ADR 0011） |
 | `agentdeck/agentdeck.json` | CLI 記錄 | 不手改；由 `init`、`add`、`update core` 維護 |
@@ -43,7 +43,7 @@
 ## 建立或改版主題
 
 1. 新主題：先以 `agentdeck init <位置>/<topic>` 建立獨立單位，再於該單位執行 `agentdeck new <topic>`（封面、一頁內容、結尾）。主入口是根 `index.html`；`resources/<topic>/` 保存 `story.js`、`story.css`、`edits.js`、`plan.md` 與素材（ADR 0017）。同一單位只能有一個主入口，已存在時 `new` 拒絕覆蓋；另一獨立主題須另行 `init`。新主題的 `edits.js` 保持 `window.storyEdits = {};`。名稱用英文小寫、數字與連字號。
-2. 先填 `plan.md`（對象、目的、素材、逐頁分鏡與元件），交人確認後再寫程式。素材在其他位置時只讀不改，內容摘錄進 `story.js`，簡報不引用工作區以外的檔案。分鏡：每頁要表達什麼關係；欄位規則見下方「分鏡資料契約」，互動頁需提供 `previewArt` 與清理函式。寫作方式依人指定的指引；未指定時，講解機制、因果類的簡報預設參考 `agentdeck docs visual-story`，其他類型不必套用（ADR 0012）。工程可能性與 PoC 展示可參考 `agentdeck docs engineering-demo`。
+2. 先填 `plan.md`（對象、目的、素材、逐頁分鏡與元件，並標明每頁放主線或附件），再寫程式；人要求先看企劃時才停下等確認。主線只留案例、結果與產物；讀懂結果以外的原理放附件，教學附件要接成邏輯鏈。實作後逐頁審查一次邏輯與文字，再交付（ADR 0018）。素材在其他位置時只讀不改，內容摘錄進 `story.js`，簡報不引用工作區以外的檔案。分鏡：每頁要表達什麼關係；欄位規則見下方「分鏡資料契約」，互動頁需提供 `previewArt` 與清理函式。寫作方式依人指定的指引；未指定時，講解機制、因果類的簡報預設參考 `agentdeck docs visual-story`，其他類型不必套用（ADR 0012）。工程可能性與 PoC 展示可參考 `agentdeck docs engineering-demo`。
 3. 頁型固定用核心：`deck.cover({ title, meta })`、`deck.end()`。
 4. 內容元件**按需查找**（ADR 0009、0013），元件分基礎與特殊兩級：
    - **建立或改版主題時**：讀 `agentdeck catalog` 完整索引（兩級都看），逐頁依「表達的關係」挑選；基礎元件能完整表達所需關係時優先用基礎。若理解依賴改變參數、追蹤中間狀態或比較即時結果，要選能支援該操作的元件，或在主題內自製。

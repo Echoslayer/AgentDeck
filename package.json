@@ -3,9 +3,10 @@
   "version": "0.1.0",
   "private": true,
   "description": "LLM 撰寫、人在現場微調的網頁簡報框架；CLI 只用於製作端（docs/adr/0016）",
+  "license": "MIT",
   "repository": "github:Echoslayer/AgentDeck",
   "bin": { "agentdeck": "cli/agentdeck.mjs" },
-  "files": ["cli/", "assets/", "templates/", "examples/", "docs/", "AGENTDECK.md", "vendor.json"],
+  "files": ["cli/", "assets/", "templates/", "examples/", "docs/", "AGENTDECK.md", "LICENSE", "vendor.json"],
   "engines": { "node": ">=18" },
   "scripts": { "check": "node cli/check.mjs" }
 }

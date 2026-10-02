@@ -295,7 +295,7 @@ function coreReport(ws) {
   const up = coreFiles();
   const dirs = ['assets/story-reader', 'templates/blank'];
   const localList = [
-    ...['AGENTDECK.md', 'assets/deck/deck-core.js', 'assets/deck/deck-editor.js', 'assets/deck/deck.css'].filter(f => exists(path.join(ws.fw, f))),
+    ...['LICENSE', 'AGENTDECK.md', 'assets/deck/deck-core.js', 'assets/deck/deck-editor.js', 'assets/deck/deck.css'].filter(f => exists(path.join(ws.fw, f))),
     ...dirs.flatMap(d => listFiles(path.join(ws.fw, d)).map(f => `${d}/${f}`)),
   ];
   return compare(ws.config.core?.files ?? {}, ws.fw, UP, up, localList);
@@ -526,6 +526,8 @@ async function pack(args, opts, ws) {
   }
   if (ws.upstream && deckRel === 'examples') dirs.add('docs');
   for (const p of packages) dirs.add(`${P}vendor/${p}`);
+  // 框架為 MIT，帶入框架檔時須附上授權聲明。
+  if ([...dirs].some(d => d.startsWith(`${P}assets`)) && exists(path.join(ws.fw, 'LICENSE'))) dirs.add(`${P}LICENSE`);
 
   const now = new Date();
   const p2 = n => String(n).padStart(2, '0');

@@ -82,7 +82,7 @@ export function upstreamCommit() {
   const top = git(['rev-parse', '--show-toplevel'], UP);
   if (top && path.resolve(top) === UP) {
     const sha = git(['rev-parse', '--short=12', 'HEAD'], UP);
-    const dirty = git(['status', '--porcelain', '--', 'assets', 'templates', 'AGENTDECK.md'], UP);
+    const dirty = git(['status', '--porcelain', '--', 'assets', 'templates', 'AGENTDECK.md', 'LICENSE'], UP);
     if (sha) commitCache = sha + (dirty ? '-dirty' : '');
     return commitCache;
   }

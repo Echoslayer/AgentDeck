@@ -38,7 +38,7 @@ AgentDeck/
 │   ├── story.js
 │   ├── edits.js             人工編輯結果（預設為空）
 │   ├── story.css
-│   └── plan.md              企劃範本（先填、人確認後才動工；不打包）
+│   └── plan.md              企劃範本（先填再動工；不打包）
 ├── docs/
 │   ├── getting-started.md   入口：流程與在其他專案中使用（見 docs/adr/0014）
 │   ├── adr/                 架構決策紀錄
@@ -134,3 +134,11 @@ AgentDeck 是上游框架；每份簡報以 `npx -y github:Echoslayer/AgentDeck 
 ## 更新閱讀器
 
 閱讀器由本專案獨立維護（[ADR 0006](docs/adr/0006-fork-story-reader.md)），不與外部專案同步；需要修改時經人同意後直接改 `assets/story-reader/`；外觀全部在 `deck.css` 與 `assets/theme/`，不受影響。修改時須保留對外介面 `window.storyReader` 與 `story:render` 事件，編輯層只依賴這兩者（[ADR 0008](docs/adr/0008-decouple-editor-reader.md)）。
+
+## 授權
+
+框架（CLI、`assets/`、`templates/`、`examples/`、文件）以 [MIT](LICENSE) 授權：可自由使用、修改、fork、商用，唯一條件是副本保留 `LICENSE` 的版權與授權聲明。`init`／`update core` 會把它複製成下游的 `agentdeck/LICENSE`，`pack` 隨框架帶入交付包。
+
+- **簡報內容不受此授權約束**：下游的 `index.html`、`resources/` 與素材歸作者所有，授權由作者自訂。
+- **修改或 fork 框架**：自己的改動可用任何授權（包含不公開），但原有檔案的 MIT 聲明須保留。
+- **第三方套件**依各自授權（見 `vendor.json` 的 `license`），授權檔隨套件下載與打包。
