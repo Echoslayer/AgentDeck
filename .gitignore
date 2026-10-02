@@ -4,3 +4,9 @@
 /dist/
 # 候選元件研究區：本機試驗用，不進 git
 /playground/
+# 本機編輯器與作業系統檔案
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+desktop.ini
