@@ -34,6 +34,7 @@ const HELP = `AgentDeck CLI（docs/adr/0016）
   update core              以上游核心覆蓋核心副本；--migrate 跨契約版本，--force 覆蓋本地修改
   new <主題>               建立根 index.html 與 resources/<主題>/ 內容
       --related <分類>     刻意共用同一主體的候選／附件，入口在 <分類>/<主題>/index.html
+  join <主題>              把平行製作的 resources/<主題>/pages/ 依入口引用順序併回 story.js、story.css
   vendor [套件…]           依 vendor.json 下載並驗證套件；--check 只檢查，--force 重新下載
   pack [入口資料夾]        預設打包整份簡報；--out 指定輸出資料夾（預設 dist/）
   export [入口資料夾]      輸出 pptx：文字可編輯、內容區截圖、record 頁錄成 mp4、講稿進備忘稿
@@ -436,6 +437,41 @@ function newTopic(args, opts, ws) {
   log(`已建立 ${rel(process.cwd(), path.join(dst, 'index.html'))}；先填 ${rel(process.cwd(), path.join(data, 'plan.md'))} 交人確認，再寫 story.js。`);
 }
 
+// ---- join ----
+// 平行製作的分頁檔（resources/<主題>/pages/）依入口的引用順序併回 story.js／story.css（ADR 0023）。純串接，不解析 JS。
+function join(args, opts, ws) {
+  const topic = args[0];
+  if (!topic || !/^[a-z0-9][a-z0-9-]*$/.test(topic)) fail('用法：join <主題>');
+  const data = path.join(ws.root, 'resources', topic), pagesDir = path.join(data, 'pages');
+  if (!exists(pagesDir)) fail(`沒有分頁檔：${rel(process.cwd(), pagesDir)}`);
+  const tag = /^[ \t]*<(?:script|link)\b[^>]*?\b(?:src|href)\s*=\s*(["'])(.*?)\1[^>]*>(?:<\/script>)?[ \t]*\r?\n?/gim;
+  const hits = [];
+  for (const e of entryDirs(ws.root)) {
+    const file = path.join(ws.root, e, 'index.html'), html = readText(file);
+    const found = [...html.matchAll(tag)].map(m => path.resolve(path.dirname(file), decodeURIComponent(m[2].split(/[?#]/)[0]))).filter(p => inside(pagesDir, p));
+    if (found.length) hits.push({ file, html, found });
+  }
+  if (hits.length !== 1) fail(hits.length ? `多個入口引用 ${topic} 的分頁檔，請手動處理` : `沒有入口引用 ${rel(process.cwd(), pagesDir)} 的檔案`);
+  const [{ file, html, found }] = hits;
+  const missing = found.filter(p => !exists(p));
+  if (missing.length) fail(`入口引用的分頁檔不存在：${missing.map(p => rel(ws.root, p)).join('、')}`);
+  const orphans = listFiles(pagesDir).map(f => path.join(pagesDir, f)).filter(p => !found.includes(p));
+  if (orphans.length) fail(`分頁檔未被入口引用，併入前先引用或刪除：${orphans.map(p => rel(ws.root, p)).join('、')}`);
+  for (const [ext, target] of [['.js', 'story.js'], ['.css', 'story.css']]) {
+    const parts = found.filter(p => p.endsWith(ext)).map(p => {
+      let src = readText(p);
+      // CSS url() 原本相對於 pages/，併入上一層後補上前綴。
+      if (ext === '.css') src = src.replace(/url\(\s*(["']?)(?![a-z][a-z0-9+.-]*:|\/|#)/gi, (m, q) => `url(${q}pages/`);
+      const head = ext === '.css' ? `/* ---- ${rel(data, p)} ---- */` : `// ---- ${rel(data, p)} ----`;
+      return `\n${head}\n${src.trimEnd()}\n`;
+    });
+    if (parts.length) fs.appendFileSync(path.join(data, target), parts.join(''));
+  }
+  writeText(file, html.replace(tag, (m, q, ref) => inside(pagesDir, path.resolve(path.dirname(file), decodeURIComponent(ref.split(/[?#]/)[0]))) ? '' : m));
+  fs.rmSync(pagesDir, { recursive: true });
+  log(`已把 ${found.length} 個分頁檔依引用順序併入 resources/${topic}/story.js、story.css，並移除 ${rel(ws.root, file)} 的引用與 pages/。`);
+}
+
 // ---- vendor ----
 async function vendorCmd(args, opts, ws) {
   const manifest = readJson(path.join(ws.fw, 'vendor.json'));
@@ -605,6 +641,7 @@ async function main() {
     case 'diff': return diff(args, opts, findWorkspace(opts));
     case 'update': return update(args, opts, findWorkspace(opts));
     case 'new': return newTopic(args, opts, findWorkspace(opts));
+    case 'join': return join(args, opts, findWorkspace(opts));
     case 'vendor': return vendorCmd(args, opts, findWorkspace(opts));
     case 'pack': return pack(args, opts, findWorkspace(opts));
     case 'export': return exportCmd(args, opts, optionalWs());

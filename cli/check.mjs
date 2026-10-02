@@ -119,6 +119,40 @@ try {
     run(['new', `agentdeck-check-${process.pid}`], UP, true);
   });
 
+  step('join 依入口引用順序把分頁檔併回 story.js／story.css', () => {
+    const data = path.join(ws, 'resources/demo'), indexPath = path.join(ws, 'index.html');
+    const storyBefore = fs.readFileSync(path.join(data, 'story.js'), 'utf8'), cssBefore = fs.readFileSync(path.join(data, 'story.css'), 'utf8');
+    const htmlBefore = fs.readFileSync(indexPath, 'utf8');
+    fs.mkdirSync(path.join(data, 'pages'));
+    for (const id of ['b', 'a']) {
+      fs.writeFileSync(path.join(data, 'pages', `${id}.js`), `story.pages.splice(-1, 0, { id: '${id}', section: '', title: '${id}', lead: '', art: resource('img/${id}.png'), point: '' });\n`);
+      fs.writeFileSync(path.join(data, 'pages', `${id}.css`), `.demo-${id} { background: url("img/${id}.png"); }\n`);
+    }
+    const tags = ['b', 'a'].map(id => `<link rel="stylesheet" href="resources/demo/pages/${id}.css">\n`).join('');
+    const scripts = ['b', 'a'].map(id => `<script src="resources/demo/pages/${id}.js"></script>\n`).join('');
+    fs.writeFileSync(indexPath, htmlBefore
+      .replace(/(<link rel="stylesheet" href="resources\/demo\/story\.css">)/, `$1\n${tags}`)
+      .replace(/(<script src="resources\/demo\/story\.js"><\/script>\r?\n)/, `$1${scripts}`));
+    fs.writeFileSync(path.join(data, 'pages', 'stray.js'), '');
+    assert.match(run(['join', 'demo'], ws, true), /stray\.js/);
+    fs.rmSync(path.join(data, 'pages', 'stray.js'));
+    run(['join', 'demo'], ws);
+    assert.deepEqual(refsOf(fs.readFileSync(indexPath, 'utf8')), refsOf(htmlBefore));
+    fs.writeFileSync(indexPath, htmlBefore);
+    assert.ok(!has(data, 'pages'));
+    const css = fs.readFileSync(path.join(data, 'story.css'), 'utf8');
+    assert.ok(css.startsWith(cssBefore) && css.indexOf('.demo-b') < css.indexOf('.demo-a') && css.includes('url("pages/img/a.png")'));
+    const source = fs.readFileSync(path.join(data, 'story.js'), 'utf8');
+    const ids = runInNewContext(`${source}\nstory.pages.map(p => p.id ?? '-').join()`, {
+      document: { currentScript: { getAttribute: () => 'resources/demo/story.js' } },
+      deck: { cover: () => ({ id: 'cover' }), end: () => ({ id: 'end' }) },
+    });
+    assert.equal(ids, 'cover,intro,b,a,end');
+    run(['join', 'demo'], ws, true);
+    fs.writeFileSync(path.join(data, 'story.js'), storyBefore);
+    fs.writeFileSync(path.join(data, 'story.css'), cssBefore);
+  });
+
   step('相關簡報需明確分組並保持相對引用', () => {
     run(['new', 'alt', '--related', 'candidates'], ws);
     run(['new', 'appendix', '--related', 'attachments'], ws);

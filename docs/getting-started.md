@@ -55,6 +55,7 @@ demo/
 | `add <元件…>` | 複製元件到 `agentdeck/assets/deck/components/<name>/`，登記到 `agentdeck/agentdeck.json`，並印出要加到 `index.html` 的引用行 |
 | `new <topic>` | 在單位內建立唯一根 `index.html` 與 `resources/<topic>/`；已存在主入口時拒絕 |
 | `new <name> --related <group>` | 明確同主體的候選／附件入口 `<group>/<name>/index.html`，內容在 `resources/<name>/` |
+| `join <topic>` | 平行製作後，把 `resources/<topic>/pages/` 依入口引用順序併回 `story.js`、`story.css`（[ADR 0023](adr/0023-parallel-pages-and-join.md)） |
 | `vendor` | 依 `agentdeck/vendor.json` 下載並驗證套件（`--check` 只檢查） |
 | `pack [入口資料夾]` | 預設打包完整單位；可選相關入口作首頁（輸出到 `dist/`） |
 | `export [入口資料夾]` | 可選進階，內容確認後才用。輸出 `dist/<名稱>.pptx`：外框文字可編輯、內容區截圖、有 `record` 的頁錄成 mp4（只有紅框／箭頭的頁改為 PPT 原生標註與出現動畫）、講稿進備忘稿；`--check` 只檢查環境（[ADR 0021](adr/0021-pptx-export.md)、[0025](adr/0025-native-pptx-annotations.md)） |

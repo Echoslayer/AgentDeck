@@ -17,7 +17,7 @@ AgentDeck/
 ├── AGENTDECK.md             製作簡報的規則（init 時複製到下游工作區）
 ├── AGENTS.md                上游維護規則
 ├── package.json             CLI 套件描述（不發佈到 npm；以 npx github: 執行，見 docs/adr/0016）
-├── cli/                     AgentDeck CLI：init、status、catalog、docs、add、diff、update、new、vendor、pack、export（check.mjs 為回歸測試；完整說明 node cli/agentdeck.mjs --help）
+├── cli/                     AgentDeck CLI：init、status、catalog、docs、add、diff、update、new、join、vendor、pack、export（check.mjs 為回歸測試；完整說明 node cli/agentdeck.mjs --help）
 ├── assets/
 │   ├── story-reader/        閱讀器（本專案獨立維護，含放大播放，見 docs/adr/0006）
 │   │   ├── reader.css
