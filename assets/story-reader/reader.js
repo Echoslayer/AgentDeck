@@ -107,6 +107,13 @@ function move(delta) {
 }
 document.getElementById('prev').onclick = () => move(-1);
 document.getElementById('next').onclick = () => move(1);
+// 導覽列空白處分左右兩半：左半上一頁、右半下一頁；按鈕與連結照常。
+document.querySelector('body>nav').onclick = e => {
+  // 用派送時的路徑判斷：按鈕翻頁後會重繪內容，e.target 已脫離 DOM。
+  if (e.composedPath().some(el => el.matches?.('button, a, .progress'))) return;
+  const r = e.currentTarget.getBoundingClientRect();
+  document.getElementById(e.clientX < r.left + r.width / 2 ? 'prev' : 'next').click();
+};
 
 // 放大播放：全螢幕 + 內容放大同時生效，離開全螢幕（含按 Esc）時自動還原。
 const zoomButton = document.getElementById('zoom');
