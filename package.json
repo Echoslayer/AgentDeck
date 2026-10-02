@@ -8,5 +8,6 @@
   "bin": { "agentdeck": "cli/agentdeck.mjs" },
   "files": ["cli/", "assets/", "templates/", "examples/", "docs/", "AGENTDECK.md", "LICENSE", "vendor.json"],
   "engines": { "node": ">=18" },
-  "scripts": { "check": "node cli/check.mjs" }
+  "scripts": { "check": "node cli/check.mjs" },
+  "optionalDependencies": { "playwright": "^1.63.0", "pptxgenjs": "^4.0.1" }
 }

@@ -15,6 +15,7 @@ import {
   linkedDocs, catalogSection, migrationPath, upstreamVendor,
 } from './lib/registry.mjs';
 import { zip } from './lib/zip.mjs';
+import { exportEnv, exportPptx } from './lib/export.mjs';
 
 const HELP = `AgentDeck CLI（docs/adr/0016）
 
@@ -35,6 +36,9 @@ const HELP = `AgentDeck CLI（docs/adr/0016）
       --related <分類>     刻意共用同一主體的候選／附件，入口在 <分類>/<主題>/index.html
   vendor [套件…]           依 vendor.json 下載並驗證套件；--check 只檢查，--force 重新下載
   pack [入口資料夾]        預設打包整份簡報；--out 指定輸出資料夾（預設 dist/）
+  export [入口資料夾]      輸出 pptx：文字可編輯、內容區截圖、record 頁錄成 mp4、講稿進備忘稿
+      --check              只檢查匯出環境（playwright、pptxgenjs、瀏覽器、ffmpeg）
+      --ffmpeg <路徑>      指定 ffmpeg（預設 FFMPEG_PATH 或 PATH）；沒有時互動頁改放截圖
 
 工作區根目錄只放入口（index.html、相關群組）、resources/ 與 dist/；
 框架、元件、套件與記錄都在 ${FW}/（含 ${FW}/AGENTDECK.md、${FW}/${MARKER}）。
@@ -42,7 +46,7 @@ const HELP = `AgentDeck CLI（docs/adr/0016）
 共同選項：--dir <工作區>（預設從目前資料夾往上找 ${FW}/${MARKER}）`;
 
 const OPTIONS = {
-  dir: { type: 'string' }, source: { type: 'string' }, theme: { type: 'string' }, out: { type: 'string' }, related: { type: 'string' },
+  dir: { type: 'string' }, source: { type: 'string' }, ffmpeg: { type: 'string' }, theme: { type: 'string' }, out: { type: 'string' }, related: { type: 'string' },
   'commit-vendor': { type: 'boolean' }, 'agents-hint': { type: 'boolean' }, 'no-agents-hint': { type: 'boolean' },
   force: { type: 'boolean' }, migrate: { type: 'boolean' }, check: { type: 'boolean' },
   patch: { type: 'boolean' }, code: { type: 'boolean' }, help: { type: 'boolean', short: 'h' },
@@ -557,6 +561,24 @@ async function pack(args, opts, ws) {
   log('  對方解壓縮後雙擊最上層的 index.html 即可播放。');
 }
 
+// ---- export（docs/adr/0021）----
+async function exportCmd(args, opts, ws) {
+  if (opts.check) {
+    const env = await exportEnv(opts);
+    await env.browser?.close();
+    if (!env.ok) process.exitCode = 1;
+    return;
+  }
+  const root = ws.root;
+  if (!ws.upstream) checkContract(ws);
+  let deckDir = args[0] ? path.resolve(args[0]) : root;
+  if (!exists(deckDir)) deckDir = path.resolve(root, args[0]);
+  if (deckDir !== root && !inside(root, deckDir)) fail(`簡報必須在工作區內：${deckDir}`);
+  if (!exists(path.join(deckDir, 'index.html'))) fail(`找不到 ${path.join(deckDir, 'index.html')}`);
+  const out = path.join(path.resolve(opts.out ?? path.join(root, 'dist')), `${path.basename(deckDir)}.pptx`);
+  await exportPptx({ dir: deckDir, out, ffmpeg: opts.ffmpeg });
+}
+
 // ---- main ----
 async function main() {
   const { values: opts, positionals } = parseArgs({ args: process.argv.slice(2), options: OPTIONS, allowPositionals: true });
@@ -574,6 +596,7 @@ async function main() {
     case 'new': return newTopic(args, opts, findWorkspace(opts));
     case 'vendor': return vendorCmd(args, opts, findWorkspace(opts));
     case 'pack': return pack(args, opts, findWorkspace(opts));
+    case 'export': return exportCmd(args, opts, opts.check ? null : findWorkspace(opts));
     default: fail(`未知指令 ${cmd}；執行 help 查看用法`);
   }
 }

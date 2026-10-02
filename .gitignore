@@ -10,3 +10,5 @@
 .DS_Store
 Thumbs.db
 desktop.ini
+# 選用依賴（export 用）
+/node_modules/
