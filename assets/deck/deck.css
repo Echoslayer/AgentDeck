@@ -50,6 +50,8 @@ progress{margin:8px auto 0;accent-color:var(--deck-accent)}
 .deck-edit-bar button[aria-pressed=true]{background:var(--deck-primary);color:#fff;border-color:var(--deck-primary)}
 .deck-speech-bar{display:contents}
 .deck-edit-bar [data-rate]{min-width:3.4em}
+.deck-cc{position:fixed;left:50%;bottom:5vh;transform:translateX(-50%);z-index:9000;max-width:min(80vw,1100px);padding:.35em .9em;border-radius:6px;background:#000000a6;color:#fff;font-size:clamp(18px,2.4vw,30px);line-height:1.45;text-align:center;pointer-events:none;text-shadow:0 1px 2px #000}
+.deck-cc[hidden]{display:none}
 body.is-editing #page .deck-editable{outline:1px dashed var(--deck-accent);outline-offset:3px;cursor:text}
 body.is-editing #page .deck-editable:focus{outline:2px solid var(--deck-blue)}
 body.is-editing #story-label.deck-editable{outline:1px dashed #fff;outline-offset:3px;cursor:text}
