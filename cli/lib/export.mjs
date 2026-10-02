@@ -71,19 +71,77 @@ function ripple({ x, y }) {
   document.body.append(d);
   d.animate([{ transform: 'scale(.3)', opacity: 1 }, { transform: 'scale(1.4)', opacity: 0 }], { duration: 450 }).onfinish = () => d.remove();
 }
+const placeCursor = ([x, y]) => { const c = document.getElementById('agentdeck-cursor'); c.style.transitionDuration = '0ms'; c.style.transform = `translate(${x}px,${y}px)`; };
 const setValue = (e, v) => { e.value = v; for (const t of ['input', 'change']) e.dispatchEvent(new Event(t, { bubbles: true })); };
 
-async function runStep(pg, s, cursor) {
-  if (s.wait !== undefined) return pg.waitForTimeout(s.wait);
-  const sel = `#page ${s.click ?? s.set}`;
-  if (!s.click && !s.set) throw new Error(`不認得的 record 步驟：${JSON.stringify(s)}`);
+// dry：只驗證步驟能執行（export --check），不等待、不顯示游標。
+async function runStep(pg, s, { cursor = false, dry = false } = {}) {
+  if (s.wait !== undefined) return dry ? undefined : pg.waitForTimeout(s.wait);
+  const target = s.click ?? s.set ?? s.drag;
+  if (typeof target !== 'string') throw new Error(`不認得的 record 步驟：${JSON.stringify(s)}`);
+  const sel = `#page ${target}`;
   if (cursor) {
     const t = await pg.evaluate(moveCursor, [sel, s.set ? s.value : undefined]);
     await pg.waitForTimeout(t.ms);
     await pg.evaluate(ripple, t);
   }
-  if (s.click) await pg.click(sel);
-  else await pg.$eval(sel, setValue, String(s.value));
+  if (s.click) return pg.click(sel, { timeout: 3000 });
+  if (s.set) return pg.$eval(sel, setValue, String(s.value));
+  // drag：從元素中心按住，約 1 秒內移動 by=[dx, dy] 像素後放開（例如旋轉 3D 元件）。
+  const b = await pg.locator(sel).first().boundingBox({ timeout: 3000 });
+  if (!b) throw new Error(`record 的拖曳目標不可見：${target}`);
+  const x0 = b.x + b.width / 2, y0 = b.y + b.height / 2, N = 25;
+  await pg.mouse.move(x0, y0);
+  await pg.mouse.down();
+  for (let k = 1; k <= N; k++) {
+    const x = x0 + s.by[0] * k / N, y = y0 + s.by[1] * k / N;
+    await pg.mouse.move(x, y);
+    if (cursor) await pg.evaluate(placeCursor, [x, y]);
+    if (!dry) await pg.waitForTimeout(40);
+  }
+  await pg.mouse.up();
+}
+
+async function openDeck(ctx, url, errors) {
+  const pg = await ctx.newPage();
+  pg.on('pageerror', e => errors.push(e.message));
+  await pg.goto(url);
+  await pg.waitForFunction(() => window.storyReader);
+  await pg.addStyleTag({ content: HIDE });
+  return pg;
+}
+async function goTo(pg, i) {
+  // 舊核心沒有 storyReader.go（0021 前）時，改以方向鍵逐頁翻。
+  if (!await pg.evaluate(i => storyReader.go ? (storyReader.go(i), true) : false, i)) {
+    for (let n = 0; n < 500 && await pg.evaluate(() => storyReader.index) !== i; n++) {
+      await pg.evaluate(k => document.dispatchEvent(new KeyboardEvent('keydown', { key: k, bubbles: true })),
+        await pg.evaluate(() => storyReader.index) < i ? 'ArrowRight' : 'ArrowLeft');
+    }
+  }
+  await pg.waitForTimeout(400); // ponytail: 固定等待讓圖片與 mount 完成；遇到慢元件再改等 load 事件
+}
+
+// export --check 在簡報資料夾內：逐頁試跑 record，回報找不到的選擇器。
+export async function checkRecords(browser, dir, log = console.log) {
+  const errors = [], bad = [];
+  const ctx = await browser.newContext({ viewport: VIEW });
+  const pg = await openDeck(ctx, pathToFileURL(path.join(dir, 'index.html')).href, errors);
+  const total = await pg.evaluate(() => Number(document.getElementById('progress').max));
+  let n = 0;
+  for (let i = 0; i < total; i++) {
+    await goTo(pg, i);
+    const { id, record } = await pg.evaluate(() => ({ id: storyReader.page.id, record: storyReader.page.record ?? null }));
+    if (!record) continue;
+    n++;
+    for (const [k, s] of record.entries()) {
+      try { await runStep(pg, s, { dry: true }); }
+      catch (e) { bad.push(`${i + 1} ${id} 第 ${k + 1} 步 ${JSON.stringify(s)}：${/Timeout/.test(e.message) ? '找不到元素或無法點擊' : e.message.split('\n')[0]}`); break; }
+    }
+  }
+  await ctx.close();
+  if (errors.length) bad.push(...new Set(errors.map(e => `頁面錯誤：${e}`)));
+  log(`record：${n} 頁${bad.length ? `，${bad.length} 個問題\n  ${bad.join('\n  ')}` : '，都能執行'}`);
+  return !bad.length;
 }
 
 export async function exportPptx({ dir, out, ffmpeg }, log = console.log) {
@@ -94,21 +152,7 @@ export async function exportPptx({ dir, out, ffmpeg }, log = console.log) {
   const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'agentdeck-export-'));
   const errors = [];
 
-  async function open(ctx) {
-    const pg = await ctx.newPage();
-    pg.on('pageerror', e => errors.push(e.message));
-    await pg.goto(url);
-    await pg.waitForFunction(() => window.storyReader);
-    await pg.addStyleTag({ content: HIDE });
-    return pg;
-  }
-  async function goTo(pg, i) {
-    for (let n = 0; n < 500 && await pg.evaluate(() => storyReader.index) !== i; n++) {
-      await pg.evaluate(k => document.dispatchEvent(new KeyboardEvent('keydown', { key: k, bubbles: true })),
-        await pg.evaluate(() => storyReader.index) < i ? 'ArrowRight' : 'ArrowLeft');
-    }
-    await pg.waitForTimeout(400); // ponytail: 固定等待讓圖片與 mount 完成；遇到慢元件再改等 load 事件
-  }
+  const open = ctx => openDeck(ctx, url, errors);
   // 目前頁面的可見文字（含 edits.js 的修改與隱藏）與講稿。
   const readPage = pg => pg.evaluate(() => {
     const vis = s => { const e = document.querySelector(`#page ${s}`); return e && e.checkVisibility() ? e.innerText.trim() : ''; };
@@ -131,11 +175,12 @@ export async function exportPptx({ dir, out, ffmpeg }, log = console.log) {
     const t0 = Date.now();
     const pg = await open(ctx);
     await goTo(pg, i);
-    const box = await pg.evaluate(() => { const e = document.querySelector('#page .stage'); e.scrollIntoView({ block: 'center' }); const r = e.getBoundingClientRect(); return { x: r.x, y: r.y, w: r.width, h: r.height }; });
+    const box = await pg.evaluate(() => { const e = document.querySelector('#page .stage'); e.scrollIntoView({ block: 'center' }); const r = e.getBoundingClientRect(); e.style.minHeight = `${r.height}px`; return { x: r.x, y: r.y, w: r.width, h: r.height }; });
+    // ponytail: 錄影期間 stage 不縮，裁切框不露出下方內容；操作後變高的部分會被裁掉，遇到再改為先量最大高度
     await pg.evaluate(installCursor);
     await pg.waitForTimeout(300);
     const start = (Date.now() - t0) / 1000;
-    for (const s of steps) await runStep(pg, s, true);
+    for (const s of steps) await runStep(pg, s, { cursor: true });
     await pg.waitForTimeout(300);
     const dur = (Date.now() - t0) / 1000 - start;
     const video = pg.video();
@@ -165,7 +210,7 @@ export async function exportPptx({ dir, out, ffmpeg }, log = console.log) {
     pptx.layout = 'LAYOUT_WIDE';
     pptx.title = await pg.title();
     const fit = (img, a) => { const s = Math.min(a.w / img.w, a.h / img.h); return { x: a.x + (a.w - img.w * s) / 2, y: a.y + (a.h - img.h * s) / 2, w: img.w * s, h: img.h * s }; };
-    const report = [];
+    const report = [], small = [];
 
     for (let i = 0; i < total; i++) {
       await goTo(pg, i);
@@ -186,6 +231,9 @@ export async function exportPptx({ dir, out, ffmpeg }, log = console.log) {
         const pointH = p.point ? 0.6 : 0;
         const img = await shot(pg, '#page .stage');
         const pos = fit(img, { x: M, y: y + 0.1, w: W - 2 * M, h: H - 0.2 - pointH - (y + 0.1) });
+        // 字級相對於在 1600px 寬瀏覽器播放時的比例；一般頁約 100–120%，低於 80% 時投影出來明顯比網頁小。
+        const scale = (pos.w / img.w) / (W / VIEW.width);
+        if (scale < 0.8) small.push(`${i + 1} ${p.id}：內容區縮為 ${Math.round(scale * 100)}%，字可能過小，考慮拆頁或降低內容高度`);
         if (p.record && env.ffmpeg) {
           const mp4 = path.join(tmp, `${i}.mp4`);
           await record(i, p.record, mp4);
@@ -208,6 +256,7 @@ export async function exportPptx({ dir, out, ffmpeg }, log = console.log) {
     fs.mkdirSync(path.dirname(out), { recursive: true });
     await pptx.writeFile({ fileName: out });
     log(report.join('\n'));
+    if (small.length) log(`注意：\n  ${small.join('\n  ')}`);
     if (errors.length) log(`注意：播放時有頁面錯誤\n  ${[...new Set(errors)].join('\n  ')}`);
     log(`已輸出 ${out}`);
   } finally {

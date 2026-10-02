@@ -40,6 +40,11 @@ window.storyReader = Object.freeze({
   get index() { return current; },
   get page() { return pages[current]; },
   refresh: () => renderPreviews(),
+  go(i) {
+    if (!Number.isInteger(i) || i < 0 || i >= pages.length) throw new Error(`storyReader.go: 頁序需為 0–${pages.length - 1}，收到 ${i}`);
+    current = i;
+    show();
+  },
 });
 
 // HTML 僅接受作者維護的本地內容，不能傳入讀者輸入或未清理的外部資料。

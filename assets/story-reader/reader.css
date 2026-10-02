@@ -11,7 +11,8 @@ h1{font-size:clamp(30px,4.7vw,49px);line-height:1.3;letter-spacing:-.035em;margi
 .question{font-size:21px;line-height:1.6;margin:0}
 .choices{display:flex;gap:12px;flex-wrap:wrap}
 button{font:inherit;cursor:pointer;border:1px solid var(--line);border-radius:7px;padding:12px 18px;background:var(--card);color:var(--ink)}
-button:hover{border-color:var(--accent);background:var(--tint)}
+/* :where 讓 hover 不蓋過主題或元件以類別設定的按鈕底色（docs/adr/0021） */
+:where(button):hover{border-color:var(--accent);background:var(--tint)}
 button:focus-visible,a:focus-visible{outline:3px solid var(--accent);outline-offset:4px}
 button:disabled{opacity:.35;cursor:default}
 .feedback{font-size:17px;line-height:1.7;min-height:58px;color:var(--ink);font-weight:600}
