@@ -10,6 +10,7 @@
 | 多組數值如何經門檻與投票形成結果 | [門檻與共識](threshold-consensus/index.html) | [投票與對齊條件](threshold-consensus/IMPLEMENTATION.md) |
 | 分項、權重與排名的關係 | [加權評分](weighted-ranking/index.html) | [計分與尺度假設](weighted-ranking/IMPLEMENTATION.md) |
 | 同一案例的參照、不同結果與來源同步回放 | [同案例結果回放](case-replay/index.html) | [資料對齊與編輯範圍](case-replay/IMPLEMENTATION.md) |
+| 替換一部分輸入後結果如何變化、哪部分影響最大 | [局部干預回放](intervention-replay/index.html) | [替換值與無效替換](intervention-replay/IMPLEMENTATION.md) |
 
 組合都用小型人工資料，各自有 `compute.js`（計算或結果選取）、`demo.js`（資料與畫面）、README 與實作追加說明；不依賴任何 XAI 檔案。抽象的是關係與更新流程，示範仍保留可驗證的具體數字。
 

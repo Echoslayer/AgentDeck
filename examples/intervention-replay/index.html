@@ -1,0 +1,10 @@
+<!doctype html><html lang="zh-Hant"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>局部干預回放 · 互動組合</title><link rel="stylesheet" href="../demo.css"></head><body><main>
+<header><a href="../index.html">← 組合範例</a><a href="README.md">實作前必讀</a></header><h1>換掉一塊輸入，結果怎麼變</h1><p>選一個區塊替換成固定值，對照已保存的替換前後輸出，並看所有區塊的影響排序。</p>
+<div class="ex-controls"><label>案例 <select id="case"><option value="case-a">案例 A</option><option value="case-b">案例 B</option></select></label><button id="reset" type="button">還原起始情境</button></div>
+<div class="ex-views"><section class="ex-panel"><h2>輸入（點區塊替換）</h2><div id="parts" class="ex-grid" style="grid-template-columns:repeat(3,minmax(0,1fr))"></div></section><section class="ex-panel"><h2>輸出對照</h2><div id="scores"></div></section></div>
+<p id="summary" class="ex-result" aria-live="polite"></p>
+<section class="ex-panel"><h2>各區塊對追蹤輸出的影響（降幅大者在前）</h2><ol id="ranking"></ol></section>
+<p class="ex-note" data-key="scope-note" data-edit>人工示範資料、預先計算結果回放。每個區塊的替換結果都是事先保存的紀錄，點選只是查表，不重新執行系統。單一區塊的影響不代表因果，也不能相加成多區塊同時替換的結果。此段為固定作者說明，更新結果時不替換它。</p>
+<details><summary>查看所選替換的結果包</summary><pre id="export-preview" style="white-space:pre-wrap;overflow-wrap:anywhere"></pre></details>
+<footer><a href="IMPLEMENTATION.md">資料格式、替換值、編輯範圍與驗收 →</a></footer>
+<script src="compute.js"></script><script src="demo.js"></script></main></body></html>
