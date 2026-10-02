@@ -200,5 +200,10 @@ body.is-zoomed header,body.is-zoomed nav{zoom:1}
 body.is-zoomed main{zoom:1.15}
 @supports not (zoom:1){body.is-zoomed main{transform:scale(1.15);width:86.96%}}
 }
+/* 上一步/下一步貼齊導覽列左右兩端；導覽列已從釘選窗格右緣起算（--sidebar-space），不會被窗格蓋住。 */
+.nav-inner{max-width:none}
+#prev,#next{width:min(100%,520px)}
+#prev{justify-self:start}
+#next{justify-self:end}
 .made-with{position:absolute;right:12px;bottom:2px;font-size:10px;line-height:1;color:var(--muted);text-decoration:none;opacity:.6}
 .made-with:hover,.made-with:focus-visible{color:var(--accent);opacity:1;text-decoration:underline}
