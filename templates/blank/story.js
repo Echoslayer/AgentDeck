@@ -22,6 +22,7 @@ const story = {
       art: '<p class="example-note" data-key="note" data-edit>這裡放元件或自製內容。</p>',
       point: '重點（可留空字串）。',
       instruction: '口頭說明：講者怎麼講這頁（只在右側「講稿」分頁與簡報者視窗顯示）。',
+      // record: [{ wait: 1000 }, { click: '[data-key=note]' }, { wait: 1500 }], // 可選：互動頁給 agentdeck export 錄影的步驟
     },
     deck.end({ instruction: '口頭說明：怎麼收尾。' }),
   ],

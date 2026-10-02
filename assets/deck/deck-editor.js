@@ -297,6 +297,14 @@
   //    右側欄給審閱，簡報者視窗給雙螢幕上台；投影畫面本身不顯示兩者。
   for (const p of story.pages) {
     for (const f of ['instruction', 'explain']) if (p[f] !== undefined && typeof p[f] !== 'string') throw new Error(`${p.id}: ${f} 必須是字串`);
+    // record 只給 agentdeck export 錄影（docs/adr/0021），播放不使用；格式錯在載入時就報，不等到匯出。
+    if (p.record === undefined) continue;
+    if (!Array.isArray(p.record)) throw new Error(`${p.id}: record 必須是步驟陣列`);
+    p.record.forEach((s, i) => {
+      const ok = s && (Number.isFinite(s.wait) || typeof s.click === 'string' || (typeof s.set === 'string' && 'value' in s)
+        || (typeof s.drag === 'string' && Array.isArray(s.by) && s.by.length === 2 && s.by.every(Number.isFinite)));
+      if (!ok) throw new Error(`${p.id}: record 第 ${i + 1} 步格式錯誤：${JSON.stringify(s)}（可用 wait、click、set+value、drag+by）`);
+    });
   }
   const esc = s => s.replace(/[&<>"]/g, c => `&#${c.charCodeAt(0)};`);
   const commentsOf = id => edits.comments?.[id] || [];

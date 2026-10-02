@@ -15,9 +15,12 @@
    - 內容頁：頁首橫幅截圖；章節、標題、引言、重點用 PPT 原生文字框，可在 PowerPoint 修改；`art` 所在的 `.stage` 截圖。不把任意 HTML／CSS 重建成 PPT 圖形。
    - 有 `record` 的頁：照步驟操作並錄影，裁成 `.stage` 大小後轉 mp4（H.264），以截圖作影片封面。錄影中加入模擬游標與點擊光圈，讓觀眾看得出操作位置。
    - `instruction`、`explain` 寫進備忘稿；註解不帶出。
-3. **頁面資料新增可選欄位 `record`**：`wait`、`click`、`set` 三種步驟，選擇器限定在 `#page` 內。由作者（LLM）依 `instruction` 的操作順序撰寫，可重播，改版後重跑即更新影片；不由 agent 即時操作瀏覽器錄影。
-4. **依賴**：`playwright`、`pptxgenjs` 列為 CLI 的 `optionalDependencies`，只在 `export` 動態載入。瀏覽器優先用系統的 Chrome、Edge，沒有才用 Playwright 下載的 Chromium。ffmpeg 由使用者環境提供（`--ffmpeg`、`FFMPEG_PATH`、`PATH`），找不到時互動頁降級為截圖並在備忘稿註明，不中止匯出。`export --check` 只回報環境。
-5. 相容新增，契約版本不遞增；`record` 不影響播放。
+3. **頁面資料新增可選欄位 `record`**：`wait`、`click`、`set`、`drag` 四種步驟，選擇器限定在 `#page` 內。由作者（LLM）依 `instruction` 的操作順序撰寫，可重播，改版後重跑即更新影片；不由 agent 即時操作瀏覽器錄影。格式錯誤由 `deck-editor.js` 在載入時報錯；`export --check` 在簡報內執行時逐頁試跑步驟，回報找不到的選擇器。
+   - 錄影期間 `.stage` 只增不縮，避免切換狀態後裁切框露出下方內容；作者也應讓互動切換時 `.stage` 高度不變。
+   - 內容區縮到瀏覽器字級的 80% 以下時，匯出報告提示拆頁。
+4. **閱讀器配合**：`window.storyReader` 新增 `go(i)` 直接跳頁（[0008](0008-decouple-editor-reader.md)），匯出不再模擬方向鍵；`reader.css` 的按鈕 hover 改為 `:where(button):hover`，不再蓋過主題或元件以類別設定的按鈕底色（原本自訂底色的白字按鈕在 hover 時看不見）。
+5. **依賴**：`playwright`、`pptxgenjs` 列為 CLI 的 `optionalDependencies`，只在 `export` 動態載入。瀏覽器優先用系統的 Chrome、Edge，沒有才用 Playwright 下載的 Chromium。ffmpeg 由使用者環境提供（`--ffmpeg`、`FFMPEG_PATH`、`PATH`），找不到時互動頁降級為截圖並在備忘稿註明，不中止匯出。`export --check` 不輸出檔案，只回報環境（在簡報內另試跑 `record`）。
+6. 相容新增，契約版本不遞增；`record` 不影響播放。
 
 ## 理由
 

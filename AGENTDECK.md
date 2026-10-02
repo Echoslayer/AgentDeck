@@ -58,7 +58,7 @@
 6. 現場可能需要修改的文字（主題、姓名、日期、清單、卡片文字等）標為可編輯；封面／結尾的絕對定位元素可再開放拖曳。
 7. 若主題的 `edits.js` 非空，改版時保留它引用到的元件 key，除非人要求吸收或捨棄。改版前先讀 `edits.js` 的 `comments`（人對各頁的註解），處理後回報每則怎麼處理；註解由人刪除，不自行清除。元件子項目 key 預設依序號產生，調整已被引用項目的順序時要給明確的 `key`。
 8. 檢查：雙擊根 `index.html` 播放，主控台無錯誤；告訴人可按頁首「✎ 編輯」現場修改，右側「講稿」看講者動作與補充解釋、「註解」留意見，「🎤 講者」開簡報者視窗；另存的 `edits.js` 放回對應 `resources/<name>/edits.js`。
-9. 交付：於單位內執行 `agentdeck pack` 打包整個簡報單位；對方解壓後雙擊最上層 `index.html` 直接離線播放，入口不是跳轉頁。打包後也要驗證互動、附件、候選版本與素材連結。人要 PPT 時，先跑 `agentdeck export --check` 回報環境缺什麼，為需要示範的互動頁寫 `record`，再以 `agentdeck export` 輸出 `dist/<名稱>.pptx`（ADR 0021）；逐頁檢查文字有無溢出、過高的內容區是否縮得太小，必要時拆頁。
+9. 交付：於單位內執行 `agentdeck pack` 打包整個簡報單位；對方解壓後雙擊最上層 `index.html` 直接離線播放，入口不是跳轉頁。打包後也要驗證互動、附件、候選版本與素材連結。人要 PPT 時，先跑 `agentdeck export --check` 回報環境缺什麼，為需要示範的互動頁寫 `record`，再以 `agentdeck export` 輸出 `dist/<名稱>.pptx`（ADR 0021）；匯出會列出內容區縮得過小的頁，依提示拆頁或降低高度，再逐頁檢查文字有無溢出。
 
 ## 簡報單位與相關內容
 
@@ -135,8 +135,8 @@ const story = {
   - `instruction`（講者動作）：實作時每頁都寫。用口語寫這頁怎麼開口、指哪裡、操作什麼、強調什麼、怎麼接到下一頁，不重複畫面上的文字；一頁約二到五句。
   - `explain`（補充解釋）：第一輪不寫，整份完成後的講稿二次迭代才寫，只寫需要的頁。內容是畫面簡化或省略了什麼（簡化模型、略過的前提、只是代表案例），以及聽眾可能追問的原因與答法，例如「為什麼模型會把這個數字判錯」。每個說法都要回到素材或實測資料查證；查不到的列進 `plan.md`「待確認」，不寫成定論。二次迭代可以和處理註解一起做。
 - **題目（可選）**：`question: { prompt, choices: [{ value, label, feedback }], hideFuturePreviews? }`。`value` 為唯一的英數、`_`、`-`；`hideFuturePreviews: true` 在作答前遮住後續縮圖（不阻止翻頁）。答案保留到重新整理。
-- **互動（可選）**：`mount(root, state)` 在當頁渲染後呼叫，`root` 是主閱讀區，`state` 是此頁專用、保留到重新整理的物件；必須同步回傳清理函式或 `undefined`，換頁時先清理再移除舊內容。有 `mount` 的頁面必須提供靜態 `previewArt` 供縮圖使用。
-- **錄影步驟（可選）**：`record: [{ wait: 毫秒 }, { click: '選擇器' }, { set: '選擇器', value }]`，給 `agentdeck export` 把這頁錄成影片放進 pptx（ADR 0021）。選擇器限定在 `#page` 內，優先用 `data-key`；`set` 用於 `<input>`、`<select>`，會觸發 `input` 與 `change`；拖曳滑桿就寫多個 `set` 漸進取值。每步之間留 `wait` 讓結果看得清楚，全長約 5 到 10 秒，順序照 `instruction` 的操作。沒有 `record` 的互動頁匯出為目前畫面的截圖。
+- **互動（可選）**：`mount(root, state)` 在當頁渲染後呼叫，`root` 是主閱讀區，`state` 是此頁專用、保留到重新整理的物件；必須同步回傳清理函式或 `undefined`，換頁時先清理再移除舊內容。有 `mount` 的頁面必須提供靜態 `previewArt` 供縮圖使用。切換狀態（換樣本、換方法）時 `.stage` 高度保持不變：以固定高度或預留最大內容的空間，避免現場版面跳動與錄影裁切錯位。
+- **錄影步驟（可選）**：`record: [{ wait: 毫秒 }, { click: '選擇器' }, { set: '選擇器', value }, { drag: '選擇器', by: [dx, dy] }]`，給 `agentdeck export` 把這頁錄成影片放進 pptx（ADR 0021）。選擇器限定在 `#page` 內，優先用 `data-key`；`set` 用於 `<input>`、`<select>`，會觸發 `input` 與 `change`，拖曳滑桿就寫多個 `set` 漸進取值；`drag` 從元素中心按住移動 `by` 像素，用於旋轉 3D 等畫布。每步之間留 `wait` 讓結果看得清楚，全長約 5 到 10 秒，順序照 `instruction` 的操作。格式錯誤在載入時報錯；`agentdeck export --check` 會逐頁試跑，回報找不到的選擇器。沒有 `record` 的互動頁匯出為目前畫面的截圖。
 - 外掛層（如編輯器）只透過 `window.storyReader` 與 `story:render` 事件取用閱讀器狀態（ADR 0008）。
 - 載入順序固定：`reader.css` → `deck.css` → `theme.css` → 元件 css → `story.css` → `deck-core.js` → `theme.js` → 套件 js → 元件 js → `story.js` → `edits.js` → `deck-editor.js` → `reader.js`。
 

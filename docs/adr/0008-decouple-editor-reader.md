@@ -14,7 +14,7 @@
 ## 決策
 
 - 閱讀器提供對外介面，外掛層只能使用這兩者：
-  - `window.storyReader`：`index`（目前頁序）、`page`（目前頁面物件）、`refresh()`（重繪縮圖與索引）。
+  - `window.storyReader`：`index`（目前頁序）、`page`（目前頁面物件）、`refresh()`（重繪縮圖與索引）、`go(i)`（跳到第 i 頁，0 起算；0021 新增）。
   - `story:render` 事件：每次換頁渲染完成（含 `mount`）後在 `document` 上觸發，`detail` 為 `{ page, root }`。
 - 編輯層在 `story:render` 時重新布置；頁內變動（`mount` 重繪、全選改寫）仍以 MutationObserver 補回按鈕。
 - 畫布版面改以開關屬性 `data-canvas` 標示，加在 `art` 的第一層元素上，編輯層以其子元素為隱藏單位。`deck.cover()`／`deck.end()` 自動加上。
