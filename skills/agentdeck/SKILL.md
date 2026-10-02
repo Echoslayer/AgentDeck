@@ -33,7 +33,7 @@ AgentDeck CLI（製作端用，播放不需要）：
 3. `catalog [關鍵字]` 選表示方式，`docs <名稱>` 只讀選中的項目，`add <元件>` 取得元件。不整份讀取上游文件。
 4. 素材在其他位置時只讀不改，內容摘錄進 `story.js`；簡報只引用工作區內的檔案。
 5. 雙擊根 `index.html` 檢查；另存的人工修正放回對應 `resources/<name>/edits.js`。交付用 `pack` 打包完整單位，zip 根 `index.html` 直接播放。入口、相關內容與素材都引用本單位內的相對路徑，整個資料夾可獨立搬移。第一層只放入口、`resources/`、`agentdeck/`、`dist/`；主題的腳本與資料放進 `resources/<topic>/`。
-6. 使用者要 PowerPoint 時用 `export`：先 `export --check` 回報環境與 `record` 問題，再輸出 `dist/<名稱>.pptx`；互動頁照 `AGENTDECK.md` 寫 `record` 才會錄成影片。
+6. `export` 是可選的進階功能：內容經使用者確認、且明確要 PowerPoint 時才用。先 `export --check` 回報環境與 `record` 問題，再輸出 `dist/<名稱>.pptx`；互動頁照 `AGENTDECK.md` 寫 `record` 才會錄成影片。
 
 ## 不要做
 
