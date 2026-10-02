@@ -171,10 +171,10 @@ window.deck = (() => {
   }
 
   // 頁型：回傳完整頁面物件。reader 的章節、標題、引言、重點由 deck.css 隱藏；title 同步索引與縮圖。
-  function cover({ id = 'cover', section = '封面', title, meta = '' } = {}) {
+  function cover({ id = 'cover', section = '封面', title, meta = '', instruction, explain } = {}) {
     if (typeof title !== 'string') throw new Error('deck.cover: 需要 title');
     return {
-      id, section, title, lead: '', point: '',
+      id, section, title, lead: '', point: '', ...(instruction !== undefined && { instruction }), ...(explain !== undefined && { explain }),
       art: `<div class="deck-cover" data-canvas>`
         + (decor?.cover ?? '')
         + `<h2 class="deck-cover-title" data-key="title" data-edit data-move>${title}</h2>`
@@ -183,9 +183,9 @@ window.deck = (() => {
     };
   }
 
-  function end({ id = 'thanks', section = '結尾', title = 'Thank You' } = {}) {
+  function end({ id = 'thanks', section = '結尾', title = 'Thank You', instruction, explain } = {}) {
     return {
-      id, section, title, lead: '', point: '',
+      id, section, title, lead: '', point: '', ...(instruction !== undefined && { instruction }), ...(explain !== undefined && { explain }),
       art: `<div class="deck-end" data-canvas>`
         + `<h2 class="deck-end-title" data-key="title" data-edit data-move>${title}</h2>`
         + (decor?.end ?? '')

@@ -31,7 +31,7 @@
 | --- | --- | --- |
 | `index.html`、`<group>/<name>/index.html`、`resources/<name>/story.js`、`story.css` 與素材 | LLM | 可，自由刪改（ADR 0004、0017） |
 | `resources/<name>/plan.md` | LLM（企劃） | 可；動工前先填，人要求時才等確認（ADR 0014、0018） |
-| `resources/<name>/edits.js` | 人（現場修正） | **不可**；人明確指示時才吸收回 `story.js`（ADR 0002） |
+| `resources/<name>/edits.js` | 人（現場修正與註解） | **不可**；人明確指示時才吸收回 `story.js`（ADR 0002）。其中 `comments` 是人對各頁的註解，可讀取作為修改意見（ADR 0020） |
 | `agentdeck/assets/deck/components/<name>/` | 下游：工作區的元件副本 | 下游可依主題需求修改；改過的檔案在 `diff` 顯示為「本地已改」。上游內**不可**，見 `AGENTS.md` |
 | `agentdeck/components/<name>/` | 下游：工作區自製的共用元件 | 可（僅下游） |
 | `agentdeck/assets/deck/` 的核心檔、`agentdeck/assets/story-reader/`、`agentdeck/templates/`、本檔、`agentdeck/LICENSE` | 框架核心副本 | **不可**；由 `update core` 整份覆蓋，要改行為回饋上游（ADR 0016）。`LICENSE` 是框架的 MIT 授權聲明，`pack` 會隨框架帶入，不得刪除 |
@@ -56,8 +56,8 @@
    - 同一種自製元件再次使用時：可整理為本單位的 `agentdeck/components/<name>/`（`<name>.js` 以 `deck.define` 註冊、`<name>.css` 用 `.deck-<name>` 前綴、附 README 的用途／API／必須保留／範例）。根入口以 `agentdeck/components/<name>/` 引用；另一獨立主題複製自己的副本，不引用其他單位；值得通用時向人提議回饋上游。
 5. 每個獨立元件在 `art` 中做成**單一第一層元素**（畫布版面則為畫布內單一元素），出錯時才能在現場單獨隱藏（ADR 0003）。
 6. 現場可能需要修改的文字（主題、姓名、日期、清單、卡片文字等）標為可編輯；封面／結尾的絕對定位元素可再開放拖曳。
-7. 若主題的 `edits.js` 非空，改版時保留它引用到的元件 key，除非人要求吸收或捨棄。元件子項目 key 預設依序號產生，調整已被引用項目的順序時要給明確的 `key`。
-8. 檢查：雙擊根 `index.html` 播放，主控台無錯誤；告訴人可按頁首「✎ 編輯」現場修改，另存的 `edits.js` 放回對應 `resources/<name>/edits.js`。
+7. 若主題的 `edits.js` 非空，改版時保留它引用到的元件 key，除非人要求吸收或捨棄。改版前先讀 `edits.js` 的 `comments`（人對各頁的註解），處理後回報每則怎麼處理；註解由人刪除，不自行清除。元件子項目 key 預設依序號產生，調整已被引用項目的順序時要給明確的 `key`。
+8. 檢查：雙擊根 `index.html` 播放，主控台無錯誤；告訴人可按頁首「✎ 編輯」現場修改，右側「講稿」看講者動作與補充解釋、「註解」留意見，「🎤 講者」開簡報者視窗；另存的 `edits.js` 放回對應 `resources/<name>/edits.js`。
 9. 交付：於單位內執行 `agentdeck pack` 打包整個簡報單位；對方解壓後雙擊最上層 `index.html` 直接離線播放，入口不是跳轉頁。打包後也要驗證互動、附件、候選版本與素材連結。
 
 ## 簡報單位與相關內容
@@ -121,6 +121,8 @@ const story = {
     art: '<div class="topic-x" data-key="x">內容</div>',
     point: '重點',
     detail: '可選：前提、限制、來源',
+    instruction: '講者動作：怎麼開口、指哪裡',  // 講稿不顯示在投影畫面，見下方說明
+    explain: '可選：補充解釋，二次迭代才寫',
   }],
 };
 ```
@@ -129,6 +131,9 @@ const story = {
 - 文字欄位（`section`、`title`、`lead`、`point`、`detail`）同樣以 HTML 插入，不解析 Markdown：程式碼寫 `<code>`，字面的 `<`、`&` 要跳脫。
 - HTML 字串只接受作者審查過的本地內容，不可塞入網址參數、讀者輸入或遠端文字。
 - 縮圖以約 1000px 寬縮放同一份內容；超長頁面會被裁切，應拆頁。SVG 若用到 `id`，另提供沒有重複 id 的 `previewArt`。
+- **講稿**：只顯示在右側「講稿」分頁與簡報者視窗，不出現在投影畫面（ADR 0020）。分兩個欄位，可用 `<b>`、`<br>`；封面與結尾以 `deck.cover({ …, instruction, explain })`、`deck.end({ instruction, explain })` 傳入。
+  - `instruction`（講者動作）：實作時每頁都寫。用口語寫這頁怎麼開口、指哪裡、操作什麼、強調什麼、怎麼接到下一頁，不重複畫面上的文字；一頁約二到五句。
+  - `explain`（補充解釋）：第一輪不寫，整份完成後的講稿二次迭代才寫，只寫需要的頁。內容是畫面簡化或省略了什麼（簡化模型、略過的前提、只是代表案例），以及聽眾可能追問的原因與答法，例如「為什麼模型會把這個數字判錯」。每個說法都要回到素材或實測資料查證；查不到的列進 `plan.md`「待確認」，不寫成定論。二次迭代可以和處理註解一起做。
 - **題目（可選）**：`question: { prompt, choices: [{ value, label, feedback }], hideFuturePreviews? }`。`value` 為唯一的英數、`_`、`-`；`hideFuturePreviews: true` 在作答前遮住後續縮圖（不阻止翻頁）。答案保留到重新整理。
 - **互動（可選）**：`mount(root, state)` 在當頁渲染後呼叫，`root` 是主閱讀區，`state` 是此頁專用、保留到重新整理的物件；必須同步回傳清理函式或 `undefined`，換頁時先清理再移除舊內容。有 `mount` 的頁面必須提供靜態 `previewArt` 供縮圖使用。
 - 外掛層（如編輯器）只透過 `window.storyReader` 與 `story:render` 事件取用閱讀器狀態（ADR 0008）。

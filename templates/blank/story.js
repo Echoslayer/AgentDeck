@@ -13,7 +13,7 @@ const story = {
   label: '作者或單位 / 主題名稱',
   // back: { href: resource('../../index.html'), label: '返回主簡報' }, // 僅同主體候選／附件使用，交付另驗證
   pages: [
-    deck.cover({ title: '主題名稱', meta: '姓名／單位<br>2026/9/30' }),
+    deck.cover({ title: '主題名稱', meta: '姓名／單位<br>2026/9/30', instruction: '口頭說明：開場怎麼講。' }),
     {
       id: 'intro',
       section: '01 / 章節',
@@ -21,7 +21,8 @@ const story = {
       lead: '引言（可留空字串）。',
       art: '<p class="example-note" data-key="note" data-edit>這裡放元件或自製內容。</p>',
       point: '重點（可留空字串）。',
+      instruction: '口頭說明：講者怎麼講這頁（只在右側「講稿」分頁與簡報者視窗顯示）。',
     },
-    deck.end(),
+    deck.end({ instruction: '口頭說明：怎麼收尾。' }),
   ],
 };

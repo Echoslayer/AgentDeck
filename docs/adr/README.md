@@ -23,3 +23,4 @@
 | [0017](0017-presentation-entry-layout.md) | 每個主題以獨立簡報單位保存，根入口直接播放，框架集中於 agentdeck/ | 已接受 |
 | [0018](0018-plan-to-build-and-teaching-attachments.md) | 企劃到實作可一次完成；主線與教學附件分工 | 已接受 |
 | [0019](0019-theme-templates.md) | 簡報以既有模板為主題：init 選主題，PPT 模板經指引轉成主題 | 已接受 |
+| [0020](0020-instructions-and-comments.md) | 每頁的口頭說明與註解：作者寫進 story.js，人寫進 edits.js | 已接受 |

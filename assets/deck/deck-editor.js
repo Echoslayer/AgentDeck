@@ -9,6 +9,7 @@
    隱藏：編輯模式下，欄位、舞台第一層元件（標記 data-canvas 的畫布版面以畫布內元件為單位）與 data-hide 元件都可隱藏。
    缺 data-key（退回位置 key）或 key 重複的元件，在編輯模式下以橘框標示（docs/adr/0007）。
    key 為 section／title／lead／point／detail 時，同時改寫該頁欄位，索引與縮圖文字會同步。
+   講稿與註解：右側「講稿」（N）顯示 page.instruction 與 page.explain，「註解」（C）顯示 edits.comments；頁首「🎤 講者」開簡報者視窗（docs/adr/0020）。
    預設不保存：未另存的修改在重新整理後消失。
    與閱讀器只透過 window.storyReader 與 story:render 事件溝通（docs/adr/0008）。
    載入順序：deck-core.js → theme.js → [元件 js] → story.js → edits.js → deck-editor.js → reader.js */
@@ -290,6 +291,176 @@
     return handle;
   }
 
+  // ── 講稿與註解（docs/adr/0020）：page.instruction 是講者動作（怎麼開口、指哪裡），page.explain 是補充解釋
+  //    （簡化了什麼、被追問時怎麼答），兩者都是作者寫的受信任 HTML；
+  //    edits.comments[頁面 id] 是人留下的註解（純文字，一律跳脫），隨「另存」寫進 edits.js。
+  //    右側欄給審閱，簡報者視窗給雙螢幕上台；投影畫面本身不顯示兩者。
+  for (const p of story.pages) {
+    for (const f of ['instruction', 'explain']) if (p[f] !== undefined && typeof p[f] !== 'string') throw new Error(`${p.id}: ${f} 必須是字串`);
+  }
+  const esc = s => s.replace(/[&<>"]/g, c => `&#${c.charCodeAt(0)};`);
+  const commentsOf = id => edits.comments?.[id] || [];
+  let presenter, started;
+
+  function addComment(text) {
+    text = text.trim();
+    if (!text) return;
+    const now = new Date();
+    const at = new Date(now - now.getTimezoneOffset() * 6e4).toISOString().slice(0, 19); // 本地時間
+    ((edits.comments ??= {})[currentPage().id] ??= []).push({ text, at });
+    notesChanged();
+  }
+  function removeComment(i) {
+    const id = currentPage().id, list = edits.comments[id];
+    list.splice(i, 1);
+    if (!list.length) delete edits.comments[id];
+    if (!Object.keys(edits.comments).length) delete edits.comments;
+    notesChanged();
+  }
+  function notesChanged() { setDirty(true); renderNotes(); }
+
+  const instructionHtml = p => p.instruction || '<span class="deck-notes-empty">本頁沒有講者動作。</span>';
+  const explainHtml = p => p.explain ? `<h3>📖 補充解釋</h3><div class="deck-explain">${p.explain}</div>` : '';
+  function commentsHtml(id) {
+    const list = commentsOf(id);
+    return (list.length
+      ? `<ol class="deck-comments">${list.map((c, i) => `<li><p>${esc(c.text)}</p><small>${esc(c.at.slice(5, 16).replace('T', ' '))}<button type="button" data-del="${i}" title="刪除這則註解">✕</button></small></li>`).join('')}</ol>`
+      : '<p class="deck-notes-empty">還沒有註解。</p>')
+      + '<form class="deck-comment-add"><textarea rows="2" placeholder="對這頁留下註解（Ctrl+Enter 送出）"></textarea><button>新增</button></form>';
+  }
+  function wireComments(root) {
+    root.querySelectorAll('[data-del]').forEach(b => b.onclick = () => removeComment(Number(b.dataset.del)));
+    const form = root.querySelector('.deck-comment-add'), ta = form.querySelector('textarea');
+    form.onsubmit = e => { e.preventDefault(); addComment(ta.value); };
+    ta.onkeydown = e => { if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); addComment(ta.value); } };
+  }
+
+  // 右側兩個分頁「講稿」「註解」：與左側索引相同，滑鼠移入暫開、點標籤釘選，一次只開一個。
+  let side, openPanel = null, pinned = false;
+  function buildSide() {
+    side = document.createElement('aside');
+    side.className = 'deck-side';
+    side.setAttribute('aria-label', '講稿與註解');
+    side.innerHTML = '<div class="deck-side-panel" data-panel="notes" hidden></div><div class="deck-side-panel" data-panel="comments" hidden></div>'
+      + '<div class="deck-side-tabs"><button type="button" class="deck-side-tab" data-tab="notes" title="講稿：講者動作與補充解釋（N）">講稿</button>'
+      + '<button type="button" class="deck-side-tab" data-tab="comments" title="本頁註解（C）">註解<b hidden></b></button></div>';
+    side.querySelectorAll('[data-tab]').forEach(tab => {
+      tab.onclick = () => togglePanel(tab.dataset.tab);
+      tab.onpointerenter = e => { if (e.pointerType === 'mouse' && !pinned) setPanel(tab.dataset.tab, false); };
+    });
+    // 正在輸入註解時不因滑鼠移出而收起。
+    side.onpointerleave = e => { if (e.pointerType === 'mouse' && !pinned && !side.contains(document.activeElement?.closest('textarea'))) setPanel(null, false); };
+    side.onkeydown = e => { if (e.key === 'Escape') setPanel(null, false); };
+    document.body.append(side);
+  }
+  function setPanel(name, pin) {
+    openPanel = name;
+    pinned = !!name && pin;
+    side.querySelectorAll('[data-panel]').forEach(el => { el.hidden = el.dataset.panel !== name; });
+    side.querySelectorAll('[data-tab]').forEach(tab => {
+      tab.setAttribute('aria-expanded', String(tab.dataset.tab === name));
+      tab.setAttribute('aria-pressed', String(tab.dataset.tab === name && pinned));
+    });
+  }
+  const togglePanel = name => setPanel(openPanel === name && pinned ? null : name, true);
+
+  function renderNotes() {
+    if (!window.storyReader || !side) return;
+    const p = currentPage(), n = commentsOf(p.id).length;
+    side.querySelector('[data-panel="notes"]').innerHTML = `<h3>🎤 講者動作</h3><div class="deck-instruction">${instructionHtml(p)}</div>${explainHtml(p)}`;
+    const box = side.querySelector('[data-panel="comments"]');
+    box.innerHTML = `<h3>💬 註解</h3>${commentsHtml(p.id)}`;
+    wireComments(box);
+    const count = side.querySelector('[data-tab="comments"] b');
+    count.hidden = !n;
+    count.textContent = n;
+    badges();
+    renderPresenter();
+  }
+
+  // 索引縮圖標出各頁註解數；閱讀器重繪索引後由 MutationObserver 補回。
+  function badges() {
+    document.querySelectorAll('#index-list [data-page]').forEach(b => {
+      const n = commentsOf(story.pages[b.dataset.page]?.id).length;
+      b.querySelector('.deck-comment-badge')?.remove();
+      if (n) b.insertAdjacentHTML('beforeend', `<span class="deck-comment-badge" title="${n} 則註解">💬${n}</span>`);
+    });
+  }
+
+  // 簡報者視窗：同源的空白視窗，由本頁直接寫入與更新；字級存在講者本機。
+  const SIZE_KEY = 'agentdeck-presenter-size';
+  let size = 26;
+  try { size = Number(localStorage.getItem(SIZE_KEY)) || size; } catch { /* 無法存取儲存空間時用預設字級 */ }
+  // 講稿、註解可在簡報者視窗個別開關，同樣存在講者本機。
+  const SHOW_KEY = 'agentdeck-presenter-show';
+  const show = { notes: true, comments: true };
+  try { Object.assign(show, JSON.parse(localStorage.getItem(SHOW_KEY))); } catch { /* 預設兩者都顯示 */ }
+  function toggleShow(name) {
+    show[name] = !show[name];
+    try { localStorage.setItem(SHOW_KEY, JSON.stringify(show)); } catch { /* 只影響下次開啟 */ }
+    renderPresenter();
+  }
+  function openPresenter() {
+    presenter = window.open('', 'agentdeck-presenter', 'width=780,height=720');
+    try {
+      presenter.document.title = `講者：${story.title}`;
+    } catch {
+      presenter = null;
+      alert('無法開啟簡報者視窗：請允許此頁開啟彈出視窗。');
+      return;
+    }
+    started ??= Date.now();
+    const doc = presenter.document;
+    doc.head.innerHTML = `<meta charset="utf-8"><style>${PRESENTER_CSS}</style>`;
+    doc.body.innerHTML = '<div id="root"></div>';
+    presenter.onkeydown = e => {
+      if (e.target.tagName === 'TEXTAREA') return;
+      if (e.key === 'ArrowRight' || e.key === 'PageDown') document.getElementById('next').click();
+      if (e.key === 'ArrowLeft' || e.key === 'PageUp') document.getElementById('prev').click();
+    };
+    clearInterval(openPresenter.timer);
+    openPresenter.timer = setInterval(tick, 1000);
+    renderPresenter();
+  }
+  function tick() {
+    const el = presenter && !presenter.closed && presenter.document.getElementById('clock');
+    if (!el) return;
+    const s = Math.floor((Date.now() - started) / 1000);
+    el.textContent = `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`;
+  }
+  function setSize(value) {
+    size = Math.min(56, Math.max(14, value));
+    try { localStorage.setItem(SIZE_KEY, String(size)); } catch { /* 只影響下次開啟的字級 */ }
+    presenter.document.documentElement.style.setProperty('--size', `${size}px`);
+  }
+  function renderPresenter() {
+    if (!presenter || presenter.closed) return;
+    const i = window.storyReader.index, p = story.pages[i], next = story.pages[i + 1];
+    const doc = presenter.document, root = doc.getElementById('root');
+    doc.documentElement.style.setProperty('--size', `${size}px`);
+    root.innerHTML = `<header><b>${i + 1} / ${story.pages.length}</b>`
+      + `<span class="tools"><button type="button" data-show="notes" aria-pressed="${show.notes}" title="顯示或隱藏講稿">講稿</button><button type="button" data-show="comments" aria-pressed="${show.comments}" title="顯示或隱藏註解">註解</button>`
+      + '<button type="button" data-size="-2" title="縮小字級">A−</button><button type="button" data-size="2" title="放大字級">A＋</button></span><span id="clock">00:00</span></header>'
+      + `<h1>${p.title}</h1><section ${show.notes ? '' : 'hidden'}><div class="deck-instruction">${instructionHtml(p)}</div>${explainHtml(p)}</section>`
+      + `<p class="next">下一頁：${next ? next.title : '（最後一頁）'}</p>`
+      + '<nav><button type="button" data-go="prev">← 上一頁</button><button type="button" data-go="next">下一頁 →</button></nav>'
+      + `<section ${show.comments ? '' : 'hidden'}><h3>💬 註解</h3>${commentsHtml(p.id)}</section>`;
+    root.querySelectorAll('[data-show]').forEach(b => b.onclick = () => toggleShow(b.dataset.show));
+    root.querySelectorAll('[data-size]').forEach(b => b.onclick = () => setSize(size + Number(b.dataset.size)));
+    root.querySelectorAll('[data-go]').forEach(b => b.onclick = () => document.getElementById(b.dataset.go).click());
+    wireComments(root);
+    tick();
+  }
+  const PRESENTER_CSS = `:root{--size:26px}body{margin:0;font:18px/1.7 system-ui,"Microsoft JhengHei",sans-serif;background:#1f211b;color:#f5f1e8}
+#root{padding:18px 28px}header{display:flex;justify-content:space-between;align-items:center;gap:12px;color:#cbc7b9}#clock{font-variant-numeric:tabular-nums;font-size:22px}
+.tools{display:flex;gap:6px}button[aria-pressed=false]{opacity:.45;text-decoration:line-through}h1{font-size:18px;color:#cbc7b9;margin:10px 0}.deck-instruction{font-size:var(--size);line-height:1.75}.deck-instruction b,.deck-instruction strong{color:#f2a58f}
+.deck-explain{font-size:calc(var(--size) * .72);line-height:1.75;color:#d9d5c7;border-left:3px solid #666;padding-left:14px}
+.next{color:#a9a795;border-top:1px solid #444;padding-top:10px}nav{display:flex;gap:10px}h3{margin:22px 0 8px;font-size:16px;color:#cbc7b9}
+button{font:inherit;font-size:15px;padding:6px 14px;border-radius:6px;border:1px solid #666;background:#2c2e26;color:inherit;cursor:pointer}
+.deck-comments{padding-left:20px;margin:0}.deck-comments p{margin:0;white-space:pre-wrap}.deck-comments small{color:#a9a795;display:flex;gap:8px;align-items:center}
+.deck-comments small button{padding:0 6px;font-size:12px}.deck-comment-add{display:flex;gap:8px;margin-top:10px}
+textarea{flex:1;font:inherit;font-size:16px;background:#2c2e26;color:inherit;border:1px solid #666;border-radius:6px;padding:6px}.deck-notes-empty{color:#a9a795}`;
+
   function setEditing(on) {
     editing = on;
     document.body.classList.toggle('is-editing', on);
@@ -307,7 +478,7 @@
 
   async function save() {
     const text = '// 人工編輯層：由頁首「另存」產生，放在 story.js 旁並命名為 edits.js 即可套用。\n'
-      + '// 只包含文字、位置與隱藏狀態；元件內容與互動仍由 story.js 決定。\n'
+      + '// 只包含文字、位置、隱藏狀態與各頁註解；元件內容、互動與口頭說明仍由 story.js 決定。\n'
       + `window.storyEdits = ${JSON.stringify(edits, null, 2)};\n`;
     const blob = new Blob([text], { type: 'text/javascript' });
     if (window.showSaveFilePicker) {
@@ -338,6 +509,7 @@
     bar.innerHTML = '<button type="button" id="edit-toggle" aria-pressed="false" title="編輯文字、位置與顯示">✎ 編輯</button>'
       + '<button type="button" id="edit-save" title="另存全部修改為 edits.js（Ctrl+S）" hidden>另存</button>'
       + '<button type="button" id="edit-discard" title="捨棄未另存的修改" hidden>捨棄</button>'
+      + '<button type="button" id="edit-presenter" title="開啟簡報者視窗：講稿、計時與註解（拖到講者螢幕）">🎤 講者</button>'
       + '<button type="button" id="edit-hide" title="隱藏編輯列（按 E 重新顯示）" aria-label="隱藏編輯列">✕</button>';
     document.querySelector('body>header').append(bar);
     document.getElementById('edit-toggle').onclick = () => setEditing(!editing);
@@ -348,6 +520,14 @@
       location.reload();
     };
     document.getElementById('edit-hide').onclick = () => setBarHidden(true);
+    document.getElementById('edit-presenter').onclick = openPresenter;
+
+    buildSide();
+    renderNotes();
+    document.addEventListener('story:render', renderNotes);
+    const indexList = document.getElementById('index-list');
+    if (indexList) new MutationObserver(() => { if (!indexList.querySelector('.deck-comment-badge')) badges(); }).observe(indexList, { childList: true });
+    window.addEventListener('pagehide', () => presenter?.close());
 
     const root = document.getElementById('page');
     // 換頁重繪由 story:render 重新布置；頁內變動（mount 重繪、全選改寫）只需補回按鈕。
@@ -380,6 +560,8 @@
       if (!typing && !e.ctrlKey && !e.metaKey && !e.altKey && e.key.toLowerCase() === 'e') {
         setBarHidden(!document.body.classList.contains('deck-bar-hidden'));
       }
+      if (!typing && !e.ctrlKey && !e.metaKey && !e.altKey && e.key.toLowerCase() === 'n') togglePanel('notes');
+      if (!typing && !e.ctrlKey && !e.metaKey && !e.altKey && e.key.toLowerCase() === 'c') togglePanel('comments');
     });
     window.addEventListener('beforeunload', e => { if (dirty) { e.preventDefault(); e.returnValue = ''; } });
   });
