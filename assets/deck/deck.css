@@ -76,6 +76,8 @@ body.is-zoomed .deck-side,body.deck-bar-hidden .deck-side{display:none}
 .deck-side-panel h3{font-size:13px;letter-spacing:.08em;color:var(--deck-primary);margin:0 0 8px}
 .deck-side-panel h3:not(:first-child){margin-top:18px}
 .deck-instruction{line-height:1.8}
+.deck-speech{line-height:1.8;border-left:3px solid var(--deck-accent);padding-left:12px}
+.deck-side-panel h3 button{margin-left:6px;padding:1px 8px;font-size:12px;letter-spacing:0;border-radius:4px}
 .deck-explain{line-height:1.8;font-size:.92em;color:var(--muted);border-left:3px solid var(--line);padding-left:12px}
 .deck-notes-empty{color:var(--muted);margin:0}
 .deck-comments{margin:0;padding-left:20px;display:grid;gap:8px}
