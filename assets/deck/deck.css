@@ -64,6 +64,29 @@ body.deck-bar-hidden .deck-edit-bar{display:none}
 /* 缺 data-key 或 key 重複：只在編輯模式標示（docs/adr/0007）。用 box-shadow 以免與可編輯外框衝突。 */
 body.is-editing #page .deck-keywarn{box-shadow:0 0 0 3px #e67e22}
 .deck-hide-toggle.deck-keywarn-toggle{border:2px solid #e67e22}
+/* 講稿與註解（docs/adr/0020）：右側「講稿」「註解」兩個分頁，與左側索引相同 hover 暫開、點標籤釘選；放大播放或隱藏編輯列時不顯示。 */
+.deck-side{position:fixed;right:0;top:88px;z-index:20;display:flex;align-items:flex-start;filter:drop-shadow(0 5px 18px #26282020)}
+body.is-zoomed .deck-side,body.deck-bar-hidden .deck-side{display:none}
+.deck-side-tabs{display:flex;flex-direction:column;gap:6px}
+.deck-side-tab{writing-mode:vertical-rl;letter-spacing:.15em;width:42px;padding:16px 10px;background:var(--ink);color:var(--paper);border:0;border-radius:8px 0 0 8px}
+.deck-side-tab:hover,.deck-side-tab[aria-expanded=true]{background:var(--deck-primary);color:#fff}
+.deck-side-tab[aria-pressed=true]{box-shadow:inset 3px 0 0 var(--deck-accent)}
+.deck-side-tab b{writing-mode:horizontal-tb;display:inline-block;margin-top:8px;background:var(--deck-accent);color:#fff;border-radius:99px;padding:0 6px;font-size:12px;letter-spacing:0}
+.deck-side-panel{width:360px;max-width:calc(100vw - 60px);max-height:calc(100dvh - 220px);overflow:auto;overscroll-behavior:contain;background:var(--card);border:1px solid var(--line);padding:16px 18px}
+.deck-side-panel h3{font-size:13px;letter-spacing:.08em;color:var(--deck-primary);margin:0 0 8px}
+.deck-side-panel h3:not(:first-child){margin-top:18px}
+.deck-instruction{line-height:1.8}
+.deck-explain{line-height:1.8;font-size:.92em;color:var(--muted);border-left:3px solid var(--line);padding-left:12px}
+.deck-notes-empty{color:var(--muted);margin:0}
+.deck-comments{margin:0;padding-left:20px;display:grid;gap:8px}
+.deck-comments p{margin:0;line-height:1.6;white-space:pre-wrap}
+.deck-comments small{color:var(--muted);display:flex;gap:6px;align-items:center}
+.deck-comments small button{padding:0 6px;font-size:11px;border-radius:4px}
+.deck-comment-add{display:flex;gap:8px;margin-top:10px}
+.deck-comment-add textarea{flex:1;min-width:0;font:inherit;font-size:15px;border:1px solid var(--line);border-radius:6px;padding:6px 8px;background:var(--card);color:var(--ink);resize:vertical}
+.deck-comment-add button{padding:6px 14px}
+.index-item{position:relative}
+.deck-comment-badge{position:absolute;right:8px;top:6px;font-size:12px;background:var(--deck-accent);color:#fff;border-radius:99px;padding:0 7px}
 
 /* 特殊元件的動態內容（deck.define 的 live，docs/adr/0013）：畫布疊在靜態後備上，啟動成功才隱藏後備。 */
 .deck-view{position:relative;min-height:0}

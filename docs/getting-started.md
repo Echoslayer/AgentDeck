@@ -72,7 +72,7 @@ demo/
 2. **企劃**：填 `resources/<topic>/plan.md`（對象、目的、素材、逐頁分鏡、元件、交付方式），標明每頁放主線或附件；人要求時先確認再動工（ADR 0018）。`plan.md` 不會被打包。
 3. **選呈現方式**：`<CLI> catalog` 看索引（上游可開 [`元件與互動範例`](../examples/index.html)）。現成元件以 `docs <name>` 讀 README 與追加說明，`add <name>` 取得後按 API 引用；互動組合以 `docs <範例> --code` 讀說明與程式後在主題內改寫。主題不得執行期引用 examples 或 playground。
 4. **製作**：主入口是根 `index.html`；內容、CSS、資料、圖片與人工修改放 `resources/<topic>/`。根入口引用 `agentdeck/assets/`、`resources/<topic>/`；動態素材依 [`AGENTDECK.md`](../AGENTDECK.md#相對路徑) 取得 story script 前綴。所有播放依賴位於同一單位內。
-5. **檢查與現場修正**：雙擊根 `index.html` 播放；頁首「✎ 編輯」可改文字、拖曳、隱藏元件，按「另存」輸出 `edits.js` 覆蓋對應 `resources/<name>/edits.js`。
+5. **檢查與現場修正**：雙擊根 `index.html` 播放；頁首「✎ 編輯」可改文字、拖曳、隱藏元件；右側「講稿」（N）看每頁的講者動作與補充解釋，「註解」（C）留意見，「🎤 講者」開簡報者視窗（[ADR 0020](adr/0020-instructions-and-comments.md)）。按「另存」輸出 `edits.js` 覆蓋對應 `resources/<name>/edits.js`；下一輪修改時 agent 會讀註解。
 6. **交付**：`<CLI> pack` 打包完整單位，解壓後最上層 `index.html` 是實際播放頁。逐頁驗證主簡報、相關內容與素材連結；缺少的引用套件會自動下載。將整個資料夾移至別處再驗證，確認沒有依賴其他主題。
 
 若以 `pack <group>/<name>` 選相關入口作交付首頁，僅靜態 HTML 引用會換算；另外檢查 `story.back` 與動態連結，原主簡報不保證一併帶入。完整交付優先用無參數的 `pack`。
