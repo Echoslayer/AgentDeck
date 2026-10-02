@@ -138,6 +138,8 @@ AgentDeck 是上游框架；每份簡報以 `npx -y github:Echoslayer/AgentDeck 
 閱讀器由本專案獨立維護（[ADR 0006](docs/adr/0006-fork-story-reader.md)），不與外部專案同步；需要修改時經人同意後直接改 `assets/story-reader/`；外觀全部在 `deck.css` 與 `assets/theme/`，不受影響。修改時須保留對外介面 `window.storyReader` 與 `story:render` 事件，編輯層只依賴這兩者（[ADR 0008](docs/adr/0008-decouple-editor-reader.md)）。
 
 ## 授權
+索引窗格（「投影片」側欄）底部有「以 AgentDeck 製作」署名，連到本專案 GitHub；只在打開索引時可見，不出現在投影畫面。由 `reader.js` 注入，既有簡報 `update core` 後即帶上；品牌若要隱藏，在 `theme.css` 加 `.made-with{display:none}`。
+
 
 框架（CLI、`assets/`、`templates/`、`examples/`、文件）以 [MIT](LICENSE) 授權：可自由使用、修改、fork、商用，唯一條件是副本保留 `LICENSE` 的版權與授權聲明。`init`／`update core` 會把它複製成下游的 `agentdeck/LICENSE`，`pack` 隨框架帶入交付包。
 
