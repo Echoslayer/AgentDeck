@@ -86,6 +86,21 @@ try {
     assert.ok(has(research, 'agentdeck/agentdeck.json'));
   });
 
+  step('init --theme 以本機主題資料夾取代預設主題，缺檔則拒絕', () => {
+    const theme = path.join(tmp, 'brand');
+    fs.mkdirSync(path.join(theme, 'img'), { recursive: true });
+    for (const f of ['theme.css', 'theme.js', 'img/logo.svg']) fs.writeFileSync(path.join(theme, f), `/* brand ${f} */`);
+    const branded = path.join(tmp, 'branded');
+    run(['init', branded, '--source', UP, '--theme', theme], tmp);
+    assert.equal(fs.readFileSync(path.join(branded, 'agentdeck/assets/theme/theme.css'), 'utf8'), '/* brand theme.css */');
+    assert.ok(!has(branded, 'agentdeck/assets/theme/img/cover-bg.svg'), '不應混入預設主題檔');
+    const cfg = JSON.parse(fs.readFileSync(path.join(branded, 'agentdeck/agentdeck.json'), 'utf8'));
+    assert.equal(cfg.theme.source, theme.replace(/\\/g, '/'));
+    fs.rmSync(path.join(theme, 'theme.js'));
+    run(['init', path.join(tmp, 'broken'), '--source', UP, '--theme', theme], tmp, true);
+    assert.ok(!has(tmp, 'broken'), '失敗時不應留下工作區');
+  });
+
   step('new 由工作區的 templates/blank 建立主題', () => {
     run(['new', 'demo'], ws);
     for (const p of ['index.html', 'resources/demo/plan.md', 'resources/demo/story.js', 'resources/demo/story.css', 'resources/demo/edits.js']) assert.ok(has(ws, p), `缺少 ${p}`);

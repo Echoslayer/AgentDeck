@@ -22,3 +22,4 @@
 | [0016](0016-registry-copy-and-contract-version.md) | 其他專案改以「複製即擁有」取用框架，契約以版本號與遷移說明管理 | 已接受（簡報單位與入口結構被 0017 修訂） |
 | [0017](0017-presentation-entry-layout.md) | 每個主題以獨立簡報單位保存，根入口直接播放，框架集中於 agentdeck/ | 已接受 |
 | [0018](0018-plan-to-build-and-teaching-attachments.md) | 企劃到實作可一次完成；主線與教學附件分工 | 已接受 |
+| [0019](0019-theme-templates.md) | 簡報以既有模板為主題：init 選主題，PPT 模板經指引轉成主題 | 已接受 |

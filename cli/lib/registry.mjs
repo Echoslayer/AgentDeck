@@ -22,7 +22,8 @@ export function coreFiles() {
     ...listFiles(path.join(UP, 'templates', 'blank')).map(f => `templates/blank/${f}`),
   ];
 }
-export const themeFiles = () => listFiles(path.join(UP, 'assets', 'theme')).map(f => `assets/theme/${f}`);
+// 主題檔案，相對於主題資料夾；預設為上游 assets/theme/，init --theme 可換成本機資料夾（ADR 0019）。
+export const themeFiles = (dir = path.join(UP, 'assets', 'theme')) => listFiles(dir);
 
 export const componentNames = () => fs.readdirSync(COMPONENTS, { withFileTypes: true })
   .filter(e => e.isDirectory() && exists(path.join(COMPONENTS, e.name, `${e.name}.js`)))

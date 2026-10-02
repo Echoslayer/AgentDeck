@@ -22,6 +22,7 @@ const HELP = `AgentDeck CLI（docs/adr/0016）
 
   init [資料夾]            建立一份簡報的獨立工作區（預設目前資料夾，須為空）
       --source <來源>      記錄的上游來源（預設 ${DEFAULT_SOURCE}；也可為本機路徑）
+      --theme <資料夾>     以本機主題資料夾（含 theme.css、theme.js）取代預設主題
       --commit-vendor      vendor/ 進宿主 git（預設不進）
       --agents-hint        在宿主 AGENTS.md 加一行指引（--no-agents-hint 不加）
   status                   契約版本、副本與上游的差異摘要、套件狀態
@@ -41,7 +42,7 @@ const HELP = `AgentDeck CLI（docs/adr/0016）
 共同選項：--dir <工作區>（預設從目前資料夾往上找 ${FW}/${MARKER}）`;
 
 const OPTIONS = {
-  dir: { type: 'string' }, source: { type: 'string' }, out: { type: 'string' }, related: { type: 'string' },
+  dir: { type: 'string' }, source: { type: 'string' }, theme: { type: 'string' }, out: { type: 'string' }, related: { type: 'string' },
   'commit-vendor': { type: 'boolean' }, 'agents-hint': { type: 'boolean' }, 'no-agents-hint': { type: 'boolean' },
   force: { type: 'boolean' }, migrate: { type: 'boolean' }, check: { type: 'boolean' },
   patch: { type: 'boolean' }, code: { type: 'boolean' }, help: { type: 'boolean', short: 'h' },
@@ -95,11 +96,15 @@ async function init(args, opts) {
   if (exists(path.join(target, FW, MARKER)) || exists(path.join(target, MARKER))) fail(`已是 AgentDeck 工作區：${target}`);
   if (exists(target) && fs.readdirSync(target).length) fail(`資料夾不是空的：${target}`);
 
+  // 主題來源（ADR 0019）：本機資料夾，格式同 assets/theme/；未指定用上游預設主題。
+  const themeDir = opts.theme ? path.resolve(opts.theme) : path.join(UP, 'assets', 'theme');
+  if (opts.theme && !['theme.css', 'theme.js'].every(f => exists(path.join(themeDir, f)))) fail(`主題資料夾須含 theme.css 與 theme.js：${themeDir}`);
   const source = opts.source ? (/^(github:|https?:|git\+)/.test(opts.source) ? opts.source : path.resolve(opts.source)) : DEFAULT_SOURCE;
   const commit = upstreamCommit();
   const core = coreFiles();
   const fw = path.join(target, FW);
-  for (const f of [...core, ...themeFiles()]) copyFile(path.join(UP, f), path.join(fw, f));
+  for (const f of core) copyFile(path.join(UP, f), path.join(fw, f));
+  for (const f of themeFiles(themeDir)) copyFile(path.join(themeDir, f), path.join(fw, 'assets', 'theme', f));
   writeText(path.join(target, 'resources', '.gitkeep'), '');
   writeJson(path.join(fw, 'vendor.json'), {
     $comment: '第三方套件清單（docs/adr/0011）：清單進 git，本體下載到 vendor/<name>/。由 agentdeck add 登記，agentdeck vendor 下載。',
@@ -117,7 +122,7 @@ async function init(args, opts) {
     source,
     cli: cliHint(source),
     core: { commit, files: fileMap(fw, core) },
-    theme: { commit },
+    theme: opts.theme ? { source: toPosix(themeDir) } : { commit },
     components: {},
   };
   writeJson(path.join(fw, MARKER), config);
@@ -125,7 +130,7 @@ async function init(args, opts) {
   await agentsHint(target, opts);
   log('下一步：');
   log(`  1. 讀 ${rel(process.cwd(), path.join(fw, 'AGENTDECK.md'))}，之後的指令以 ${config.cli} 執行`);
-  log('  2. new <主題> 建立根 index.html，先填 resources/<主題>/plan.md 交人確認');
+  log('  2. new <主題> 建立根 index.html，先填 resources/<主題>/plan.md 再實作（ADR 0018）');
   log('  3. catalog 選表示方式，docs <名稱> 讀文件，add <元件> 取得元件');
 }
 
