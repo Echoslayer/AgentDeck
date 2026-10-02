@@ -16,7 +16,7 @@
 3. **操作以合成事件執行**：`click` 呼叫元素的 `click()`，`set` 設值並觸發 `input`、`change`，`drag` 送出指標事件；三者都在操作點顯示點擊光圈。合成指標事件沒有真的指標，`setPointerCapture` 會丟例外，拖曳期間暫時略過。
 4. **選填欄位 `cues`**：音檔中每句口語稿的起始秒數（由小到大），字幕與 `at` 照秒數對齊；句數不符時載入時警告。沒有 `cues` 時退回 0022 的估算（依播放進度按句子字數比例）。內建語音以句子開始事件對齊，不需要 `cues`。時間點的產生（語音服務的時間資訊、Whisper 對齊、人工標記）不在框架內。
 5. **全部播放等動作做完才翻頁**：本頁最後一組動作完成後，才計時翻到下一頁。
-6. **匯出共用同一份步驟（暫行）**：`agentdeck export` 照順序執行所有步驟並忽略 `at`；`arrow`／`box`／`clear` 交給簡報自己的 `deck-editor.js`（`window.deckActions`）畫，標註後停 400 毫秒讓影片看得清楚。錄影只裁 `.stage`，標註要落在 `.stage` 內。
+6. **匯出共用同一份步驟（暫行）**：`agentdeck export` 照順序執行所有步驟並忽略 `at`；`arrow`／`box`／`clear` 交給簡報自己的 `deck-editor.js`（`window.deckActions`）畫，標註後停 400 毫秒讓影片看得清楚。錄影只裁 `.stage`，標註要落在 `.stage` 內。只有標註的 `record` 已改為 PPT 原生圖形與動畫，見 [0025](0025-native-pptx-annotations.md)。
 7. 實作在 `deck-editor.js` 與 `cli/lib/export.mjs`，不新增套件；相容新增，契約版本不遞增。
 
 ## 理由

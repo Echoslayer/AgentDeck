@@ -1,5 +1,5 @@
 // agentdeck export：以無頭瀏覽器播放簡報並輸出 pptx（docs/adr/0021）。
-// 外框（章節、標題、引言、重點）為 PPT 原生文字；內容區截圖；有 record 的頁照步驟錄影轉 mp4；講稿進備忘稿。
+// 外框（章節、標題、引言、重點）為 PPT 原生文字；內容區截圖；有 record 的頁照步驟錄影轉 mp4，只有標註的 record 改為原生圖形與動畫（docs/adr/0025）；講稿進備忘稿。
 // playwright、pptxgenjs 是選用依賴，只在這裡動態載入；ffmpeg 與瀏覽器由使用者環境提供，缺 ffmpeg 時互動頁降級為截圖。
 import fs from 'node:fs';
 import os from 'node:os';
@@ -7,6 +7,7 @@ import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { fail } from './util.mjs';
+import { zip, unzip } from './zip.mjs';
 
 const VIEW = { width: 1600, height: 1100 };
 const HIDE = '.deck-side,.deck-edit-bar,body>nav,#index,.made-with{display:none!important}';
@@ -108,6 +109,101 @@ async function runStep(pg, s, { cursor = false, dry = false } = {}) {
     if (!dry) await pg.waitForTimeout(40);
   }
   await pg.mouse.up();
+}
+
+// ── 只有標註的 record（box／arrow／clear，可夾 wait）不錄影：內容區放截圖，標註畫成 PPT 原生圖形，
+//    以最簡單的「出現／消失」動畫按一下依序顯示（docs/adr/0021）。幾何與 deck-editor 的 drawMarks 相同。
+const MARK = 'E5484D', MARK_NAME = 'agentdeck-mark-';
+const marksOnly = r => r.every(s => s.click === undefined && s.set === undefined && s.drag === undefined) && r.some(s => s.box || s.arrow);
+// 在瀏覽器內量每個標註目標相對於 .stage 的位置（CSS px），以及標籤的實際尺寸。
+function measureMarks(steps) {
+  const st = document.querySelector('#page .stage').getBoundingClientRect();
+  const layer = document.createElement('div');
+  layer.className = 'deck-marks';
+  document.body.append(layer);
+  try {
+    return steps.map(s => {
+      const sel = s.box ?? s.arrow;
+      if (typeof sel !== 'string') return null;
+      const e = document.querySelector(`#page ${sel}`);
+      if (!e) throw new Error(`record 找不到元素：${sel}`);
+      const r = e.getBoundingClientRect();
+      let label = null;
+      if (s.text) {
+        const d = Object.assign(document.createElement('div'), { className: 'deck-mark-label', textContent: s.text });
+        d.style.animation = 'none';
+        layer.append(d);
+        const b = d.getBoundingClientRect();
+        label = { w: b.width, h: b.height };
+      }
+      return { x: r.left - st.left, y: r.top - st.top, w: r.width, h: r.height, label };
+    });
+  } finally { layer.remove(); }
+}
+// 把步驟分成「按一下」：有 at 時每個帶 at 的步驟開新的一下，其後的步驟併入；沒有 at 時每個 box／arrow 各一下，
+// clear 讓先前的標註在下一下消失（最後一步是 clear 時自成一下）。同一下裡的 wait 成為後續效果的延遲。
+// 回傳 [[{ name, out, delay }]]。
+function markClicks(steps, names) {
+  const anyAt = steps.some(s => s.at !== undefined);
+  const clicks = [];
+  let visible = [], pending = [], t = 0;
+  steps.forEach((s, i) => {
+    if (s.wait !== undefined && !(s.box || s.arrow || s.clear)) { if (clicks.length) t += s.wait; return; }
+    if (anyAt ? s.at !== undefined || !clicks.length : !s.clear) { clicks.push([]); t = 0; }
+    if (s.clear) {
+      if (anyAt) clicks.at(-1).push(...visible.map(name => ({ name, out: true, delay: t })));
+      else pending.push(...visible);
+      visible = [];
+      return;
+    }
+    clicks.at(-1).push(...pending.map(name => ({ name, out: true, delay: 0 })), ...names[i].map(name => ({ name, delay: t })));
+    pending = [];
+    visible.push(...names[i]);
+  });
+  if (pending.length) clicks.push(pending.map(name => ({ name, out: true, delay: 0 })));
+  return clicks.filter(c => c.length);
+}
+// 投影片的 <p:timing>：進場與離場都用「出現」（presetID 1）；同一下裡延遲相同的效果同時發生，有延遲的接在前一組之後。
+function timingXml(clicks, ids) {
+  let n = 2;
+  const groups = new Set();
+  const effect = ({ name, out }, type, delay) => {
+    const spid = ids.get(name), grp = out ? 1 : 0;
+    groups.add(`${spid}:${grp}`);
+    return `<p:par><p:cTn id="${++n}" presetID="1" presetClass="${out ? 'exit' : 'entr'}" presetSubtype="0" fill="hold" grpId="${grp}" nodeType="${type}">`
+      + `<p:stCondLst><p:cond delay="${delay}"/></p:stCondLst><p:childTnLst><p:set><p:cBhvr><p:cTn id="${++n}" dur="1" fill="hold"><p:stCondLst><p:cond delay="0"/></p:stCondLst></p:cTn>`
+      + `<p:tgtEl><p:spTgt spid="${spid}"/></p:tgtEl><p:attrNameLst><p:attrName>style.visibility</p:attrName></p:attrNameLst></p:cBhvr>`
+      + `<p:to><p:strVal val="${out ? 'hidden' : 'visible'}"/></p:to></p:set></p:childTnLst></p:cTn></p:par>`;
+  };
+  const seq = clicks.map(c => {
+    const outer = ++n;
+    const delays = [...new Set(c.map(e => e.delay))].sort((a, b) => a - b);
+    // 組容器從前一組的時間點開始，效果自身的延遲是兩組的間隔（與 PowerPoint 存檔的結構相同）。
+    const inner = delays.map((d, j) => { const base = j ? delays[j - 1] : 0; return `<p:par><p:cTn id="${++n}" fill="hold"><p:stCondLst><p:cond delay="${base}"/></p:stCondLst><p:childTnLst>`
+      + c.filter(e => e.delay === d).map((e, k) => effect(e, k ? 'withEffect' : j ? 'afterEffect' : 'clickEffect', d - base)).join('')
+      + '</p:childTnLst></p:cTn></p:par>'; }).join('');
+    return `<p:par><p:cTn id="${outer}" fill="hold"><p:stCondLst><p:cond delay="indefinite"/></p:stCondLst><p:childTnLst>${inner}</p:childTnLst></p:cTn></p:par>`;
+  }).join('');
+  return '<p:timing><p:tnLst><p:par><p:cTn id="1" dur="indefinite" restart="never" nodeType="tmRoot"><p:childTnLst>'
+    + `<p:seq concurrent="1" nextAc="seek"><p:cTn id="2" dur="indefinite" nodeType="mainSeq"><p:childTnLst>${seq}</p:childTnLst></p:cTn>`
+    + '<p:prevCondLst><p:cond evt="onPrev" delay="0"><p:tgtEl><p:sldTgt/></p:tgtEl></p:cond></p:prevCondLst>'
+    + '<p:nextCondLst><p:cond evt="onNext" delay="0"><p:tgtEl><p:sldTgt/></p:tgtEl></p:cond></p:nextCondLst></p:seq>'
+    + '</p:childTnLst></p:cTn></p:par></p:tnLst>'
+    + `<p:bldLst>${[...groups].map(g => { const [spid, grp] = g.split(':'); return `<p:bldP spid="${spid}" grpId="${grp}" animBg="1"/>`; }).join('')}</p:bldLst></p:timing>`;
+}
+// pptxgenjs 不支援動畫：寫出後在 slideN.xml 補 <p:timing>。標註圖形改用不與其他物件衝突的 id。
+function addTimings(buf, anims) {
+  const files = unzip(buf);
+  let next = 1000;
+  for (const [slide, clicks] of anims) {
+    const name = `ppt/slides/slide${slide}.xml`, ids = new Map();
+    let xml = files.get(name).toString('utf8')
+      .replace(new RegExp(`<p:cNvPr id="\\d+" name="(${MARK_NAME}\\d+)"`, 'g'), (_, n) => { ids.set(n, ++next); return `<p:cNvPr id="${next}" name="${n}"`; });
+    const t = timingXml(clicks, ids);
+    xml = xml.includes('</p:clrMapOvr>') ? xml.replace('</p:clrMapOvr>', `</p:clrMapOvr>${t}`) : xml.replace('</p:sld>', `${t}</p:sld>`);
+    files.set(name, Buffer.from(xml, 'utf8'));
+  }
+  return zip([...files].map(([name, data]) => ({ name, data })));
 }
 
 async function openDeck(ctx, url, errors) {
@@ -219,7 +315,44 @@ export async function exportPptx({ dir, out, ffmpeg }, log = console.log) {
     pptx.layout = 'LAYOUT_WIDE';
     pptx.title = await pg.title();
     const fit = (img, a) => { const s = Math.min(a.w / img.w, a.h / img.h); return { x: a.x + (a.w - img.w * s) / 2, y: a.y + (a.h - img.h * s) / 2, w: img.w * s, h: img.h * s }; };
-    const report = [], small = [];
+    const report = [], small = [], anims = [];
+    let markN = 0;
+    // 標註畫成原生圖形；k 是每 CSS px 對應的英吋，線寬與字級同比例換成 pt。
+    function addMarks(slide, steps, rects, pos, k) {
+      const X = v => pos.x + v * k, Y = v => pos.y + v * k, pt = v => Math.max(0.75, v * k * 72);
+      const label = (text, l, x, y) => {
+        const name = MARK_NAME + ++markN;
+        slide.addText(text, {
+          objectName: name, shape: pptx.ShapeType.roundRect, rectRadius: 6 * k, x: X(x), y: Y(y), w: (l.w + 4) * k, h: l.h * k,
+          fill: { color: MARK }, color: 'FFFFFF', bold: true, fontFace: FONT, fontSize: pt(18), margin: 0, align: 'center', valign: 'middle', wrap: false,
+        });
+        return name;
+      };
+      const names = steps.map((s, i) => {
+        const r = rects[i];
+        if (!r) return [];
+        const out = [MARK_NAME + ++markN];
+        if (s.box) {
+          slide.addShape(pptx.ShapeType.roundRect, { objectName: out[0], x: X(r.x - 6), y: Y(r.y - 6), w: (r.w + 12) * k, h: (r.h + 12) * k, rectRadius: 10 * k, fill: { type: 'none' }, line: { color: MARK, width: pt(4) } });
+          if (r.label) out.push(label(s.text, r.label, r.x - 6, r.y - 10 - r.label.h));
+          return out;
+        }
+        const from = s.from ?? 'left', L = 90, G = 10, cx = r.x + r.w / 2, cy = r.y + r.h / 2;
+        const [hx, hy, dx, dy] = { left: [r.x - G, cy, -1, 0], right: [r.x + r.w + G, cy, 1, 0], top: [cx, r.y - G, 0, -1], bottom: [cx, r.y + r.h + G, 0, 1] }[from];
+        const tx = hx + dx * L, ty = hy + dy * L;
+        slide.addShape(pptx.ShapeType.line, {
+          objectName: out[0], x: X(Math.min(tx, hx)), y: Y(Math.min(ty, hy)), w: Math.abs(hx - tx) * k, h: Math.abs(hy - ty) * k,
+          flipH: hx < tx, flipV: hy < ty, line: { color: MARK, width: pt(5), endArrowType: 'triangle' },
+        });
+        if (r.label) {
+          const { w, h } = r.label;
+          const [lx, ly] = { left: [tx - w, ty - h / 2], right: [tx, ty - h / 2], top: [tx - w / 2, ty - h], bottom: [tx - w / 2, ty] }[from];
+          out.push(label(s.text, r.label, lx, ly));
+        }
+        return out;
+      });
+      return markClicks(steps, names);
+    }
 
     for (let i = 0; i < total; i++) {
       await goTo(pg, i);
@@ -243,7 +376,12 @@ export async function exportPptx({ dir, out, ffmpeg }, log = console.log) {
         // 字級相對於在 1600px 寬瀏覽器播放時的比例；一般頁約 100–120%，低於 80% 時投影出來明顯比網頁小。
         const scale = (pos.w / img.w) / (W / VIEW.width);
         if (scale < 0.8) small.push(`${i + 1} ${p.id}：內容區縮為 ${Math.round(scale * 100)}%，字可能過小，考慮拆頁或降低內容高度`);
-        if (p.record && env.ffmpeg) {
+        if (p.record && marksOnly(p.record)) {
+          slide.addImage({ data: img.data, ...pos });
+          const clicks = addMarks(slide, p.record, await pg.evaluate(measureMarks, p.record), pos, pos.w / img.w);
+          anims.push([i + 1, clicks]);
+          report.push(`${i + 1} ${p.id}：截圖＋PPT 標註動畫（${clicks.length} 下）`);
+        } else if (p.record && env.ffmpeg) {
           const mp4 = path.join(tmp, `${i}.mp4`);
           await record(i, p.record, mp4);
           slide.addMedia({ type: 'video', path: mp4, cover: img.data, ...pos });
@@ -269,7 +407,8 @@ export async function exportPptx({ dir, out, ffmpeg }, log = console.log) {
       if (n) slide.addNotes(n);
     }
     fs.mkdirSync(path.dirname(out), { recursive: true });
-    await pptx.writeFile({ fileName: out });
+    if (anims.length) fs.writeFileSync(out, addTimings(await pptx.write({ outputType: 'nodebuffer' }), anims));
+    else await pptx.writeFile({ fileName: out });
     log(report.join('\n'));
     if (small.length) log(`注意：\n  ${small.join('\n  ')}`);
     if (errors.length) log(`注意：播放時有頁面錯誤\n  ${[...new Set(errors)].join('\n  ')}`);
