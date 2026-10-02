@@ -9,7 +9,8 @@
    隱藏：編輯模式下，欄位、舞台第一層元件（標記 data-canvas 的畫布版面以畫布內元件為單位）與 data-hide 元件都可隱藏。
    缺 data-key（退回位置 key）或 key 重複的元件，在編輯模式下以橘框標示（docs/adr/0007）。
    key 為 section／title／lead／point／detail 時，同時改寫該頁欄位，索引與縮圖文字會同步。
-   講稿與註解：右側「講稿」（N）顯示 page.instruction 與 page.explain，「註解」（C）顯示 edits.comments；頁首「🎤 講者」開簡報者視窗（docs/adr/0020）。
+   講稿與註解：右側「講稿」（N）顯示 page.instruction、page.speech 與 page.explain，「註解」（C）顯示 edits.comments；頁首「🎤 講者」開簡報者視窗（docs/adr/0020）。
+   朗讀：R 或口語稿旁的「▶ 朗讀」以瀏覽器內建語音念 page.speech（docs/adr/0022）。
    預設不保存：未另存的修改在重新整理後消失。
    與閱讀器只透過 window.storyReader 與 story:render 事件溝通（docs/adr/0008）。
    載入順序：deck-core.js → theme.js → [元件 js] → story.js → edits.js → deck-editor.js → reader.js */
@@ -296,7 +297,7 @@
   //    edits.comments[頁面 id] 是人留下的註解（純文字，一律跳脫），隨「另存」寫進 edits.js。
   //    右側欄給審閱，簡報者視窗給雙螢幕上台；投影畫面本身不顯示兩者。
   for (const p of story.pages) {
-    for (const f of ['instruction', 'explain']) if (p[f] !== undefined && typeof p[f] !== 'string') throw new Error(`${p.id}: ${f} 必須是字串`);
+    for (const f of ['instruction', 'explain', 'speech']) if (p[f] !== undefined && typeof p[f] !== 'string') throw new Error(`${p.id}: ${f} 必須是字串`);
     // record 只給 agentdeck export 錄影（docs/adr/0021），播放不使用；格式錯在載入時就報，不等到匯出。
     if (p.record === undefined) continue;
     if (!Array.isArray(p.record)) throw new Error(`${p.id}: record 必須是步驟陣列`);
@@ -329,6 +330,57 @@
 
   const instructionHtml = p => p.instruction || '<span class="deck-notes-empty">本頁沒有講者動作。</span>';
   const explainHtml = p => p.explain ? `<h3>📖 補充解釋</h3><div class="deck-explain">${p.explain}</div>` : '';
+  const speechHtml = p => p.speech
+    ? `<h3>🗣 口語稿${tts ? ` <button type="button" data-speak aria-pressed="${speaking}" title="朗讀口語稿（R）">${speaking ? '■ 停止' : '▶ 朗讀'}</button>` : ''}</h3><div class="deck-speech">${p.speech}</div>`
+    : '';
+
+  // ── 朗讀口語稿：page.speech 交給瀏覽器內建的 speechSynthesis，不需套件或網路服務以外的依賴；
+  //    只念 speech，不念畫面與講者動作。換頁、關閉頁面即停止。
+  const tts = window.speechSynthesis;
+  let speaking = false, speakRun = 0, speakPage = -1;
+  tts?.getVoices(); // 部分瀏覽器第一次呼叫才開始載入語音清單
+  const plain = h => { const d = document.createElement('div'); d.innerHTML = h.replace(/<br\s*\/?>/gi, '\n'); return d.textContent; };
+  function pickVoice() {
+    const lang = (document.documentElement.lang || 'zh-TW').toLowerCase();
+    const want = { 'zh-hant': ['zh-tw', 'zh-hk'], 'zh-hans': ['zh-cn'], zh: ['zh-tw', 'zh-cn'] }[lang] || [lang];
+    const voices = tts.getVoices(), norm = v => v.lang.replace('_', '-').toLowerCase();
+    let pool = [];
+    for (const w of want) if (!pool.length) pool = voices.filter(v => norm(v) === w);
+    if (!pool.length) pool = voices.filter(v => norm(v).startsWith(lang.split('-')[0]));
+    return { lang: want[0], voice: pool.find(v => /natural/i.test(v.name)) || pool[0] };
+  }
+  function speak(on = !speaking) {
+    if (!tts) return;
+    const run = ++speakRun, p = currentPage();
+    tts.cancel();
+    speaking = false;
+    // 長段落在部分瀏覽器會中途被截斷，所以逐句排入佇列。
+    const parts = on && p.speech ? plain(p.speech).split(/(?<=[。！？!?；;\n])/).map(s => s.trim()).filter(Boolean) : [];
+    if (parts.length) {
+      const { lang, voice } = pickVoice();
+      const done = () => { if (run === speakRun) { speaking = false; syncSpeak(); } };
+      parts.forEach((text, i) => {
+        const u = new SpeechSynthesisUtterance(text);
+        u.lang = voice?.lang || lang;
+        if (voice) u.voice = voice;
+        u.onerror = e => { if (!['interrupted', 'canceled'].includes(e.error)) done(); };
+        if (i === parts.length - 1) u.onend = done;
+        tts.speak(u);
+      });
+      speaking = true;
+      speakPage = window.storyReader.index;
+    }
+    syncSpeak();
+  }
+  function syncSpeak() {
+    for (const doc of [document, presenter && !presenter.closed && presenter.document]) {
+      doc?.querySelectorAll('[data-speak]').forEach(b => {
+        b.textContent = speaking ? '■ 停止' : '▶ 朗讀';
+        b.setAttribute('aria-pressed', String(speaking));
+      });
+    }
+  }
+  const wireSpeak = root => root.querySelectorAll('[data-speak]').forEach(b => b.onclick = () => speak());
   function commentsHtml(id) {
     const list = commentsOf(id);
     return (list.length
@@ -375,7 +427,9 @@
   function renderNotes() {
     if (!window.storyReader || !side) return;
     const p = currentPage(), n = commentsOf(p.id).length;
-    side.querySelector('[data-panel="notes"]').innerHTML = `<h3>🎤 講者動作</h3><div class="deck-instruction">${instructionHtml(p)}</div>${explainHtml(p)}`;
+    const notes = side.querySelector('[data-panel="notes"]');
+    notes.innerHTML = `<h3>🎤 講者動作</h3><div class="deck-instruction">${instructionHtml(p)}</div>${speechHtml(p)}${explainHtml(p)}`;
+    wireSpeak(notes);
     const box = side.querySelector('[data-panel="comments"]');
     box.innerHTML = `<h3>💬 註解</h3>${commentsHtml(p.id)}`;
     wireComments(box);
@@ -425,6 +479,7 @@
       if (e.target.tagName === 'TEXTAREA') return;
       if (e.key === 'ArrowRight' || e.key === 'PageDown') document.getElementById('next').click();
       if (e.key === 'ArrowLeft' || e.key === 'PageUp') document.getElementById('prev').click();
+      if (e.key.toLowerCase() === 'r' && !e.ctrlKey && !e.metaKey && !e.altKey) speak();
     };
     clearInterval(openPresenter.timer);
     openPresenter.timer = setInterval(tick, 1000);
@@ -449,7 +504,7 @@
     root.innerHTML = `<header><b>${i + 1} / ${story.pages.length}</b>`
       + `<span class="tools"><button type="button" data-show="notes" aria-pressed="${show.notes}" title="顯示或隱藏講稿">講稿</button><button type="button" data-show="comments" aria-pressed="${show.comments}" title="顯示或隱藏註解">註解</button>`
       + '<button type="button" data-size="-2" title="縮小字級">A−</button><button type="button" data-size="2" title="放大字級">A＋</button></span><span id="clock">00:00</span></header>'
-      + `<h1>${p.title}</h1><section ${show.notes ? '' : 'hidden'}><div class="deck-instruction">${instructionHtml(p)}</div>${explainHtml(p)}</section>`
+      + `<h1>${p.title}</h1><section ${show.notes ? '' : 'hidden'}><div class="deck-instruction">${instructionHtml(p)}</div>${speechHtml(p)}${explainHtml(p)}</section>`
       + `<p class="next">下一頁：${next ? next.title : '（最後一頁）'}</p>`
       + '<nav><button type="button" data-go="prev">← 上一頁</button><button type="button" data-go="next">下一頁 →</button></nav>'
       + `<section ${show.comments ? '' : 'hidden'}><h3>💬 註解</h3>${commentsHtml(p.id)}</section>`;
@@ -457,12 +512,14 @@
     root.querySelectorAll('[data-size]').forEach(b => b.onclick = () => setSize(size + Number(b.dataset.size)));
     root.querySelectorAll('[data-go]').forEach(b => b.onclick = () => document.getElementById(b.dataset.go).click());
     wireComments(root);
+    wireSpeak(root);
     tick();
   }
   const PRESENTER_CSS = `:root{--size:26px}body{margin:0;font:18px/1.7 system-ui,"Microsoft JhengHei",sans-serif;background:#1f211b;color:#f5f1e8}
 #root{padding:18px 28px}header{display:flex;justify-content:space-between;align-items:center;gap:12px;color:#cbc7b9}#clock{font-variant-numeric:tabular-nums;font-size:22px}
 .tools{display:flex;gap:6px}button[aria-pressed=false]{opacity:.45;text-decoration:line-through}h1{font-size:18px;color:#cbc7b9;margin:10px 0}.deck-instruction{font-size:var(--size);line-height:1.75}.deck-instruction b,.deck-instruction strong{color:#f2a58f}
 .deck-explain{font-size:calc(var(--size) * .72);line-height:1.75;color:#d9d5c7;border-left:3px solid #666;padding-left:14px}
+.deck-speech{font-size:calc(var(--size) * .85);line-height:1.75;border-left:3px solid #f2a58f;padding-left:14px}h3 button{margin-left:8px;padding:2px 10px;font-size:13px}
 .next{color:#a9a795;border-top:1px solid #444;padding-top:10px}nav{display:flex;gap:10px}h3{margin:22px 0 8px;font-size:16px;color:#cbc7b9}
 button{font:inherit;font-size:15px;padding:6px 14px;border-radius:6px;border:1px solid #666;background:#2c2e26;color:inherit;cursor:pointer}
 .deck-comments{padding-left:20px;margin:0}.deck-comments p{margin:0;white-space:pre-wrap}.deck-comments small{color:#a9a795;display:flex;gap:8px;align-items:center}
@@ -532,10 +589,11 @@ textarea{flex:1;font:inherit;font-size:16px;background:#2c2e26;color:inherit;bor
 
     buildSide();
     renderNotes();
+    document.addEventListener('story:render', () => { if (speaking && window.storyReader.index !== speakPage) speak(false); });
     document.addEventListener('story:render', renderNotes);
     const indexList = document.getElementById('index-list');
     if (indexList) new MutationObserver(() => { if (!indexList.querySelector('.deck-comment-badge')) badges(); }).observe(indexList, { childList: true });
-    window.addEventListener('pagehide', () => presenter?.close());
+    window.addEventListener('pagehide', () => { presenter?.close(); tts?.cancel(); });
 
     const root = document.getElementById('page');
     // 換頁重繪由 story:render 重新布置；頁內變動（mount 重繪、全選改寫）只需補回按鈕。
@@ -570,6 +628,7 @@ textarea{flex:1;font:inherit;font-size:16px;background:#2c2e26;color:inherit;bor
       }
       if (!typing && !e.ctrlKey && !e.metaKey && !e.altKey && e.key.toLowerCase() === 'n') togglePanel('notes');
       if (!typing && !e.ctrlKey && !e.metaKey && !e.altKey && e.key.toLowerCase() === 'c') togglePanel('comments');
+      if (!typing && !e.ctrlKey && !e.metaKey && !e.altKey && e.key.toLowerCase() === 'r') speak();
     });
     window.addEventListener('beforeunload', e => { if (dirty) { e.preventDefault(); e.returnValue = ''; } });
   });

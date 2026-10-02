@@ -25,3 +25,4 @@
 | [0019](0019-theme-templates.md) | 簡報以既有模板為主題：init 選主題，PPT 模板經指引轉成主題 | 已接受 |
 | [0020](0020-instructions-and-comments.md) | 每頁的口頭說明與註解：作者寫進 story.js，人寫進 edits.js | 已接受 |
 | [0021](0021-pptx-export.md) | 匯出 pptx：外框文字可編輯，內容區截圖，互動頁照腳本錄影 | 已接受 |
+| [0022](0022-speech-read-aloud.md) | 口語稿與朗讀：選填 speech 欄位，以瀏覽器內建語音念出 | 已接受 |

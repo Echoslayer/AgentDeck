@@ -161,7 +161,7 @@ export async function exportPptx({ dir, out, ffmpeg }, log = console.log) {
     return {
       id: p.id, full: !!document.querySelector('#page :is(.deck-cover,.deck-end)'),
       chapter: vis('.chapter'), title: vis('h1'), lead: vis('.lead'), point: vis('.point'),
-      instruction: text(p.instruction), explain: text(p.explain), record: p.record ?? null,
+      instruction: text(p.instruction), speech: text(p.speech), explain: text(p.explain), record: p.record ?? null,
     };
   });
   async function shot(pg, sel) {
@@ -216,7 +216,7 @@ export async function exportPptx({ dir, out, ffmpeg }, log = console.log) {
       await goTo(pg, i);
       const p = await readPage(pg);
       const slide = pptx.addSlide();
-      const notes = [p.instruction && `【講者動作】\n${p.instruction}`, p.explain && `【補充解釋】\n${p.explain}`];
+      const notes = [p.instruction && `【講者動作】\n${p.instruction}`, p.speech && `【口語稿】\n${p.speech}`, p.explain && `【補充解釋】\n${p.explain}`];
       if (p.full) {
         const img = await shot(pg, '#page :is(.deck-cover,.deck-end)');
         slide.addImage({ data: img.data, x: 0, y: 0, w: W, h: H });
