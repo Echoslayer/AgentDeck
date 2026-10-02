@@ -199,5 +199,5 @@ body.is-zoomed header,body.is-zoomed nav{zoom:1}
 body.is-zoomed main{zoom:1.15}
 @supports not (zoom:1){body.is-zoomed main{transform:scale(1.15);width:86.96%}}
 }
-.made-with{justify-self:center;margin:6px 0 2px;padding:4px 8px;font-size:12px;color:var(--muted);text-decoration:none;opacity:.8}
+.made-with{position:absolute;right:12px;bottom:2px;font-size:10px;line-height:1;color:var(--muted);text-decoration:none;opacity:.6}
 .made-with:hover,.made-with:focus-visible{color:var(--accent);opacity:1;text-decoration:underline}
