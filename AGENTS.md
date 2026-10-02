@@ -42,3 +42,7 @@
 
 - `node cli/check.mjs`：在暫存資料夾跑 `init`／`new`／`add`／`catalog`／`docs`／`diff`／`status`／`update core`／`pack`，驗證下游工作區只引用自身檔案，完成後清理。
 - `node examples/check.cjs`：互動組合範例的運算與本機引用。
+
+## Commit
+
+- 不加 `Co-authored-by: Copilot` trailer；作者只有 repo 擁有者。
