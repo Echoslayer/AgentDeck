@@ -10,7 +10,7 @@
    缺 data-key（退回位置 key）或 key 重複的元件，在編輯模式下以橘框標示（docs/adr/0007）。
    key 為 section／title／lead／point／detail 時，同時改寫該頁欄位，索引與縮圖文字會同步。
    講稿與註解：右側「講稿」（N）顯示 page.instruction、page.speech 與 page.explain，「註解」（C）顯示 edits.comments；頁首「🎤 講者」開簡報者視窗（docs/adr/0020）。
-   朗讀：R 或口語稿旁的「▶ 朗讀」以瀏覽器內建語音念 page.speech（docs/adr/0022）。
+   朗讀：R 或口語稿旁的按鈕播放 page.audio；沒有音檔或載入失敗時以瀏覽器內建語音念 page.speech（docs/adr/0022）。
    預設不保存：未另存的修改在重新整理後消失。
    與閱讀器只透過 window.storyReader 與 story:render 事件溝通（docs/adr/0008）。
    載入順序：deck-core.js → theme.js → [元件 js] → story.js → edits.js → deck-editor.js → reader.js */
@@ -297,7 +297,7 @@
   //    edits.comments[頁面 id] 是人留下的註解（純文字，一律跳脫），隨「另存」寫進 edits.js。
   //    右側欄給審閱，簡報者視窗給雙螢幕上台；投影畫面本身不顯示兩者。
   for (const p of story.pages) {
-    for (const f of ['instruction', 'explain', 'speech']) if (p[f] !== undefined && typeof p[f] !== 'string') throw new Error(`${p.id}: ${f} 必須是字串`);
+    for (const f of ['instruction', 'explain', 'speech', 'audio']) if (p[f] !== undefined && typeof p[f] !== 'string') throw new Error(`${p.id}: ${f} 必須是字串`);
     // record 只給 agentdeck export 錄影（docs/adr/0021），播放不使用；格式錯在載入時就報，不等到匯出。
     if (p.record === undefined) continue;
     if (!Array.isArray(p.record)) throw new Error(`${p.id}: record 必須是步驟陣列`);
@@ -330,14 +330,17 @@
 
   const instructionHtml = p => p.instruction || '<span class="deck-notes-empty">本頁沒有講者動作。</span>';
   const explainHtml = p => p.explain ? `<h3>📖 補充解釋</h3><div class="deck-explain">${p.explain}</div>` : '';
-  const speechHtml = p => p.speech
-    ? `<h3>🗣 口語稿${tts ? ` <button type="button" data-speak aria-pressed="${speaking}" title="朗讀口語稿（R）">${speaking ? '■ 停止' : '▶ 朗讀'}</button>` : ''}</h3><div class="deck-speech">${p.speech}</div>`
+  const speakLabel = p => speaking ? '■ 停止' : p.audio ? '▶ 播放' : '▶ 朗讀';
+  const canSpeak = p => !!(p.audio || (tts && p.speech));
+  const speechHtml = p => p.speech || p.audio
+    ? `<h3>🗣 口語稿${canSpeak(p) ? ` <button type="button" data-speak aria-pressed="${speaking}" title="${p.audio ? '播放音檔' : '朗讀口語稿'}（R）">${speakLabel(p)}</button>` : ''}</h3>`
+      + `<div class="deck-speech">${p.speech || '<span class="deck-notes-empty">本頁以音檔播放。</span>'}</div>`
     : '';
 
-  // ── 朗讀口語稿：page.speech 交給瀏覽器內建的 speechSynthesis，不需套件或網路服務以外的依賴；
-  //    只念 speech，不念畫面與講者動作。換頁、關閉頁面即停止。
+  // ── 口語稿發聲：有 page.audio 就播放音檔；沒有音檔、或音檔載入失敗時，把 page.speech 交給瀏覽器內建的
+  //    speechSynthesis。兩者都不需套件。只念口語稿，不念畫面與講者動作；換頁、關閉頁面即停止。
   const tts = window.speechSynthesis;
-  let speaking = false, speakRun = 0, speakPage = -1;
+  let speaking = false, speakRun = 0, speakPage = -1, player = null;
   tts?.getVoices(); // 部分瀏覽器第一次呼叫才開始載入語音清單
   const plain = h => { const d = document.createElement('div'); d.innerHTML = h.replace(/<br\s*\/?>/gi, '\n'); return d.textContent; };
   function pickVoice() {
@@ -349,33 +352,48 @@
     if (!pool.length) pool = voices.filter(v => norm(v).startsWith(lang.split('-')[0]));
     return { lang: want[0], voice: pool.find(v => /natural/i.test(v.name)) || pool[0] };
   }
-  function speak(on = !speaking) {
-    if (!tts) return;
-    const run = ++speakRun, p = currentPage();
-    tts.cancel();
-    speaking = false;
+  const finished = run => { if (run === speakRun) { speaking = false; player = null; syncSpeak(); } };
+  function playAudio(run, p) {
+    player = new Audio(p.audio);
+    player.onended = () => finished(run);
+    player.onerror = () => {
+      if (run !== speakRun) return;
+      console.warn(`${p.id}: 音檔無法播放（${p.audio}），改用內建語音`);
+      player = null;
+      if (!sayText(run, p)) finished(run);
+    };
+    player.play().catch(() => { /* 載入失敗由 onerror 處理；停止時的中斷不需處理 */ });
+    return true;
+  }
+  function sayText(run, p) {
     // 長段落在部分瀏覽器會中途被截斷，所以逐句排入佇列。
-    const parts = on && p.speech ? plain(p.speech).split(/(?<=[。！？!?；;\n])/).map(s => s.trim()).filter(Boolean) : [];
-    if (parts.length) {
-      const { lang, voice } = pickVoice();
-      const done = () => { if (run === speakRun) { speaking = false; syncSpeak(); } };
-      parts.forEach((text, i) => {
-        const u = new SpeechSynthesisUtterance(text);
-        u.lang = voice?.lang || lang;
-        if (voice) u.voice = voice;
-        u.onerror = e => { if (!['interrupted', 'canceled'].includes(e.error)) done(); };
-        if (i === parts.length - 1) u.onend = done;
-        tts.speak(u);
-      });
-      speaking = true;
-      speakPage = window.storyReader.index;
-    }
+    const parts = tts && p.speech ? plain(p.speech).split(/(?<=[。！？!?；;\n])/).map(s => s.trim()).filter(Boolean) : [];
+    if (!parts.length) return false;
+    const { lang, voice } = pickVoice();
+    parts.forEach((text, i) => {
+      const u = new SpeechSynthesisUtterance(text);
+      u.lang = voice?.lang || lang;
+      if (voice) u.voice = voice;
+      u.onerror = e => { if (!['interrupted', 'canceled'].includes(e.error)) finished(run); };
+      if (i === parts.length - 1) u.onend = () => finished(run);
+      tts.speak(u);
+    });
+    return true;
+  }
+  function speak(on = !speaking) {
+    const run = ++speakRun, p = currentPage();
+    tts?.cancel();
+    player?.pause();
+    player = null;
+    speaking = on && canSpeak(p) && (p.audio ? playAudio(run, p) : sayText(run, p));
+    if (speaking) speakPage = window.storyReader.index;
     syncSpeak();
   }
   function syncSpeak() {
+    const p = currentPage();
     for (const doc of [document, presenter && !presenter.closed && presenter.document]) {
       doc?.querySelectorAll('[data-speak]').forEach(b => {
-        b.textContent = speaking ? '■ 停止' : '▶ 朗讀';
+        b.textContent = speakLabel(p);
         b.setAttribute('aria-pressed', String(speaking));
       });
     }
@@ -593,7 +611,7 @@ textarea{flex:1;font:inherit;font-size:16px;background:#2c2e26;color:inherit;bor
     document.addEventListener('story:render', renderNotes);
     const indexList = document.getElementById('index-list');
     if (indexList) new MutationObserver(() => { if (!indexList.querySelector('.deck-comment-badge')) badges(); }).observe(indexList, { childList: true });
-    window.addEventListener('pagehide', () => { presenter?.close(); tts?.cancel(); });
+    window.addEventListener('pagehide', () => { presenter?.close(); tts?.cancel(); player?.pause(); });
 
     const root = document.getElementById('page');
     // 換頁重繪由 story:render 重新布置；頁內變動（mount 重繪、全選改寫）只需補回按鈕。

@@ -5,7 +5,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
-import { pathToFileURL } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 import { fail } from './util.mjs';
 
 const VIEW = { width: 1600, height: 1100 };
@@ -162,6 +162,7 @@ export async function exportPptx({ dir, out, ffmpeg }, log = console.log) {
       id: p.id, full: !!document.querySelector('#page :is(.deck-cover,.deck-end)'),
       chapter: vis('.chapter'), title: vis('h1'), lead: vis('.lead'), point: vis('.point'),
       instruction: text(p.instruction), speech: text(p.speech), explain: text(p.explain), record: p.record ?? null,
+      audio: p.audio ? new URL(p.audio, location.href).href : null,
     };
   });
   async function shot(pg, sel) {
@@ -250,6 +251,12 @@ export async function exportPptx({ dir, out, ffmpeg }, log = console.log) {
           slide.addText(p.point, { x: M + 0.2, y: py, w: W - 2 * M - 0.2, h: pointH, fontFace: FONT, fontSize: 14, bold: true, color: C.ink, margin: 0, valign: 'middle', fit: 'shrink' });
         }
       }
+      // 口語稿音檔放在右下角的小圖示，放映時點擊播放。
+      const audio = p.audio?.startsWith('file:') && fileURLToPath(p.audio);
+      if (audio && fs.existsSync(audio)) {
+        slide.addMedia({ type: 'audio', path: audio, x: W - 0.55, y: H - 0.55, w: 0.4, h: 0.4 });
+        report[report.length - 1] += '＋音檔';
+      } else if (p.audio) small.push(`${i + 1} ${p.id}：找不到音檔 ${p.audio}`);
       const n = notes.filter(Boolean).join('\n\n');
       if (n) slide.addNotes(n);
     }
