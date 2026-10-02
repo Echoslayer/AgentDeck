@@ -297,15 +297,31 @@
   //    （簡化了什麼、被追問時怎麼答），兩者都是作者寫的受信任 HTML；
   //    edits.comments[頁面 id] 是人留下的註解（純文字，一律跳脫），隨「另存」寫進 edits.js。
   //    右側欄給審閱，簡報者視窗給雙螢幕上台；投影畫面本身不顯示兩者。
+  const plain = h => { const d = document.createElement('div'); d.innerHTML = h.replace(/<br\s*\/?>/gi, '\n'); return d.textContent; };
+  // 口語稿斷句：句末標點（。！？!?；;）或換行（<br>）後切開；cues 與 at 的「第幾句」都照這個算。
+  const sentences = p => p.speech ? plain(p.speech).split(/(?<=[。！？!?；;\n])/).map(s => s.trim()).filter(Boolean) : [];
+  const ARROW_FROM = ['left', 'right', 'top', 'bottom'];
   for (const p of story.pages) {
     for (const f of ['instruction', 'explain', 'speech', 'audio']) if (p[f] !== undefined && typeof p[f] !== 'string') throw new Error(`${p.id}: ${f} 必須是字串`);
-    // record 只給 agentdeck export 錄影（docs/adr/0021），播放不使用；格式錯在載入時就報，不等到匯出。
+    // cues：音檔裡每句口語稿的起始秒數（docs/adr/0024），給字幕與講者動作對齊。
+    if (p.cues !== undefined) {
+      if (!Array.isArray(p.cues) || !p.cues.every((t, i) => Number.isFinite(t) && t >= 0 && (i === 0 || t >= p.cues[i - 1])))
+        throw new Error(`${p.id}: cues 必須是由小到大的秒數陣列`);
+      const n = sentences(p).length;
+      if (n && n !== p.cues.length) console.warn(`${p.id}: cues 有 ${p.cues.length} 個時間點，口語稿有 ${n} 句`);
+    }
+    // record 給 agentdeck export 錄影（docs/adr/0021）；步驟帶 at 時也在朗讀到該句時執行（docs/adr/0024）。
+    // 格式錯在載入時就報，不等到匯出。
     if (p.record === undefined) continue;
     if (!Array.isArray(p.record)) throw new Error(`${p.id}: record 必須是步驟陣列`);
     p.record.forEach((s, i) => {
       const ok = s && (Number.isFinite(s.wait) || typeof s.click === 'string' || (typeof s.set === 'string' && 'value' in s)
-        || (typeof s.drag === 'string' && Array.isArray(s.by) && s.by.length === 2 && s.by.every(Number.isFinite)));
-      if (!ok) throw new Error(`${p.id}: record 第 ${i + 1} 步格式錯誤：${JSON.stringify(s)}（可用 wait、click、set+value、drag+by）`);
+        || (typeof s.drag === 'string' && Array.isArray(s.by) && s.by.length === 2 && s.by.every(Number.isFinite))
+        || typeof s.box === 'string' || (typeof s.arrow === 'string' && (s.from === undefined || ARROW_FROM.includes(s.from)))
+        || s.clear === true)
+        && (s.at === undefined || (Number.isInteger(s.at) && s.at >= 1))
+        && (s.text === undefined || typeof s.text === 'string');
+      if (!ok) throw new Error(`${p.id}: record 第 ${i + 1} 步格式錯誤：${JSON.stringify(s)}（可用 wait、click、set+value、drag+by、arrow(+from)、box、clear，可加 at、text）`);
     });
   }
   const esc = s => s.replace(/[&<>"]/g, c => `&#${c.charCodeAt(0)};`);
@@ -353,9 +369,7 @@
   tts?.getVoices(); // 部分瀏覽器第一次呼叫才開始載入語音清單
   let cc = false, ccBox = null, ccText = '';
   try { cc = localStorage.getItem(CC_KEY) === '1'; } catch { /* 預設不顯示字幕 */ }
-  const plain = h => { const d = document.createElement('div'); d.innerHTML = h.replace(/<br\s*\/?>/gi, '\n'); return d.textContent; };
-  const sentences = p => p.speech ? plain(p.speech).split(/(?<=[。！？!?；;\n])/).map(s => s.trim()).filter(Boolean) : [];
-  // 字幕：朗讀中在畫面下方顯示目前這句。內建語音逐句同步；音檔沒有時間軸，依播放進度按句子字數比例估算。
+  // 字幕：朗讀中在畫面下方顯示目前這句。內建語音逐句同步；音檔有 cues 時照秒數，沒有時依播放進度按句子字數比例估算。
   function caption(text = '') {
     ccText = text;
     if (!ccBox) {
@@ -373,6 +387,125 @@
     caption(ccText);
     syncSpeak();
   }
+
+  // ── 講者動作（docs/adr/0024）：record 步驟帶 at（第幾句，1 起算）時，朗讀到那句就執行；其後沒有 at 的步驟
+  //    屬於同一組依序執行，wait 依語速縮短。沒有任何 at 的 record 只給匯出錄影，播放不執行。
+  //    arrow／box 是疊在畫面上的標註，換頁、停止或 clear 時移除；click／set／drag 以合成事件操作 #page 內的元件。
+  let layer = null, marks = [];
+  const pageEl = sel => {
+    const el = document.querySelector(`#page ${sel}`);
+    if (!el) throw new Error(`${currentPage().id}: 講者動作找不到元素：${sel}`);
+    return el;
+  };
+  function drawMarks() {
+    if (!marks.length) return;
+    const svg = layer.querySelector('svg');
+    svg.innerHTML = '';
+    for (const m of marks) {
+      const r = m.el.getBoundingClientRect();
+      if (m.box) {
+        Object.assign(m.box.style, { left: `${r.left - 6}px`, top: `${r.top - 6}px`, width: `${r.width + 12}px`, height: `${r.height + 12}px` });
+        if (m.label) Object.assign(m.label.style, { left: `${r.left - 6}px`, top: `${r.top - 10}px`, transform: 'translateY(-100%)' });
+        continue;
+      }
+      const cx = r.left + r.width / 2, cy = r.top + r.height / 2, L = 90, G = 10;
+      const [hx, hy, dx, dy] = { left: [r.left - G, cy, -1, 0], right: [r.right + G, cy, 1, 0], top: [cx, r.top - G, 0, -1], bottom: [cx, r.bottom + G, 0, 1] }[m.from];
+      const tx = hx + dx * L, ty = hy + dy * L;
+      svg.insertAdjacentHTML('beforeend', `<line x1="${tx}" y1="${ty}" x2="${hx + dx * 12}" y2="${hy + dy * 12}"/>`
+        + `<polygon points="${hx},${hy} ${hx + dx * 18 - dy * 10},${hy + dy * 18 + dx * 10} ${hx + dx * 18 + dy * 10},${hy + dy * 18 - dx * 10}"/>`);
+      if (m.label) Object.assign(m.label.style, { left: `${tx}px`, top: `${ty}px`, transform: { left: 'translate(-100%,-50%)', right: 'translate(0,-50%)', top: 'translate(-50%,-100%)', bottom: 'translate(-50%,0)' }[m.from] });
+    }
+  }
+  function annotate(s) {
+    if (s.clear) return clearMarks();
+    const el = pageEl(s.arrow ?? s.box);
+    if (!layer) {
+      layer = document.createElement('div');
+      layer.className = 'deck-marks';
+      layer.innerHTML = '<svg aria-hidden="true"></svg>';
+      document.body.append(layer);
+      addEventListener('resize', drawMarks);
+    }
+    const m = { el, from: s.from ?? 'left' };
+    if (s.box) layer.append(m.box = Object.assign(document.createElement('div'), { className: 'deck-mark-box' }));
+    if (s.text) layer.append(m.label = Object.assign(document.createElement('div'), { className: 'deck-mark-label', textContent: s.text }));
+    marks.push(m);
+    drawMarks();
+  }
+  function clearMarks() {
+    marks = [];
+    layer?.querySelectorAll('.deck-mark-box, .deck-mark-label').forEach(e => e.remove());
+    if (layer) layer.querySelector('svg').innerHTML = '';
+  }
+  function ripple(x, y) {
+    const d = Object.assign(document.createElement('div'), { className: 'deck-mark-ripple' });
+    Object.assign(d.style, { left: `${x}px`, top: `${y}px` });
+    document.body.append(d);
+    d.animate([{ transform: 'translate(-50%,-50%) scale(.3)', opacity: 1 }, { transform: 'translate(-50%,-50%) scale(1.4)', opacity: 0 }], { duration: 450 }).onfinish = () => d.remove();
+  }
+  const pause = ms => new Promise(r => setTimeout(r, ms / rate));
+  async function act(s, run) {
+    if (s.wait !== undefined) return pause(s.wait);
+    if (s.arrow || s.box || s.clear) return annotate(s);
+    const el = pageEl(s.click ?? s.set ?? s.drag), r = el.getBoundingClientRect();
+    let x = r.left + r.width / 2;
+    const y = r.top + r.height / 2;
+    if (s.set && el.type === 'range') x = r.left + (s.value - (el.min || 0)) / ((el.max || 100) - (el.min || 0)) * r.width;
+    ripple(x, y);
+    if (s.click) return el.click();
+    if (s.set) {
+      el.value = String(s.value);
+      for (const t of ['input', 'change']) el.dispatchEvent(new Event(t, { bubbles: true }));
+      return;
+    }
+    // drag：合成指標事件從元素中心移動 by=[dx, dy]。合成事件沒有真的指標，setPointerCapture 會丟例外，拖曳期間略過。
+    const fire = (type, px, py) => el.dispatchEvent(new PointerEvent(type, { bubbles: true, cancelable: true, clientX: px, clientY: py, pointerId: 1, pointerType: 'mouse', isPrimary: true, buttons: type === 'pointerup' ? 0 : 1 }));
+    const proto = Element.prototype, cap = proto.setPointerCapture, rel = proto.releasePointerCapture;
+    proto.setPointerCapture = proto.releasePointerCapture = function () {};
+    try {
+      fire('pointerdown', x, y);
+      for (let k = 1; k <= 25 && run === speakRun; k++) {
+        await pause(40);
+        fire('pointermove', x + s.by[0] * k / 25, y + s.by[1] * k / 25);
+      }
+      fire('pointerup', x + s.by[0], y + s.by[1]);
+    } finally {
+      proto.setPointerCapture = cap;
+      proto.releasePointerCapture = rel;
+    }
+  }
+  // 依 at 分組；沒有任何 at 時回傳 null（只給匯出用）。
+  function cueGroups(p) {
+    if (!p.record?.some(s => s.at)) return null;
+    const groups = new Map();
+    let at = 1;
+    for (const s of p.record) {
+      if (s.at) at = s.at;
+      if (!groups.has(at)) groups.set(at, []);
+      groups.get(at).push(s);
+    }
+    return groups;
+  }
+  // 朗讀進到第 i 句（0 起算）時呼叫：更新字幕，並依序執行 at ≤ i+1 且尚未執行的組（估算跳句時不漏）。
+  function cueSentence(run, p, i, text) {
+    if (run !== speakRun) return;
+    caption(text);
+    const st = cueState;
+    if (!st || st.run !== run) return;
+    for (const [at, steps] of st.groups) {
+      if (at > i + 1 || st.fired.has(at)) continue;
+      st.fired.add(at);
+      st.chain = st.chain.then(async () => {
+        for (const s of steps) {
+          if (run !== speakRun) return;
+          await act(s, run);
+        }
+      }).catch(e => console.error(e));
+    }
+  }
+  let cueState = null;
+  // 給 agentdeck export 錄影時執行 arrow／box／clear 步驟（cli/lib/export.mjs）。
+  window.deckActions = Object.freeze({ annotate, clear: clearMarks });
   function pickVoice() {
     const lang = (document.documentElement.lang || 'zh-TW').toLowerCase();
     const want = { 'zh-hant': ['zh-tw', 'zh-hk'], 'zh-hans': ['zh-cn'], zh: ['zh-tw', 'zh-cn'] }[lang] || [lang];
@@ -388,21 +521,29 @@
     player = null;
     caption();
     const i = window.storyReader.index;
-    if (auto && i < story.pages.length - 1) autoTimer = setTimeout(() => { if (run === speakRun && auto) window.storyReader.go(i + 1); }, AUTO_GAP);
-    else auto = false;
+    if (auto && i < story.pages.length - 1) {
+      // 本頁的講者動作做完才翻頁，避免最後一句觸發的操作被切掉。
+      (cueState?.run === run ? cueState.chain : Promise.resolve()).then(() => {
+        if (run === speakRun && auto) autoTimer = setTimeout(() => { if (run === speakRun && auto) window.storyReader.go(i + 1); }, AUTO_GAP);
+      });
+    } else auto = false;
     syncSpeak();
   }
   function playAudio(run, p) {
     player = new Audio(p.audio);
     player.playbackRate = rate;
     player.onended = () => finished(run);
-    const parts = sentences(p), ends = [];
-    parts.reduce((n, s) => (ends.push(n + s.length), n + s.length), 0);
-    player.ontimeupdate = () => {
-      if (run !== speakRun || !parts.length || !(player?.duration > 0)) return;
-      const at = player.currentTime / player.duration * ends[ends.length - 1];
-      const i = ends.findIndex(e => at < e);
-      caption(parts[i < 0 ? parts.length - 1 : i]);
+    // 目前句子：有 cues 照秒數；沒有就依播放進度按字數比例估算。currentTime 是音檔本身的秒數，不受語速影響。
+    const parts = sentences(p), lens = parts.map(s => s.length), total = lens.reduce((a, b) => a + b, 0);
+    const starts = () => p.cues ?? (player.duration > 0 ? lens.map((_, i) => lens.slice(0, i).reduce((a, b) => a + b, 0) / total * player.duration) : null);
+    let last = -1;
+    const tick = () => {
+      if (run !== speakRun || !player) return;
+      const at = starts(), t = player.currentTime;
+      let i = 0;
+      if (at) while (i + 1 < at.length && at[i + 1] <= t) i++;
+      if ((at || !parts.length) && i !== last) { last = i; cueSentence(run, p, i, parts[i] ?? ''); }
+      requestAnimationFrame(tick);
     };
     player.onerror = () => {
       if (run !== speakRun) return;
@@ -410,7 +551,7 @@
       player = null;
       if (!sayText(run, p)) finished(run);
     };
-    player.play().catch(() => { /* 載入失敗由 onerror 處理；停止時的中斷不需處理 */ });
+    player.play().then(() => { if (last < 0) tick(); }, () => { /* 載入失敗由 onerror 處理；停止時的中斷不需處理 */ });
     return true;
   }
   function sayText(run, p) {
@@ -425,7 +566,7 @@
       u.lang = voice?.lang || lang;
       if (voice) u.voice = voice;
       u.rate = rate;
-      u.onstart = () => caption(parts[i]);
+      u.onstart = () => cueSentence(run, p, i, parts[i]);
       u.onend = () => say(i + 1);
       u.onerror = e => { if (!['interrupted', 'canceled'].includes(e.error)) finished(run); };
       tts.speak(u);
@@ -440,7 +581,10 @@
     player?.pause();
     player = null;
     caption();
+    clearMarks();
     if (!on) auto = false;
+    const groups = on ? cueGroups(p) : null;
+    cueState = groups && { run, groups, fired: new Set(), chain: Promise.resolve() };
     speaking = on && canSpeak(p) && (p.audio ? playAudio(run, p) : sayText(run, p));
     if (on && auto && !speaking) { speaking = true; autoTimer = setTimeout(() => finished(run), AUTO_DWELL); }
     speakPage = window.storyReader.index;
@@ -693,6 +837,7 @@ textarea{flex:1;font:inherit;font-size:16px;background:#2c2e26;color:inherit;bor
     renderNotes();
     // 全部播放時換頁（自動或手動）接著念新的一頁；單頁朗讀則在換頁時停止。同一頁重繪不影響。
     document.addEventListener('story:render', () => {
+      clearMarks();
       if (window.storyReader.index === speakPage) return;
       if (auto) speak(true); else if (speaking) speak(false);
     });

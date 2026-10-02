@@ -134,6 +134,7 @@ const story = {
     instruction: '講者動作：怎麼開口、指哪裡',  // 講稿不顯示在投影畫面，見下方說明
     speech: '可選：要念出口的口語稿，人要求逐字稿或朗讀時才寫',
     audio: '可選：口語稿音檔，resource(\'audio/<頁面 id>.mp3\')',
+    cues: [0, 3.2, 7.8],            // 可選：音檔中每句口語稿的起始秒數
     explain: '可選：補充解釋，二次迭代才寫',
   }],
 };
@@ -145,12 +146,14 @@ const story = {
 - 縮圖以約 1000px 寬縮放同一份內容；超長頁面會被裁切，應拆頁。SVG 若用到 `id`，另提供沒有重複 id 的 `previewArt`。
 - **講稿**：只顯示在右側「講稿」分頁與簡報者視窗，不出現在投影畫面（ADR 0020）。分三個欄位，可用 `<b>`、`<br>`；另可附音檔 `audio`。封面與結尾以 `deck.cover({ …, instruction, speech, audio, explain })`、`deck.end({ instruction, speech, audio, explain })` 傳入。
   - `instruction`（講者動作）：實作時每頁都寫。用口語寫這頁怎麼開口、指哪裡、操作什麼、強調什麼、怎麼接到下一頁，不重複畫面上的文字；一頁約二到五句。
-  - `speech`（口語稿）：人要求逐字稿或朗讀時才寫。只寫講者實際說出口的話，照說的順序，不寫動作與括號提示（「指左邊」「停兩秒」留在 `instruction`）；數字、縮寫寫成念得順的樣子。右側「講稿」與簡報者視窗按口語稿旁的按鈕或 R 念本頁；P 或頁首「⏵ 全部播放」從目前這頁逐頁念完並自動翻頁（不執行互動），語速可切換；S 或 CC 按鈕開關朗讀時的半透明字幕（ADR 0022）。
+  - `speech`（口語稿）：人要求逐字稿或朗讀時才寫。只寫講者實際說出口的話，照說的順序，不寫動作與括號提示（「指左邊」「停兩秒」留在 `instruction`）；數字、縮寫寫成念得順的樣子。右側「講稿」與簡報者視窗按口語稿旁的按鈕或 R 念本頁；P 或頁首「⏵ 全部播放」從目前這頁逐頁念完並自動翻頁（不執行互動；要畫面跟著動見下方「講者動作隨朗讀」），語速可切換；S 或 CC 按鈕開關朗讀時的半透明字幕（ADR 0022）。
   - `audio`（口語稿音檔，可選）：人提供錄音或預先產生的語音時才填，檔案放 `resources/<name>/audio/`，以 `resource('audio/<頁面 id>.mp3')` 引用（mp3、m4a、wav、ogg 等瀏覽器能播的格式）。有音檔就播放音檔；沒有音檔或載入失敗時，以瀏覽器內建語音念 `speech`。有音檔時 `speech` 仍建議寫成音檔的逐字稿，供閱讀與匯出備忘稿。
+  - `cues`（每句起始秒數，可選）：有音檔且要字幕或講者動作精準對齊時才填，一句一個秒數，句數與 `speech` 的斷句相同（句末 `。！？!?；;` 或 `<br>` 切開）。秒數由語音服務的時間資訊、Whisper 對齊或人工標記取得；沒有時依播放進度估算（ADR 0024）。
   - `explain`（補充解釋）：第一輪不寫，整份完成後的講稿二次迭代才寫，只寫需要的頁。內容是畫面簡化或省略了什麼（簡化模型、略過的前提、只是代表案例），以及聽眾可能追問的原因與答法，例如「為什麼模型會把這個數字判錯」。每個說法都要回到素材或實測資料查證；查不到的列進 `plan.md`「待確認」，不寫成定論。二次迭代可以和處理註解一起做。
 - **題目（可選）**：`question: { prompt, choices: [{ value, label, feedback }], hideFuturePreviews? }`。`value` 為唯一的英數、`_`、`-`；`hideFuturePreviews: true` 在作答前遮住後續縮圖（不阻止翻頁）。答案保留到重新整理。
 - **互動（可選）**：`mount(root, state)` 在當頁渲染後呼叫，`root` 是主閱讀區，`state` 是此頁專用、保留到重新整理的物件；必須同步回傳清理函式或 `undefined`，換頁時先清理再移除舊內容。有 `mount` 的頁面必須提供靜態 `previewArt` 供縮圖使用。切換狀態（換樣本、換方法）時 `.stage` 高度保持不變：以固定高度或預留最大內容的空間，避免現場版面跳動與錄影裁切錯位。
 - **錄影步驟（可選）**：`record: [{ wait: 毫秒 }, { click: '選擇器' }, { set: '選擇器', value }, { drag: '選擇器', by: [dx, dy] }]`，給 `agentdeck export` 把這頁錄成影片放進 pptx（ADR 0021）。選擇器限定在 `#page` 內，優先用 `data-key`；`set` 用於 `<input>`、`<select>`，會觸發 `input` 與 `change`，拖曳滑桿就寫多個 `set` 漸進取值；`drag` 從元素中心按住移動 `by` 像素，用於旋轉 3D 等畫布。每步之間留 `wait` 讓結果看得清楚，全長約 5 到 10 秒，順序照 `instruction` 的操作。格式錯誤在載入時報錯；`agentdeck export --check` 會逐頁試跑，回報找不到的選擇器。沒有 `record` 的互動頁匯出為目前畫面的截圖。
+- **講者動作隨朗讀（可選）**：人要求無人播放、或要畫面跟著口語稿動時才寫。在 `record` 步驟加 `at: 第幾句`（1 起算），朗讀到那句時執行，其後沒有 `at` 的步驟屬於同一組，`wait` 依語速縮短；沒有任何 `at` 的 `record` 只用於匯出。另有標註步驟：`{ arrow: '選擇器', from: 'left'|'right'|'top'|'bottom', text }`、`{ box: '選擇器', text }`、`{ clear: true }`，紅色、不擋點擊，換頁或停止時移除。例：`record: [{ at: 2, box: '[data-key=a]', text: '先看這裡' }, { at: 3, clear: true }, { click: '[data-key=b] button' }, { wait: 800 }]`。動作照 `instruction` 的順序寫，標註要落在 `.stage` 內（匯出只錄這塊）；可重播的操作優先用 `set` 指定值，少用切換型的 `click`。同一份步驟匯出時依序執行、忽略 `at`（ADR 0024）。
 - 外掛層（如編輯器）只透過 `window.storyReader` 與 `story:render` 事件取用閱讀器狀態（ADR 0008）。
 - 載入順序固定：`reader.css` → `deck.css` → `theme.css` → 元件 css → `story.css` → `deck-core.js` → `theme.js` → 套件 js → 元件 js → `story.js` →（平行製作時的分頁檔，見「平行製作」）→ `edits.js` → `deck-editor.js` → `reader.js`。
 
