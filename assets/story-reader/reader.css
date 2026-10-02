@@ -203,9 +203,14 @@ body.is-zoomed main{zoom:1.15}
 /* 上一步/下一步貼齊導覽列左右兩端；導覽列已從釘選窗格右緣起算（--sidebar-space），不會被窗格蓋住。 */
 .nav-inner{max-width:none}
 body>nav .nav-inner{padding-inline:0}
-#prev,#next{width:100%}
+#prev,#next{width:fit-content;max-width:100%}
+#prev{justify-self:start}
+#next{justify-self:end}
 #prev{border-left:0;border-radius:0 7px 7px 0}
 #next{border-right:0;border-radius:7px 0 0 7px}
 #prev:focus-visible,#next:focus-visible{outline-offset:-3px}
+/* 導覽列空白處也能翻頁（reader.js）：左半上一頁、右半下一頁。 */
+body>nav{cursor:pointer}
+body>nav .progress{cursor:default}
 .made-with{position:absolute;right:12px;bottom:2px;font-size:10px;line-height:1;color:var(--muted);text-decoration:none;opacity:.6}
 .made-with:hover,.made-with:focus-visible{color:var(--accent);opacity:1;text-decoration:underline}
