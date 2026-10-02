@@ -118,6 +118,8 @@ AgentDeck/
 
 封面／結尾的 logo 由 `assets/theme/theme.js` 以 `deck.theme({ cover: img => html, end: img => html })` 提供，每個裝飾需有 `data-key`，現場可逐一隱藏。預設圖片為自繪 SVG（CC0，見 `assets/theme/img/README.md`）。
 
+要沿用指定模板時，`init --theme <主題資料夾>` 以該資料夾取代預設主題；PPT 模板依 [`docs/guides/theme-from-pptx.md`](docs/guides/theme-from-pptx.md) 先轉成主題資料夾，預設只取 logo 與背景，轉換只涵蓋主題層，不新增頁型（[ADR 0019](docs/adr/0019-theme-templates.md)）。
+
 ## 建立品牌版本（下游專案）
 
 AgentDeck 是上游框架；每份簡報以 `npx -y github:Echoslayer/AgentDeck init <位置>/<topic>` 建立自己的下游單位。下游的框架副本都在單位的 `agentdeck/` 內（上游路徑加上 `agentdeck/` 前綴）。`agentdeck/assets/theme/`、`resources/` 歸下游所有，核心與元件是可比對的副本，以 `diff`、`update core` 跟進上游（[ADR 0010](docs/adr/0010-theme-layer-and-downstream.md)、[ADR 0016](docs/adr/0016-registry-copy-and-contract-version.md)、[ADR 0017](docs/adr/0017-presentation-entry-layout.md)）。既有品牌可複製到各單位，不作跨資料夾播放依賴。
