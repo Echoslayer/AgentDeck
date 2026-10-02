@@ -6,29 +6,57 @@
 
 | 情境 | 簡報放在哪 | 第一步 |
 | --- | --- | --- |
-| A. 簡報跟著其他專案一起版本控制 | `<其他專案>/slides/resources/<topic>/` | `npx -y github:Echoslayer/AgentDeck init <其他專案>/slides` |
+| A. 簡報跟著其他專案一起版本控制 | `<其他專案>/slides/<topic>/index.html`；該資料夾是完整獨立單位 | `npx -y github:Echoslayer/AgentDeck init <其他專案>/slides/<topic>` |
 | B. 在其他專案裡直接叫 agent 做簡報 | 由 agent 找到或建立工作區 | 先安裝 skill：`tools\install-skill.cmd` |
-| C. 試做或驗證框架本身 | `AgentDeck/resources/<topic>/`（不進 git） | 在 AgentDeck 開 agent |
+| C. 試做或驗證框架本身 | `AgentDeck/playground/<topic>/index.html`；該資料夾是獨立試驗單位 | `node cli/agentdeck.mjs init playground/<topic>` |
 
-- **A**：`init` 只複製播放必需的核心（`assets/deck` 核心檔、`assets/story-reader/`、`templates/blank/`）、品牌 `assets/theme/`、`AGENTDECK.md` 與 `vendor.json`，並寫入 `agentdeck.json`（契約版本、來源、每個副本的上游 commit 與雜湊）。元件、範例、指引留在上游，用到才取。`vendor/`、`dist/` 預設列入 `.gitignore`。需要 Node.js 18 以上；播放與交付的 zip 不需要。
-- **B**：skill 原始檔在 [`skills/agentdeck/`](../skills/agentdeck/SKILL.md)，安裝到 `~\.copilot\skills\` 與 `~\.claude\skills\`，並寫入本機 AgentDeck 位置，讓 agent 可改用本機 CLI。只想給單一專案用，可加 `-Dest <repo>\.github\skills`。agent 被要求做簡報時會讀到它，找到 `agentdeck.json` 或照 A 建立工作區。
-- **C**：上游本身也可直接當工作區；`add`、`diff`、`update` 在上游內不適用。
+- **A**：`init` 只複製播放必需的核心（`assets/deck` 核心檔、`assets/story-reader/`、`templates/blank/`）、品牌 `assets/theme/`、`AGENTDECK.md` 與 `vendor.json`，全部放進單位內的 `agentdeck/`，並寫入 `agentdeck/agentdeck.json`（契約版本、來源、每個副本的上游 commit 與雜湊）。元件、範例、指引留在上游，用到才取。`agentdeck/vendor/`、`dist/` 預設列入 `.gitignore`。需要 Node.js 18 以上；播放與交付的 zip 不需要。
+- **B**：skill 原始檔在 [`skills/agentdeck/`](../skills/agentdeck/SKILL.md)，安裝到 `~\.copilot\skills\` 與 `~\.claude\skills\`，並寫入本機 AgentDeck 位置，讓 agent 可改用本機 CLI。只想給單一專案用，可加 `-Dest <repo>\.github\skills`。agent 被要求做簡報時會讀到它，找到 `agentdeck/agentdeck.json` 或照 A 建立工作區。
+- **C**：`init` 只允許上游內被忽略的 `playground/` 作試驗單位；上游根與其他上游資料夾不能用來製作主題。Registry 的 `templates/blank/`、元件展示與 examples 仍可直接預覽。
 - 舊版以 `workspace.cmd`（已移除）建立的工作區，轉換方式見 [`migrations/0-to-1.md`](migrations/0-to-1.md)。
+
+例如在 AgentDeck 上游試做一份簡報，從上游根目錄執行：
+
+```powershell
+node cli/agentdeck.mjs init playground/demo
+node cli/agentdeck.mjs new demo --dir playground/demo
+```
+
+只有刻意屬於這份簡報的候選或附件，才接著建立：
+
+```powershell
+node cli/agentdeck.mjs new draft-a --related candidates --dir playground/demo
+node cli/agentdeck.mjs new experiment --related attachments --dir playground/demo
+```
+
+主入口是 `playground/demo/index.html`。完成內容後，以 `node cli/agentdeck.mjs pack --dir playground/demo` 打包整份交付。另一份獨立 HTML PPT 另行 `init`，即使題材相近也不放進 `demo`；一般下游專案改用情境 A 的 CLI 與目的路徑。
+
+單位的第一層只放人會打開的東西，框架都收在 `agentdeck/`：
+
+```text
+demo/
+  index.html          主簡報（雙擊播放）
+  resources/demo/     story.js、story.css、edits.js、plan.md、素材
+  candidates/…        同主體的候選或附件（可選）
+  agentdeck/          框架、品牌、元件、套件、AGENTDECK.md 與 CLI 記錄
+  dist/               打包產物（不進 git）
+```
 
 ## CLI
 
-以下 `<CLI>` 為 `npx -y github:Echoslayer/AgentDeck`，或本機的 `node <AgentDeck>/cli/agentdeck.mjs`；工作區的 `agentdeck.json` 的 `cli` 欄位會記錄要用哪一個。在工作區任一層執行即可，也可用 `--dir` 指定。
+以下 `<CLI>` 為 `npx -y github:Echoslayer/AgentDeck`，或本機的 `node <AgentDeck>/cli/agentdeck.mjs`；工作區的 `agentdeck/agentdeck.json` 的 `cli` 欄位會記錄要用哪一個。在工作區任一層執行即可，也可用 `--dir` 指定。
 
 | 指令 | 用途 |
 | --- | --- |
-| `init [資料夾]` | 建立工作區（`--commit-vendor` 讓套件進 git；`--agents-hint` 在宿主 `AGENTS.md` 加一行指引） |
+| `init [資料夾]` | 建立一份簡報的獨立單位（`--commit-vendor` 讓套件進 git；`--agents-hint` 在宿主 `AGENTS.md` 加一行指引） |
 | `status` | 契約版本、副本與上游的差異摘要、套件狀態；動工前先跑 |
 | `catalog [關鍵字]` | 元件、互動範例、寫作指引的一行索引 |
 | `docs <名稱> [--code]` | 只讀選中項目的 README 與追加說明；範例加 `--code` 連同程式 |
-| `add <元件…>` | 複製元件到 `assets/deck/components/<name>/`，登記到 `agentdeck.json` |
-| `new <topic>` | 由 `templates/blank/` 建立 `resources/<topic>/` |
-| `vendor` | 依 `vendor.json` 下載並驗證套件（`--check` 只檢查） |
-| `pack <簡報資料夾>` | 打包成可離線播放的 zip（預設輸出到 `dist/`） |
+| `add <元件…>` | 複製元件到 `agentdeck/assets/deck/components/<name>/`，登記到 `agentdeck/agentdeck.json`，並印出要加到 `index.html` 的引用行 |
+| `new <topic>` | 在單位內建立唯一根 `index.html` 與 `resources/<topic>/`；已存在主入口時拒絕 |
+| `new <name> --related <group>` | 明確同主體的候選／附件入口 `<group>/<name>/index.html`，內容在 `resources/<name>/` |
+| `vendor` | 依 `agentdeck/vendor.json` 下載並驗證套件（`--check` 只檢查） |
+| `pack [入口資料夾]` | 預設打包完整單位；可選相關入口作首頁（輸出到 `dist/`） |
 | `diff [core\|<元件>]` | 副本相對於取得時與上游最新版的差異；`--patch` 顯示內容 |
 | `update core` | 以上游核心覆蓋副本；有本地修改需 `--force`，跨契約版本需 `--migrate` |
 
@@ -36,16 +64,18 @@
 
 - 副本取得後歸工作區所有，不會自動更新。想跟進上游時先 `diff`，再決定 `update core`、`add <元件> --force`，或手動挑選修改。
 - 核心公開 `deck.contract`（契約版本）。上游改動分鏡資料契約、`deck.*` API、標記規範或工作區結構時遞增版本，並在 [`migrations/`](migrations/README.md) 寫遷移說明。
-- 工作區與上游契約版本不同時，`add` 會拒絕；`status` 會列出需讀的遷移說明，讀完以 `update core --migrate` 升級，再依說明修改元件副本與簡報。無法遷移時，改用對應版本的來源（例如 tag `contract-<n>`）。
+- 工作區與上游契約版本不同時，`add`、`new`、`pack` 會拒絕；`status` 會列出需讀的遷移說明，讀完以 `update core --migrate` 升級，再依說明修改元件副本與簡報。契約 2 的入口結構見 [1-to-2](migrations/1-to-2.md)。無法遷移時，改用對應版本的來源（例如 tag `contract-<n>`）。
 
 ## 共同流程
 
-1. **建立主題**：`<CLI> new <topic>`。
+1. **建立主題**：`<CLI> init <位置>/<topic>` 後，於該單位 `<CLI> new <topic>`。另一獨立主題另行 `init`，不能放在此單位內共用框架；只有同一主體的候選／附件才用 `--related`，群組可用 `candidates`、`attachments` 或其他有效名稱。探索可先建立候選，主入口稍後再定。
 2. **企劃**：填 `resources/<topic>/plan.md`（對象、目的、素材、逐頁分鏡、元件、交付方式），人確認後再動工。`plan.md` 不會被打包。
 3. **選呈現方式**：`<CLI> catalog` 看索引（上游可開 [`元件與互動範例`](../examples/index.html)）。現成元件以 `docs <name>` 讀 README 與追加說明，`add <name>` 取得後按 API 引用；互動組合以 `docs <範例> --code` 讀說明與程式後在主題內改寫。主題不得執行期引用 examples 或 playground。
-4. **製作**：寫 `story.js`／`story.css`／`index.html`。寫作方式可參考 `catalog` 列出的指引。
-5. **檢查與現場修正**：雙擊 `resources/<topic>/index.html` 播放；頁首「✎ 編輯」可改文字、拖曳、隱藏元件，按「另存」輸出 `edits.js` 覆蓋主題內的同名檔。
-6. **交付**：`<CLI> pack resources/<topic>` 產生 `dist/<topic>-<時間>.zip`，對方解壓後雙擊最上層 `index.html` 即可離線播放。用到特殊元件（three.js 等）時，缺少的套件會自動下載。
+4. **製作**：主入口是根 `index.html`；內容、CSS、資料、圖片與人工修改放 `resources/<topic>/`。根入口引用 `agentdeck/assets/`、`resources/<topic>/`；動態素材依 [`AGENTDECK.md`](../AGENTDECK.md#相對路徑) 取得 story script 前綴。所有播放依賴位於同一單位內。
+5. **檢查與現場修正**：雙擊根 `index.html` 播放；頁首「✎ 編輯」可改文字、拖曳、隱藏元件，按「另存」輸出 `edits.js` 覆蓋對應 `resources/<name>/edits.js`。
+6. **交付**：`<CLI> pack` 打包完整單位，解壓後最上層 `index.html` 是實際播放頁。逐頁驗證主簡報、相關內容與素材連結；缺少的引用套件會自動下載。將整個資料夾移至別處再驗證，確認沒有依賴其他主題。
+
+若以 `pack <group>/<name>` 選相關入口作交付首頁，僅靜態 HTML 引用會換算；另外檢查 `story.back` 與動態連結，原主簡報不保證一併帶入。完整交付優先用無參數的 `pack`。
 
 ## 給 agent 的開場白範例
 

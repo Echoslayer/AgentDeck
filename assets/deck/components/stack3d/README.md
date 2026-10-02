@@ -7,7 +7,7 @@
 `deck.stack3d(key, [{ text, note?, key?, highlight? }], { hint? })`
 - 層次由上而下排列；`highlight` 以突顯色標出本頁要講的那一層。
 - 每層 key 預設 `key-序號`，可單獨隱藏（3D 中的對應層同步隱藏）；`text`、`note` 可現場編輯。
-- 引用方式見 `CATALOG.md`「特殊元件」：需先引用 `vendor/three/three.min.js`。
+- 引用方式見 `CATALOG.md`「特殊元件」：需先引用 three.js 套件（下游為 `agentdeck/vendor/three/three.min.js`，`agentdeck add` 會印出引用行）。
 
 ## 必須保留
 - 層數 2–6；超過時拆頁或改用 `list`。

@@ -1,6 +1,6 @@
 # 0016. 其他專案改以「複製即擁有」取用框架，契約以版本號與遷移說明管理
 
-- 狀態：已接受
+- 狀態：已接受（簡報單位與入口結構被 [0017](0017-presentation-entry-layout.md) 修訂；下文結構為契約 1）
 - 日期：2026-10-01
 - 修訂：[0014](0014-portable-usage.md)（決策 3 工作區）、[0011](0011-vendor-manifest-and-packing.md)（決策 2「不需要 Node」改為僅指播放端）、[0010](0010-theme-layer-and-downstream.md)（下游可修改自己的元件副本）
 

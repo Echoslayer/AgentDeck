@@ -7,6 +7,8 @@ import { fileURLToPath } from 'node:url';
 
 export const UP = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
 export const MARKER = 'agentdeck.json';
+// 下游的框架、元件、套件與製作記錄集中在此資料夾，根目錄只留入口與內容（ADR 0017）。
+export const FW = 'agentdeck';
 export const DEFAULT_SOURCE = 'github:Echoslayer/AgentDeck';
 
 export class UserError extends Error {}
@@ -99,22 +101,28 @@ export function upstreamCommit() {
   return commitCache;
 }
 
-// 工作區：往上找 agentdeck.json；在上游 repo 內則以上游為工作區（情境 A，僅供上游自用）。
+// 工作區：往上找 agentdeck/agentdeck.json；在上游 repo 內則以上游為工作區（情境 A，僅供上游自用）。
+// root 是簡報單位根目錄（入口與 resources/），fw 是框架副本所在；上游與舊佈局兩者相同。
 export function findWorkspace(opts = {}) {
   let d = path.resolve(opts.dir ?? process.cwd());
   const start = d;
+  const load = file => ({ contract: 0, core: {}, components: {}, ...readJson(file) });
   for (;;) {
-    if (exists(path.join(d, MARKER))) {
-      // 舊版 workspace.cmd 的記錄沒有 contract，視為契約 0（遷移見 docs/migrations/0-to-1.md）。
-      const config = { contract: 0, core: {}, components: {}, ...readJson(path.join(d, MARKER)) };
-      return { root: d, upstream: false, config };
+    if (exists(path.join(d, FW, MARKER))) return { root: d, fw: path.join(d, FW), upstream: false, config: load(path.join(d, FW, MARKER)) };
+    if (path.basename(d) === FW && exists(path.join(d, MARKER))) {
+      const root = path.dirname(d);
+      return { root, fw: d, upstream: false, config: load(path.join(d, MARKER)) };
     }
-    if (d === UP) return { root: UP, upstream: true, config: null };
+    if (exists(path.join(d, MARKER))) {
+      // 根目錄的 agentdeck.json 是契約 1 以前的佈局；workspace.cmd 的記錄沒有 contract，視為契約 0（docs/migrations/0-to-1.md）。
+      return { root: d, fw: d, upstream: false, legacy: true, config: load(path.join(d, MARKER)) };
+    }
+    if (d === UP) return { root: UP, fw: UP, upstream: true, config: null };
     const parent = path.dirname(d);
     if (parent === d) break;
     d = parent;
   }
-  fail(`找不到 ${MARKER}（從 ${start} 往上找）。先執行 init 建立工作區，或以 --dir 指定。`);
+  fail(`找不到 ${FW}/${MARKER}（從 ${start} 往上找）。先執行 init 建立工作區，或以 --dir 指定。`);
 }
 
 export function requireDownstream(ws, cmd) {
@@ -122,7 +130,7 @@ export function requireDownstream(ws, cmd) {
 }
 
 export function saveConfig(ws) {
-  writeJson(path.join(ws.root, MARKER), ws.config);
+  writeJson(path.join(ws.fw, MARKER), ws.config);
 }
 
 export function cliHint(source) {

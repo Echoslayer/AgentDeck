@@ -10,7 +10,7 @@
 'use strict';
 window.deck = (() => {
   // 契約版本（docs/adr/0016）：只有不相容變更才遞增，並附 docs/migrations/<n>-to-<n+1>.md。CLI 以此行讀取版本。
-  const CONTRACT = 1;
+  const CONTRACT = 2;
   const KEY = /^[\w-]+$/;
   const TIERS = ['basic', 'special'];
   const NAME = /^[a-z][a-z0-9]*$/;
@@ -77,7 +77,7 @@ window.deck = (() => {
   // three.js 共用外殼（vendor.json 的 three）：renderer、尺寸、動畫迴圈、拖曳旋轉、釋放資源。
   // setup(ctx) 建好場景後回傳 update(t)；ctx.drag 為累積拖曳角度 { x, y }，ctx.token(name) 讀色票。
   function three(host, setup) {
-    if (!window.THREE) throw new Error('three.js 未載入：在 index.html 引用 vendor/three/three.min.js，並執行 agentdeck vendor 下載（docs/adr/0011）');
+    if (!window.THREE) throw new Error('three.js 未載入：在 index.html 引用 agentdeck/vendor/three/three.min.js（上游內為 vendor/three/three.min.js），並執行 agentdeck vendor 下載（docs/adr/0011）');
     const T = window.THREE;
     const renderer = new T.WebGLRenderer({ antialias: true, alpha: true });
     renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
@@ -214,7 +214,7 @@ window.deck = (() => {
       if (prop in target) return target[prop];
       if (registry.has(prop)) return registry.get(prop).call;
       if (typeof prop === 'string' && NAME.test(prop) && prop !== 'then') {
-        throw new Error(`deck.${prop} 未載入。若元件目錄（agentdeck catalog）有此元件，以 agentdeck add ${prop} 取得後在 index.html 引用 components/${prop}/${prop}.css 與 ${prop}.js；否則在主題 story.js／story.css 自行實作。`);
+        throw new Error(`deck.${prop} 未載入。若元件目錄（agentdeck catalog）有此元件，以 agentdeck add ${prop} 取得後，依其輸出在 index.html 引用 agentdeck/assets/deck/components/${prop}/${prop}.css 與 ${prop}.js；否則在主題 story.js／story.css 自行實作。`);
       }
       return undefined;
     },

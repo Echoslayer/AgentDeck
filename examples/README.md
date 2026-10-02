@@ -18,7 +18,7 @@
 ## 使用方式
 
 1. 先讀上方選用摘要，選定後只讀該範例的 README、必要的追加說明與程式；不要掃描整個 examples 或預先載入所有範例。
-2. 在 `resources/<topic>/` 裡改寫需要的 HTML、CSS、JS 與資料，保留來源說明及語意限制。從 `templates/blank/` 建立主題；不要把範例整包當成正式主題骨架。
+2. 先 `agentdeck init <位置>/<topic>` 建立獨立簡報單位，再於其中 `agentdeck new <topic>` 建立根 `index.html` 與 `resources/<topic>/` 內容。改寫需要的 HTML、CSS、JS 與資料，保留來源說明及語意限制；動態圖片與檔案連結使用 story.js 的 `resource()`。只有同一主體的候選／附件才用 `new <name> --related <group>`；不要把範例整包當成正式主題骨架。
 3. 主題不得以 script、stylesheet、圖片或其他執行期方式引用 `examples/` 或 `playground/`。範例之間可共用檔案，正式主題必須自行持有需要的實作。
 4. 檢查掛載後與互動更新後的結果、文字換行、窄版面、返回狀態與靜態預覽。
 
@@ -32,6 +32,6 @@
 
 ## 檢查與交付
 
-`node examples/check.cjs` 執行三種組合檢查，確認範例的本機引用。這不是瀏覽器排版驗收。
+`node examples/check.cjs` 執行組合檢查，確認範例的本機引用。這不是瀏覽器排版驗收。
 
 `node cli/check.mjs` 驗證下游工作區不帶入 examples、`docs` 能輸出範例說明與程式、examples 打包後引用完整，以及主題引用 examples 時 pack 會拒絕。若要寄送示範，使用 `node cli/agentdeck.mjs pack examples` 打包整個展示入口。

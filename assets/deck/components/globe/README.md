@@ -8,7 +8,7 @@
 - `lat` −90～90、`lon` −180～180。
 - `links`：`[[from, to], …]`，元素為地點序號或地點 key；參照不存在會直接報錯。
 - 每個地點 key 預設 `key-序號`，可單獨隱藏（標記與相關連線同步隱藏）；`label`、`note` 可現場編輯。
-- 引用方式見 `CATALOG.md`「特殊元件」：需先引用 `vendor/three/three.min.js`。
+- 引用方式見 `CATALOG.md`「特殊元件」：需先引用 three.js 套件（下游為 `agentdeck/vendor/three/three.min.js`，`agentdeck add` 會印出引用行）。
 
 ## 必須保留
 - 地球是抽象點雲，沒有國界與海岸線，**不能用來表達精確地理位置**；需要地圖精度時改用圖片（`figure`）。

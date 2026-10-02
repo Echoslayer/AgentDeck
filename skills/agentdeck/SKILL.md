@@ -16,25 +16,26 @@ AgentDeck CLI（製作端用，播放不需要）：
 
 | 情況 | 做法 |
 | --- | --- |
-| 目前專案某層已有 `agentdeck.json` | 用該資料夾；CLI 改用其中 `cli` 欄位的指令 |
-| 簡報要跟著目前專案版本控制 | `<CLI> init <repo>/slides`（宿主有 `AGENTS.md` 時，問使用者是否加 `--agents-hint`） |
+| 找到的 `agentdeck/agentdeck.json` 屬於這次要改版的簡報，或其明確候選／附件 | 沿用該單位；CLI 改用其中 `cli` 欄位的指令 |
+| 找到的單位屬於另一份獨立簡報 | 在另一個資料夾 `init`，不因已有 `agentdeck/agentdeck.json` 而共用 |
+| 簡報要跟著目前專案版本控制 | `<CLI> init <repo>/slides/<topic>`；每個主題各一個獨立單位（宿主有 `AGENTS.md` 時依既有授權決定 `--agents-hint`） |
 | 只拿目前專案當素材、簡報不需跟著它 | 問使用者放哪個資料夾，在那裡 `init` |
-| 目前專案就是 AgentDeck 本身 | 讀其 `AGENTS.md`（上游只用於試做與驗證） |
+| 目前專案就是 AgentDeck 本身 | 讀其 `AGENTS.md`；試驗以 `init playground/<topic>` 建立獨立單位，不在上游根 `new` |
 
-位置有疑問就問使用者。舊版 `workspace.cmd`（已移除）建立的工作區（`agentdeck.json` 沒有 `contract`）：先執行 `status`，依 `docs 0-to-1` 轉換。
+位置有疑問就問使用者。根目錄直接有 `agentdeck.json` 的是舊版工作區（契約 1 以前，或 `workspace.cmd` 建立而沒有 `contract`）：先執行 `status`，依它列出的遷移說明（`docs 0-to-1`、`docs 1-to-2`）轉換。
 
 ## 2. 照 AGENTDECK.md 做
 
-讀工作區的 `AGENTDECK.md`，**全部照做**。重點：
+讀工作區的 `agentdeck/AGENTDECK.md`，**全部照做**。重點：
 
 1. 動工前 `status` 檢查契約版本；不一致時依遷移說明處理，無法遷移就停下來說明。
-2. `new <topic>` 建立主題，先填 `plan.md` 交使用者確認，再寫程式。
+2. 在已 `init` 的獨立單位中 `new <topic>` 建立唯一根 `index.html` 與 `resources/<topic>/`，先填後者的 `plan.md` 交使用者確認，再寫程式。另一獨立主題須另行 `init`；只有同一主體的候選／附件使用 `new <name> --related <group>`，入口在 `<group>/<name>/index.html`。
 3. `catalog [關鍵字]` 選表示方式，`docs <名稱>` 只讀選中的項目，`add <元件>` 取得元件。不整份讀取上游文件。
 4. 素材在其他位置時只讀不改，內容摘錄進 `story.js`；簡報只引用工作區內的檔案。
-5. 雙擊 `resources/<topic>/index.html` 檢查；交付用 `pack resources/<topic>`。
+5. 雙擊根 `index.html` 檢查；另存的人工修正放回對應 `resources/<name>/edits.js`。交付用 `pack` 打包完整單位，zip 根 `index.html` 直接播放。入口、相關內容與素材都引用本單位內的相對路徑，整個資料夾可獨立搬移。第一層只放入口、`resources/`、`agentdeck/`、`dist/`；主題的腳本與資料放進 `resources/<topic>/`。
 
 ## 不要做
 
-- 不改 `edits.js`、核心副本（`assets/deck/` 核心檔、`assets/story-reader/`、`templates/`、`AGENTDECK.md`）、`assets/theme/`、`agentdeck.json`（除非使用者明確要求）。
-- 不引入建置流程、不走 CDN、不把 `vendor/`、`dist/` 加入 git。
+- 不改 `edits.js`、核心副本（`agentdeck/` 下的 `assets/deck/` 核心檔、`assets/story-reader/`、`templates/`、`AGENTDECK.md`）、`agentdeck/assets/theme/`、`agentdeck/agentdeck.json`（除非使用者明確要求）。
+- 不引入建置流程、不走 CDN、不把 `agentdeck/vendor/`、`dist/` 加入 git。
 - 不在工作區以外另起一套簡報框架；需要的元件不存在時，依 `AGENTDECK.md` 在主題內自製。

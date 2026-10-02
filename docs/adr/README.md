@@ -19,4 +19,5 @@
 | [0013](0013-component-tiers.md) | 元件分為基礎與特殊兩級，候選元件升級 | 已接受 |
 | [0014](0014-portable-usage.md) | 從其他專案使用：入口文件、企劃範本、工作區與 skill | 已接受（工作區被 0016 取代） |
 | [0015](0015-interactive-examples.md) | 互動組合範例隨專案交付，與正式元件分開 | 已接受（交付方式被 0016 修訂） |
-| [0016](0016-registry-copy-and-contract-version.md) | 其他專案改以「複製即擁有」取用框架，契約以版本號與遷移說明管理 | 已接受 |
+| [0016](0016-registry-copy-and-contract-version.md) | 其他專案改以「複製即擁有」取用框架，契約以版本號與遷移說明管理 | 已接受（簡報單位與入口結構被 0017 修訂） |
+| [0017](0017-presentation-entry-layout.md) | 每個主題以獨立簡報單位保存，根入口直接播放，框架集中於 agentdeck/ | 已接受 |

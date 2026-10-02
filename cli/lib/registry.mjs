@@ -10,6 +10,7 @@ export const MIGRATIONS = path.join(UP, 'docs', 'migrations');
 const CATALOG = path.join(COMPONENTS, 'CATALOG.md');
 
 // 核心副本：update core 整份覆蓋。路徑相對於上游根目錄，也就是下游工作區根目錄。
+// templates/blank 保留可直接預覽的骨架；new 建立主題工作區根入口與 resources/<topic>/ 內容（契約 2）。
 export function coreFiles() {
   return [
     'AGENTDECK.md',

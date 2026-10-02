@@ -44,13 +44,12 @@ AgentDeck/
 │   ├── adr/                 架構決策紀錄
 │   ├── migrations/          契約版本的遷移說明（<n>-to-<m>.md）
 │   └── guides/              寫作指引（建議，非強制），例如 visual-story.md
-├── playground/              候選元件研究（本機試驗，不進 git；主題不得引用）
+├── playground/              本機研究；試驗簡報各自 init 成獨立單位（不進 git）
 ├── examples/                互動組合範例（進 git、留在上游，以 cli docs --code 讀取；參考改寫，不是執行期依賴）
 │   ├── index.html           現成元件與互動範例的展示入口
 │   ├── resolution-comparison/  解析度比較：矩陣、聚合尺度、細節變化
 │   ├── threshold-consensus/    門檻與共識：對齊數值、篩選、投票
 │   └── weighted-ranking/       加權評分：分項表格、權重、貢獻與排序
-├── resources/<topic>/       正式主題放這裡
 ├── vendor.json              第三方套件清單（版本、網址、SHA-256；見 docs/adr/0011）
 ├── vendor/                  套件本體，由 cli vendor 下載（不進 git）
 ├── skills/agentdeck/        可攜 skill，讓其他專案的 agent 照本專案規則做簡報（tools\install-skill.cmd 安裝）
@@ -75,15 +74,17 @@ AgentDeck/
 - 編輯支援 Ctrl+B／I／U 與清單換行；貼上一律轉純文字，存檔前會移除所有屬性與非格式標籤。
 - **隱藏元件**：編輯模式下，欄位、舞台第一層元件（封面／結尾則是畫布內的 logo、標題、說明等）與標記 `data-hide` 的子元件（如單張卡片）右上角有 👁，點一下切換顯示。隱藏的元件在編輯時半透明、播放與縮圖時不顯示；鎖定元件（如 logo）也能隱藏，但不能改內容。
 - **隱藏編輯列**：編輯列的 ✕ 收起整組按鈕，按 `E` 重新顯示（Ctrl+S 仍可另存）。
-- **預設不保存**：重新整理即還原。按「另存」（或 Ctrl+S）把全部修改輸出為 `edits.js`，覆蓋主題資料夾內的同名檔即可永久套用；「捨棄」丟棄未另存的修改。
+- **預設不保存**：重新整理即還原。按「另存」（或 Ctrl+S）把全部修改輸出為 `edits.js`，覆蓋 `resources/<topic>/edits.js` 即可永久套用；「捨棄」丟棄未另存的修改。
 
 底部導覽的 🔍 按鈕切換放大播放（全螢幕 + 內容放大），按 Esc 或再按一次還原。
 
 ## 建立新主題
 
-1. 執行 `node cli/agentdeck.mjs new <topic>`（或複製 `templates/blank/` 為 `resources/<topic>/`）。兩者同為兩層深度，`../../assets/...` 路徑不用改。先填 `plan.md`（企劃與逐頁分鏡），確認後再動工。
+1. 執行 `node cli/agentdeck.mjs init <位置>/<topic>` 建立獨立簡報單位，再於其中 `new <topic>` 建立根 `index.html` 與 `resources/<topic>/`。每個主題各有自己的框架、品牌、元件與素材（收在單位內的 `agentdeck/`，第一層只留入口與 `resources/`），整個資料夾可獨立搬移。先填 `resources/<topic>/plan.md`（企劃與逐頁分鏡），確認後再動工。
 2. 改 `story.js` 的 `title`、`label`、封面文字與分鏡，並改 HTML `<title>`。寫作方式可參考 [`docs/guides/`](docs/guides/)，例如講解機制時用 [visual-story](docs/guides/visual-story.md)。
-3. 需要元件時查 [`assets/deck/components/CATALOG.md`](assets/deck/components/CATALOG.md)，在 `index.html` 的註解處引用；沒有合適的就在 `story.js`／`story.css` 自製，class 加主題前綴。不要改 `assets/`。
+3. 需要元件時查 [`assets/deck/components/CATALOG.md`](assets/deck/components/CATALOG.md)，以 `add` 取得本單位副本，在根 `index.html` 引用；沒有合適的就在 `story.js`／`story.css` 自製，class 加主題前綴。動態素材路徑依 [`AGENTDECK.md`](AGENTDECK.md#相對路徑) 從 story script 取得。
+
+契約 2 以一個主題、一份 HTML PPT、一個獨立資料夾為單位（[ADR 0017](docs/adr/0017-presentation-entry-layout.md)）。只有明確相關的候選版本／附件可用 `new <name> --related <group>` 放在同一單位的 `<group>/<name>/index.html`，不能用來收納不同主題；探索時可先做候選，稍後建立主入口。既有多主題工作區依 [1-to-2](docs/migrations/1-to-2.md) 拆分，人工 `edits.js` 保留原始位元組。
 
 ## 分鏡資料契約
 
@@ -119,16 +120,16 @@ AgentDeck/
 
 ## 建立品牌版本（下游專案）
 
-AgentDeck 是上游框架；公司、個人或專案的品牌版本是下游工作區：`npx -y github:Echoslayer/AgentDeck init <資料夾>` 後，`assets/theme/`、`resources/` 歸下游所有，核心與元件是可比對的副本，以 `diff`、`update core` 跟進上游（[ADR 0010](docs/adr/0010-theme-layer-and-downstream.md)、[ADR 0016](docs/adr/0016-registry-copy-and-contract-version.md)）。下游做出的通用元件或修正，回饋到上游。
+AgentDeck 是上游框架；每份簡報以 `npx -y github:Echoslayer/AgentDeck init <位置>/<topic>` 建立自己的下游單位。下游的框架副本都在單位的 `agentdeck/` 內（上游路徑加上 `agentdeck/` 前綴）。`agentdeck/assets/theme/`、`resources/` 歸下游所有，核心與元件是可比對的副本，以 `diff`、`update core` 跟進上游（[ADR 0010](docs/adr/0010-theme-layer-and-downstream.md)、[ADR 0016](docs/adr/0016-registry-copy-and-contract-version.md)、[ADR 0017](docs/adr/0017-presentation-entry-layout.md)）。既有品牌可複製到各單位，不作跨資料夾播放依賴。
 
 ## 第三方套件與交付
 
-第三方套件（例如特殊元件用的 three.js）**不進 git**：`vendor.json` 記錄版本、網址與 SHA-256，本體下載到 `vendor/<name>/`（[ADR 0011](docs/adr/0011-vendor-manifest-and-packing.md)）。
+第三方套件（例如特殊元件用的 three.js）**不進 git**：`vendor.json` 記錄版本、網址與 SHA-256，本體下載到 `vendor/<name>/`；下游單位為 `agentdeck/vendor.json` 與 `agentdeck/vendor/<name>/`（[ADR 0011](docs/adr/0011-vendor-manifest-and-packing.md)）。
 
 - **準備環境**：clone 後執行 `node cli/agentdeck.mjs vendor`（下游工作區用 `agentdeck vendor`），依清單下載並驗證雜湊；重跑會略過已就緒的檔案。加 `--check` 只檢查不下載。沒下載時，用到套件的元件顯示靜態後備。
-- **引用**：頁面直接以相對路徑引用，例如主題 `index.html` 的 `<script src="../../vendor/three/three.min.js"></script>`。只收能在 `file://` 下以 `<script>` 載入的檔案（UMD／IIFE、css、字型、圖片），不走 CDN。
+- **引用**：下游根 `index.html` 以相對路徑引用，例如 `<script src="agentdeck/vendor/three/three.min.js"></script>`；相關入口改用 `../../agentdeck/vendor/`。只收能在 `file://` 下以 `<script>` 載入的檔案（UMD／IIFE、css、字型、圖片），不走 CDN。
 - **新增套件**：經人同意後在 `vendor.json` 加一項；`sha256` 先留空，執行 `agentdeck vendor` 會印出實際雜湊，確認來源後填回。
-- **交付給別人**：`agentdeck pack resources/<topic>` 產生 `dist/<topic>-<時間>.zip`，內含簡報資料夾、`assets/` 與該簡報引用到的 `vendor/<name>/`（含授權檔），缺少的套件會先下載。對方解壓縮後雙擊最上層的 `index.html` 即可播放，不需要網路或任何工具。
+- **交付給別人**：在簡報單位內 `agentdeck pack`，帶入根 `index.html`、單位資源、相關入口、`agentdeck/` 內的框架與引用的套件（含授權檔），缺少的套件會先下載；排除製作骨架、企劃、CLI 記錄與既有打包產物。解壓後第一層只有 `index.html`、`resources/`、`agentdeck/`（與相關群組），根頁直接播放，不使用跳轉或 `<base>`。`pack <入口資料夾>` 可選某個相關入口作交付首頁；通常打包完整單位。
 
 ## 更新閱讀器
 

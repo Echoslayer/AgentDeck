@@ -8,7 +8,7 @@
 - `values`：二維數字陣列，`values[列][欄]`，欄對應橫軸 `x`、列對應縱深 `y`；至少 2×2、每列等長。
 - 高度與顏色由數值推導（主色→輔色→突顯色），最高值以突顯色圓點標出。
 - 軸名 `x`／`y`／`z` 可現場編輯；**數值與範圍不開放編輯**，要改數字請改 `story.js`。
-- 引用方式見 `CATALOG.md`「特殊元件」：需先引用 `vendor/three/three.min.js`。
+- 引用方式見 `CATALOG.md`「特殊元件」：需先引用 three.js 套件（下游為 `agentdeck/vendor/three/three.min.js`，`agentdeck add` 會印出引用行）。
 
 ## 必須保留
 - 在 `point` 或 `deck.figure` 的 caption 註明資料來源與量測條件。

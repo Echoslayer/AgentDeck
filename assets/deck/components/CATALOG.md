@@ -63,22 +63,22 @@
 
 ## 引用方式
 
-在主題的 `index.html` 加兩行（`<name>` 換成元件名）：
+在獨立簡報單位的根 `index.html` 加兩行（`<name>` 換成元件名；`agentdeck add` 會印出這兩行）：
 
 ```html
-<link rel="stylesheet" href="../../assets/deck/components/<name>/<name>.css">   <!-- theme.css 之後、story.css 之前 -->
-<script src="../../assets/deck/components/<name>/<name>.js"></script>           <!-- theme.js 之後、story.js 之前 -->
+<link rel="stylesheet" href="agentdeck/assets/deck/components/<name>/<name>.css">   <!-- theme.css 之後、story.css 之前 -->
+<script src="agentdeck/assets/deck/components/<name>/<name>.js"></script>           <!-- theme.js 之後、story.js 之前 -->
 ```
 
-呼叫一律是 `deck.<name>(key, …)`，第一個參數是 `data-key`（每頁唯一）。回傳 HTML 字串，可用 `+` 串接。忘了引用時，呼叫會直接報錯並提示路徑；只引用 js 沒引用 css，主控台會出錯誤訊息。
+相關入口 `<group>/<name>/index.html` 改以 `../../agentdeck/assets/` 引用同一單位內的副本；上游內框架在根目錄，去掉 `agentdeck/`。不同主題各自擁有副本，不跨單位引用。呼叫一律是 `deck.<name>(key, …)`，第一個參數是 `data-key`（每頁唯一）。回傳 HTML 字串，可用 `+` 串接。忘了引用時，呼叫會直接報錯並提示路徑；只引用 js 沒引用 css，主控台會出錯誤訊息。
 
 ## 特殊元件規則
 
 1. **套件**：用到套件的元件（表中「技術」為 three.js），先在元件 js 之前引用套件，每份簡報只引用一次：
    ```html
-   <script src="../../vendor/three/three.min.js"></script>   <!-- theme.js 之後、元件 js 之前 -->
+   <script src="agentdeck/vendor/three/three.min.js"></script>   <!-- theme.js 之後、元件 js 之前 -->
    ```
-   `vendor/` 不進 git，第一次使用先執行 `agentdeck vendor`；交付用 `agentdeck pack` 打包會自動下載並帶上（ADR 0011）。沒下載時顯示靜態後備，主控台提示。
+   `agentdeck/vendor/` 不進 git，第一次使用先執行 `agentdeck vendor`；交付用 `agentdeck pack` 打包會自動下載並帶上（ADR 0011）。沒下載時顯示靜態後備，主控台提示。
 2. **每頁最多一個 three.js 元件**；整份簡報的特殊元件控制在少數關鍵頁。
 3. **現場可講解**：投影時不依賴觀眾親自拖曳；3D 展示的結論仍需清單、`point` 或口述輔助。互動實驗可由講者操作，須有起始情境、操作提示與靜態後備；會後讀者可自行探索。
 4. 不用寫 `mount`／`previewArt`：核心在頁面出現時啟動動態內容、換頁時釋放；縮圖用靜態後備。
