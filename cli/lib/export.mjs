@@ -77,6 +77,14 @@ const setValue = (e, v) => { e.value = v; for (const t of ['input', 'change']) e
 // dry：只驗證步驟能執行（export --check），不等待、不顯示游標。
 async function runStep(pg, s, { cursor = false, dry = false } = {}) {
   if (s.wait !== undefined) return dry ? undefined : pg.waitForTimeout(s.wait);
+  // arrow／box／clear 是畫面標註，交給簡報自己的 deck-editor 畫（docs/adr/0024）；at 只用於朗讀同步，錄影時依序執行。
+  if (s.arrow || s.box || s.clear) {
+    await pg.evaluate(s => {
+      if (!window.deckActions) throw new Error('核心版本過舊，不支援 arrow／box／clear；請先執行 agentdeck update core');
+      window.deckActions.annotate(s);
+    }, s);
+    return dry || s.clear ? undefined : pg.waitForTimeout(400); // 等標註淡入完成，最後一步是標註時影片才看得清楚
+  }
   const target = s.click ?? s.set ?? s.drag;
   if (typeof target !== 'string') throw new Error(`不認得的 record 步驟：${JSON.stringify(s)}`);
   const sel = `#page ${target}`;
