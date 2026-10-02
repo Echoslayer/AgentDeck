@@ -46,4 +46,21 @@ node('variant').value='setting-b';node('variant').listeners.change();assert.equa
 assert.match(node('reference').innerHTML,/>6<\/td>/);assert.match(node('result').innerHTML,/>8<\/td>/);
 node('reset').listeners.click();assert.equal(node('case').value,'case-a');assert.equal(node('variant').value,'setting-a');assert.equal(node('result-time').textContent,'75 ms');
 assert(!nodes.has('scope-note'),'Replay must leave fixed author text outside its update targets');
-console.log('PASS: aggregation, threshold voting, weighted ranking, case replay controls and invalid input boundaries');
+// Intervention replay: tracked output stays fixed, no-op parts are flagged and ranked last.
+const intervene=require('./intervention-replay/compute.js');
+const ic={labels:['x','y'],fill:0,input:[3,0,5],before:[60,40],after:[[50,50],[60,40],[30,70]]};
+const hit=intervene(ic,2);assert.equal(hit.tracked,'x');assert.equal(hit.delta,-30);assert.equal(hit.flipped,true);assert.equal(hit.topAfter,'y');
+assert.equal(intervene(ic,0).flipped,false);assert.equal(intervene(ic,1).noop,true);assert.equal(intervene(ic,1).delta,0);
+assert.deepEqual(hit.ranking.map(x=>x.part),[2,0,1]);assert.equal(hit.ranking.at(-1).noop,true);
+const frozen=JSON.stringify(ic);intervene(ic,0);assert.equal(JSON.stringify(ic),frozen);
+assert.throws(()=>intervene(ic,3));assert.throws(()=>intervene(ic,-1));assert.throws(()=>intervene(ic,1.5));
+for(const bad of [{after:[[50,50],[61,40],[30,70]]},{after:[[50,50],[60,40]]},{after:[[50],[60,40],[30,70]]},{before:[60,-1]},{input:[3,NaN,5]},{fill:undefined},{labels:['x','x']},{labels:['x']}])assert.throws(()=>intervene({...ic,...bad},0));
+const inodes=new Map(),inode=id=>{if(!inodes.has(id))inodes.set(id,{value:id==='case'?'case-a':'',textContent:'',innerHTML:'',listeners:{},addEventListener(event,fn){this.listeners[event]=fn;}});return inodes.get(id);};
+vm.runInNewContext(fs.readFileSync(path.join(__dirname,'intervention-replay/demo.js'),'utf8'),{intervene,document:{getElementById:inode}});
+assert.match(inode('summary').textContent,/55 → 28（−27）/);assert.match(inode('summary').textContent,/改為「乙」/);
+inode('parts').listeners.click({target:{closest:()=>({dataset:{part:'6'}})}});assert.match(inode('summary').textContent,/沒測到/);assert.match(inode('ranking').innerHTML,/未測/);
+inode('case').value='case-b';inode('case').listeners.change();assert.equal(JSON.parse(inode('export-preview').textContent).caseId,'case-b');assert.match(inode('summary').textContent,/「乙」62 → 50/);
+inode('parts').listeners.click({target:{closest:()=>({dataset:{part:'4'}})}});assert.match(inode('summary').textContent,/\+4/);assert.doesNotMatch(inode('scores').innerHTML,/>55</);
+inode('reset').listeners.click();assert.equal(inode('case').value,'case-a');assert.match(inode('summary').textContent,/−27/);
+assert(!inodes.has('scope-note'),'Intervention replay must leave fixed author text outside its update targets');
+console.log('PASS: aggregation, threshold voting, weighted ranking, case replay, intervention replay controls and invalid input boundaries');
