@@ -27,3 +27,4 @@
 | [0021](0021-pptx-export.md) | 匯出 pptx：外框文字可編輯，內容區截圖，互動頁照腳本錄影 | 已接受 |
 | [0022](0022-speech-read-aloud.md) | 口語稿與朗讀：選填 speech 與 audio，有音檔播音檔，否則以瀏覽器內建語音念出，可全部播放、調語速、開字幕 | 已接受 |
 | [0024](0024-speech-synced-actions.md) | 講者動作隨朗讀執行：record 步驟加 at，新增 arrow、box、clear 與 cues | 已接受 |
+| [0025](0025-native-pptx-annotations.md) | 匯出 pptx：只有標註的 record 改為原生圖形與出現動畫 | 已接受 |
