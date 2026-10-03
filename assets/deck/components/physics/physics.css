@@ -1,0 +1,12 @@
+/* deck.physics 樣式。 */
+.deck-physics{margin:0;display:grid;gap:8px}
+.deck-physics .deck-view{aspect-ratio:5/3;width:min(100%,calc(56vh * 5 / 3));margin:auto;background:var(--tint);border-radius:8px}
+.deck-physics text{font-size:2.2px;fill:var(--ink);text-anchor:middle}
+.deck-physics-v{stroke:var(--deck-highlight);stroke-width:.5;stroke-dasharray:1 .8;marker-end:var(--arrow)}
+.deck-physics marker path{fill:var(--deck-highlight)}
+.deck-physics-rope{stroke:var(--muted);stroke-width:.3}
+.deck-physics-pin{fill:var(--ink)}
+.deck-physics-bar{display:flex;align-items:center;gap:12px}
+.deck-physics-bar button{padding:4px 14px;font-size:14px}
+.mini-page .deck-physics-bar{display:none}
+.deck-physics figcaption{font-size:14px;color:var(--muted)}

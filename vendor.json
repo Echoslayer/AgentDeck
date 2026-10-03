@@ -105,6 +105,198 @@
           "sha256": "766CCC1F306C885AA45542A9846BBD0A505B27A0374F146778171C2254CE18E3"
         }
       ]
+    },
+    "asciinema-player": {
+      "version": "3.17.0",
+      "license": "Apache-2.0",
+      "homepage": "https://docs.asciinema.org/manual/player/",
+      "note": "bundle 版（全域 AsciinemaPlayer）；css 由 terminal 元件自行載入。錄製資料直接寫在頁面裡，不以 url 讀檔（file:// 無法 fetch）。",
+      "files": [
+        {
+          "path": "asciinema-player.min.js",
+          "url": "https://unpkg.com/asciinema-player@3.17.0/dist/bundle/asciinema-player.min.js",
+          "sha256": "A13C37632E1B5C49FE9128417B9319A9B5BC64CB457DD5AE52CBBA8A3ACEB880"
+        },
+        {
+          "path": "asciinema-player.css",
+          "url": "https://unpkg.com/asciinema-player@3.17.0/dist/bundle/asciinema-player.css",
+          "sha256": "F619FE17597043564F03B2C6918B3DAF890EE8B912FB408542FBA11AFADE4FDB"
+        },
+        {
+          "path": "LICENSE",
+          "url": "https://unpkg.com/asciinema-player@3.17.0/LICENSE",
+          "sha256": "63422284ED65BE54AB38D8A94E7518D27E222FBB26C9AE4CD984C63926E91C12"
+        }
+      ]
+    },
+    "cytoscape": {
+      "version": "3.34.3",
+      "license": "MIT",
+      "homepage": "https://js.cytoscape.org/",
+      "files": [
+        {
+          "path": "cytoscape.min.js",
+          "url": "https://unpkg.com/cytoscape@3.34.3/dist/cytoscape.min.js",
+          "sha256": "5F3B5B529546D5AF1FC5628590AF033B74511A5B6F789F5F4682845863228B91"
+        },
+        {
+          "path": "LICENSE",
+          "url": "https://unpkg.com/cytoscape@3.34.3/LICENSE",
+          "sha256": "EB319C6E6F233607F71E8E2F450391751883CFC0EEB3CA7EF574C13D1D9C2203"
+        }
+      ]
+    },
+    "lottie": {
+      "version": "5.13.0",
+      "license": "MIT",
+      "homepage": "https://github.com/airbnb/lottie-web",
+      "note": "lottie-web 的 SVG 渲染器精簡版；全域 lottie。",
+      "files": [
+        {
+          "path": "lottie_svg.min.js",
+          "url": "https://unpkg.com/lottie-web@5.13.0/build/player/lottie_svg.min.js",
+          "sha256": "AC64292815E1D96628A5C412F0B6F71A5134846E43B5B972AB85687BD7B53508"
+        },
+        {
+          "path": "LICENSE.md",
+          "url": "https://unpkg.com/lottie-web@5.13.0/LICENSE.md",
+          "sha256": "9D8D4D8B4BB99572EE8B51025A30B8493D949798CAC465C6C15B1B29420BCB06"
+        }
+      ]
+    },
+    "d3": {
+      "version": "7.9.0",
+      "license": "ISC",
+      "homepage": "https://d3js.org/",
+      "note": "附 d3-sankey 0.12.3（BSD-3-Clause），掛在同一個全域 d3；須在 d3.min.js 之後載入。",
+      "files": [
+        {
+          "path": "d3.min.js",
+          "url": "https://unpkg.com/d3@7.9.0/dist/d3.min.js",
+          "sha256": "F2094BBF6141B359722C4FE454EB6C4B0F0E42CC10CC7AF921FC158FCEB86539"
+        },
+        {
+          "path": "d3-sankey.min.js",
+          "url": "https://unpkg.com/d3-sankey@0.12.3/dist/d3-sankey.min.js",
+          "sha256": "8286DB5D6AA049CC6E8A546708943B79DFB4DAAEFB0CCF42AF674EC0EE4C86BE"
+        },
+        {
+          "path": "LICENSE",
+          "url": "https://unpkg.com/d3@7.9.0/LICENSE",
+          "sha256": "3E6849627F74FF73C257A3AE1EFB574015D94FC1035C05EC3C15805165EFCBC4"
+        },
+        {
+          "path": "LICENSE-d3-sankey",
+          "url": "https://unpkg.com/d3-sankey@0.12.3/LICENSE",
+          "sha256": "2BF785E778D67A4F5266CFFCD4F2CC5BB98CDE73791666E7EFEB8002BA32DFA5"
+        }
+      ]
+    },
+    "matter": {
+      "version": "0.20.0",
+      "license": "MIT",
+      "homepage": "https://brm.io/matter-js/",
+      "files": [
+        {
+          "path": "matter.min.js",
+          "url": "https://unpkg.com/matter-js@0.20.0/build/matter.min.js",
+          "sha256": "72D30BE0F579EB02CE1E0B6F9D359A4F392E6837E5A26BA8BE5DBEE7F88E24AE"
+        },
+        {
+          "path": "LICENSE",
+          "url": "https://unpkg.com/matter-js@0.20.0/LICENSE",
+          "sha256": "ED182087BE5B26734AA6D4789743DE3A97417950E8C1E3FF2E3D19C6462720D3"
+        }
+      ]
+    },
+    "zdog": {
+      "version": "1.1.3",
+      "license": "MIT",
+      "homepage": "https://zzz.dog/",
+      "note": "套件未附 LICENSE 檔；授權宣告在 zdog.dist.min.js 檔頭。",
+      "files": [
+        {
+          "path": "zdog.dist.min.js",
+          "url": "https://unpkg.com/zdog@1.1.3/dist/zdog.dist.min.js",
+          "sha256": "2BAEDE641561FA7F00490809A3357CE66A70A47C4C46385B078B8E10027C14F0"
+        }
+      ]
+    },
+    "rough-notation": {
+      "version": "0.5.1",
+      "license": "MIT",
+      "homepage": "https://roughnotation.com/",
+      "files": [
+        {
+          "path": "rough-notation.iife.js",
+          "url": "https://unpkg.com/rough-notation@0.5.1/lib/rough-notation.iife.js",
+          "sha256": "F90AA0090E361FF48694B74E0319E109856DECB3E757C280DFE25E3607F35FAC"
+        },
+        {
+          "path": "LICENSE",
+          "url": "https://unpkg.com/rough-notation@0.5.1/LICENSE",
+          "sha256": "E9754A00AEBDE654E80F40BCF41DAB667D6A41DFBBD2912BCF14FB07D468BF71"
+        }
+      ]
+    },
+    "rough": {
+      "version": "4.6.6",
+      "license": "MIT",
+      "homepage": "https://roughjs.com/",
+      "note": "roughjs 的 bundled 版；全域 rough。",
+      "files": [
+        {
+          "path": "rough.js",
+          "url": "https://unpkg.com/roughjs@4.6.6/bundled/rough.js",
+          "sha256": "6853AF8619532F3939B156CD16824D2E14F31E71D3DF306AD5558EEAFACAB194"
+        },
+        {
+          "path": "LICENSE",
+          "url": "https://unpkg.com/roughjs@4.6.6/LICENSE",
+          "sha256": "DCA9A392272606AC748AC0976A2A1133F14EEF841C27BEAA51A844D53C56A09D"
+        }
+      ]
+    },
+    "confetti": {
+      "version": "1.9.4",
+      "license": "ISC",
+      "homepage": "https://github.com/catdad/canvas-confetti",
+      "note": "canvas-confetti 的瀏覽器版；全域 confetti。",
+      "files": [
+        {
+          "path": "confetti.browser.js",
+          "url": "https://unpkg.com/canvas-confetti@1.9.4/dist/confetti.browser.js",
+          "sha256": "49F4BCBC56E7CEB5C3D25D13DB1D0DA965B6CD1C8A54A707BB055BE0685B0A95"
+        },
+        {
+          "path": "LICENSE",
+          "url": "https://unpkg.com/canvas-confetti@1.9.4/LICENSE",
+          "sha256": "FD44477C30A832A1DEE9EF0B6CFB34677FBE5EF58C0CF655D27C646F11BB2F7A"
+        }
+      ]
+    },
+    "vanta": {
+      "version": "0.5.24",
+      "license": "MIT",
+      "homepage": "https://www.vantajs.com/",
+      "note": "只收 waves 與 net 兩種效果；需要 three（以參數傳入，r160 實測可用）。",
+      "files": [
+        {
+          "path": "vanta.waves.min.js",
+          "url": "https://unpkg.com/vanta@0.5.24/dist/vanta.waves.min.js",
+          "sha256": "60A30382A898AE570DD0E88AC903FAC9273FD188AE8C8D1984200B9EBD89237D"
+        },
+        {
+          "path": "vanta.net.min.js",
+          "url": "https://unpkg.com/vanta@0.5.24/dist/vanta.net.min.js",
+          "sha256": "76FE5829C73C27AA4F357200997C160523277C0DDB81F35D5CFB818CC3CB96C6"
+        },
+        {
+          "path": "LICENSE.md",
+          "url": "https://unpkg.com/vanta@0.5.24/LICENSE.md",
+          "sha256": "ABCD0D2BE97F3AB15F8EABB61F16982B15422BB3E808A566F62C23948F7E4BDA"
+        }
+      ]
     }
   }
 }

@@ -1,0 +1,8 @@
+/* deck.model 樣式。 */
+.deck-model{margin:0;display:grid;grid-template-columns:minmax(0,1fr) minmax(160px,240px);gap:20px;align-items:center}
+.deck-model .deck-view{aspect-ratio:4/3;width:min(100%,calc(56vh * 4 / 3))}
+.deck-model-side{display:grid;gap:10px}
+.deck-model-legend{display:grid;gap:6px;margin:0;padding:0;list-style:none;font-size:15px}
+.deck-model-legend li::before{content:"";display:inline-block;width:12px;height:12px;border-radius:3px;background:var(--c);margin-right:8px;vertical-align:-1px}
+.deck-model figcaption{font-size:14px;color:var(--muted)}
+@media(max-width:700px){.deck-model{grid-template-columns:1fr}}

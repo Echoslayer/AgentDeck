@@ -1,0 +1,7 @@
+/* deck.backdrop 樣式。 */
+.deck-backdrop{position:relative;min-height:340px;border-radius:10px;overflow:hidden;display:grid;place-items:center;color:#fff;background:var(--deck-gradient)}
+.deck-backdrop-bg{position:absolute;inset:0}
+.deck-backdrop-body{position:relative;text-align:center;padding:40px;text-shadow:0 2px 12px rgba(0,0,0,.35)}
+.deck-backdrop-body h2{margin:0;font-size:40px}
+.deck-backdrop-kicker{margin:0 0 8px;letter-spacing:.2em;opacity:.8}
+.deck-backdrop-body :is(h2,p){pointer-events:none}

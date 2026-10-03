@@ -1,0 +1,10 @@
+/* deck.mark 樣式。未啟動（縮圖、匯出）時以 CSS 標記代替手繪筆觸。 */
+.deck-mark{position:relative;font-size:24px;line-height:1.9;margin:0}
+.deck-mark [class^="deck-mark-"]{position:relative}
+.deck-mark:not(.deck-live-on) .deck-mark-highlight{background:color-mix(in srgb,var(--c) 35%,transparent);border-radius:3px}
+.deck-mark:not(.deck-live-on) .deck-mark-underline{text-decoration:underline 3px var(--c);text-underline-offset:5px}
+.deck-mark:not(.deck-live-on) :is(.deck-mark-circle,.deck-mark-box,.deck-mark-bracket){outline:2px solid var(--c);outline-offset:3px;border-radius:2px}
+.deck-mark:not(.deck-live-on) .deck-mark-circle{border-radius:50%}
+.deck-mark:not(.deck-live-on) :is(.deck-mark-strike-through,.deck-mark-crossed-off){text-decoration:line-through 3px var(--c)}
+/* rough-notation 的 svg 疊在文字下方（螢光筆）或上方 */
+.deck-mark .rough-annotation{pointer-events:none}

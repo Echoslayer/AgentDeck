@@ -1,0 +1,10 @@
+/* deck.network 樣式。 */
+.deck-network{margin:0;display:grid;gap:8px}
+.deck-network .deck-view{aspect-ratio:var(--ratio);width:min(100%,calc(56vh * var(--ratio)));margin:auto}
+.deck-network .deck-canvas{cursor:default}
+.deck-network-edges line{stroke:var(--muted);stroke-width:1.6;marker-end:var(--arrow)}
+.deck-network marker path{fill:var(--muted)}
+.deck-network text{font-size:14px;fill:var(--ink);text-anchor:middle}
+.deck-network-legend{display:flex;flex-wrap:wrap;gap:6px 18px;margin:0;padding:0;list-style:none;font-size:14px;color:var(--muted)}
+.deck-network-legend li::before{content:"";display:inline-block;width:10px;height:10px;border-radius:50%;background:var(--c);margin-right:6px}
+.deck-network figcaption{font-size:14px;color:var(--muted)}
