@@ -8,6 +8,7 @@ import { fileURLToPath } from 'node:url';
 import { runInNewContext } from 'node:vm';
 import { createHash } from 'node:crypto';
 import { unzip } from './lib/zip.mjs';
+import { hashFile, listFiles } from './lib/util.mjs';
 
 const UP = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const CLI = path.join(UP, 'cli', 'agentdeck.mjs');
@@ -17,7 +18,7 @@ const research = path.join(UP, 'playground', `agentdeck-check-${process.pid}`);
 let passed = 0;
 
 function run(args, cwd, expectFail = false) {
-  const r = spawnSync(process.execPath, [CLI, ...args], { cwd, encoding: 'utf8' });
+  const r = spawnSync(process.execPath, [CLI, ...args], { cwd, encoding: 'utf8', env: { ...process.env, TMPDIR: tmp, TMP: tmp, TEMP: tmp } });
   const out = `${r.stdout}${r.stderr}`;
   if (expectFail) assert.notEqual(r.status, 0, `應失敗：${args.join(' ')}\n${out}`);
   else assert.equal(r.status, 0, `失敗：${args.join(' ')}\n${out}`);
@@ -216,6 +217,61 @@ try {
     assert.match(run(['update', 'core'], ws, true), /deck\.css/);
     run(['update', 'core', '--force'], ws);
     assert.doesNotMatch(fs.readFileSync(path.join(ws, 'agentdeck/assets/deck/deck.css'), 'utf8'), /local/);
+  });
+
+  step('update 預檢唯讀、備份原檔、只更新核心並保留客製內容', () => {
+    const cfgPath = path.join(ws, 'agentdeck/agentdeck.json');
+    const corePath = path.join(ws, 'agentdeck/assets/story-reader/reader.css');
+    const cfg = JSON.parse(fs.readFileSync(cfgPath, 'utf8'));
+    fs.writeFileSync(corePath, '/* old upstream */');
+    cfg.core.files['assets/story-reader/reader.css'] = hashFile(corePath);
+    fs.writeFileSync(cfgPath, JSON.stringify(cfg));
+    const snapshot = () => Object.fromEntries(listFiles(ws).map(f => [f, fs.readFileSync(path.join(ws, f)).toString('base64')]));
+    const before = snapshot();
+    const dirsBefore = fs.readdirSync(tmp);
+    assert.match(run(['update', 'core', '--check'], ws), /1 個檔案待更新；0 個本地修改/);
+    assert.deepEqual(snapshot(), before);
+    assert.deepEqual(fs.readdirSync(tmp), dirsBefore, '預檢不可產生備份');
+    const out = run(['update', 'core'], ws);
+    const backup = out.match(/備份：(.*)/)[1].trim();
+    assert.equal(fs.readFileSync(path.join(backup, 'agentdeck/assets/story-reader/reader.css'), 'utf8'), '/* old upstream */');
+    assert.equal(fs.readFileSync(path.join(backup, 'agentdeck/agentdeck.json')).toString('base64'), before['agentdeck/agentdeck.json']);
+    const after = snapshot();
+    assert.deepEqual(Object.keys(after), Object.keys(before));
+    for (const f of Object.keys(before)) if (!['agentdeck/agentdeck.json', 'agentdeck/assets/story-reader/reader.css'].includes(f)) assert.equal(after[f], before[f], f);
+    assert.match(run(['update', 'core'], ws), /無需更新或備份/);
+  });
+
+  step('上游移除的核心仍保護本地修改，新增檔保留，符號連結拒絕', () => {
+    const cfgPath = path.join(ws, 'agentdeck/agentdeck.json');
+    const removed = 'assets/story-reader/retired.js';
+    const full = path.join(ws, 'agentdeck', removed);
+    const cfg = JSON.parse(fs.readFileSync(cfgPath, 'utf8'));
+    fs.writeFileSync(full, 'old');
+    cfg.core.files[removed] = hashFile(full);
+    fs.writeFileSync(cfgPath, JSON.stringify(cfg));
+    fs.writeFileSync(full, 'custom');
+    const extra = path.join(ws, 'agentdeck/assets/story-reader/custom.js');
+    fs.writeFileSync(extra, 'keep');
+    assert.match(run(['update', 'core', '--check'], ws, true), /核心副本有本地修改/);
+    assert.equal(fs.readFileSync(full, 'utf8'), 'custom');
+    const out = run(['update', 'core', '--force'], ws);
+    assert.ok(!fs.existsSync(full));
+    assert.equal(fs.readFileSync(extra, 'utf8'), 'keep');
+    assert.equal(fs.readFileSync(path.join(out.match(/備份：(.*)/)[1].trim(), 'agentdeck', removed), 'utf8'), 'custom');
+    fs.rmSync(extra);
+    if (process.platform !== 'win32') {
+      const css = path.join(ws, 'agentdeck/assets/deck/deck.css');
+      const original = fs.readFileSync(css);
+      const outside = path.join(tmp, 'outside.css');
+      fs.writeFileSync(outside, original);
+      fs.rmSync(css);
+      fs.symlinkSync(outside, css);
+      assert.match(run(['update', 'core', '--check'], ws, true), /符號連結/);
+      assert.deepEqual(fs.readFileSync(outside), original);
+      fs.rmSync(css);
+      fs.writeFileSync(css, original);
+    }
   });
 
   step('pack 產生只含工作區檔案的 zip', () => {

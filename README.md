@@ -50,7 +50,7 @@ AgentDeck/
 │   └── <name>/              每個範例一個資料夾；清單見 examples/README.md 或 cli catalog
 ├── vendor.json              第三方套件清單（版本、網址、SHA-256；見 docs/adr/0011）
 ├── vendor/                  套件本體，由 cli vendor 下載（不進 git）
-├── skills/agentdeck/        可攜 skill，讓其他專案的 agent 照本專案規則做簡報（tools\install-skill.cmd 安裝）
+├── skills/                  agentdeck 製作簡報、agentdeck-upgrade 更新既有簡報（tools\install-skill.cmd 安裝）
 ├── tools/                   install-skill.cmd 安裝 skill（下載套件、打包、建立工作區改用 cli）
 └── dist/                    打包輸出的 zip（不進 git）
 ```

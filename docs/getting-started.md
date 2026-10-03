@@ -60,10 +60,15 @@ demo/
 | `pack [入口資料夾]` | 預設打包完整單位；可選相關入口作首頁（輸出到 `dist/`） |
 | `export [入口資料夾]` | 可選進階，內容確認後才用。輸出 `dist/<名稱>.pptx`：外框文字可編輯、內容區截圖、有 `record` 的頁錄成 mp4（只有紅框／箭頭的頁改為 PPT 原生標註與出現動畫）、講稿進備忘稿；`--check` 只檢查環境（[ADR 0021](adr/0021-pptx-export.md)、[0025](adr/0025-native-pptx-annotations.md)） |
 | `diff [core\|<元件>]` | 副本相對於取得時與上游最新版的差異；`--patch` 顯示內容 |
-| `update core` | 以上游核心覆蓋副本；有本地修改需 `--force`，跨契約版本需 `--migrate` |
+| `update core --check` | 唯讀預檢來源、契約、實際差異與本地衝突；可更新回傳 0，受阻回傳非 0 |
+| `update core` | 自動備份完整單位後，只覆蓋有差異的核心；本地修改需 `--force`，跨契約需 `--migrate` |
 
 ## 更新與版本
 
+- 安裝 skills 後，可直接對 agent 說「把這份簡報升到最新 AgentDeck，保留客製內容」，或「只補上新版字幕功能」。[agentdeck-upgrade](../skills/agentdeck-upgrade/SKILL.md) 會確認目標來源、備份、更新核心、整合客製元件、調整必要接入並驗證打包結果；最新版不代表替每頁新增所有可選內容。`tools\install-skill.cmd` 會一併安裝製作與更新 skills，已安裝者重新執行即可。
+- 先執行 `update core --check`，相容且無衝突時直接 `update core`；只有衝突才讀 `diff core --patch`。來源是執行中 CLI 所在的 checkout／套件，預檢不會下載或確認遠端最新版。
+- 寫入前自動把完整單位備份到系統暫存目錄 `agentdeck-update-*/backup/`，印出絕對路徑；需要長期保留時請移到自己的備份位置。更新後核對核心雜湊及非核心一般檔案的原始 SHA-256，包含內容、主題、元件和人工修正。完全一致時不寫入、不備份。失敗會保留備份並回報；還原時先比對，避免覆蓋更新期間新增的工作。
+- `update core` 只更新核心與 CLI 記錄；契約一致不代表簡報內容已完成遷移。完整更新須驗證既有互動、人工修正及搬移後的離線播放；未完成的驗證應明確回報。
 - 副本取得後歸工作區所有，不會自動更新。想跟進上游時先 `diff`，再決定 `update core`、`add <元件> --force`，或手動挑選修改。
 - 核心公開 `deck.contract`（契約版本）。上游改動分鏡資料契約、`deck.*` API、標記規範或工作區結構時遞增版本，並在 [`migrations/`](migrations/README.md) 寫遷移說明。
 - 工作區與上游契約版本不同時，`add`、`new`、`pack` 會拒絕；`status` 會列出需讀的遷移說明，讀完以 `update core --migrate` 升級，再依說明修改元件副本與簡報。契約 2 的入口結構見 [1-to-2](migrations/1-to-2.md)。無法遷移時，改用對應版本的來源（例如 tag `contract-<n>`）。
