@@ -167,6 +167,7 @@
 5. **匯出 pptx**：要在 PPT 裡呈現旋轉，在頁面加 `record` 拖曳畫布，例如 `record: [{ wait: 800 }, { drag: '[data-key=<key>] .deck-canvas', by: [360, 0] }, { wait: 1200 }]`；自動動畫（如 cube）只要寫 `wait`。沒有 `record` 時匯出靜止畫面（ADR 0021）。
 6. **包裝型元件**（`sketch`、`celebrate`）：把其他元件的輸出當內容傳入，被包住的元件照常引用、照常可編輯。
 7. **減少動態**：系統設定「減少動態」時，自動播放的元件（`terminal`、`lottie`、`physics`、`mark`、`model`、`backdrop`、`celebrate`）不播放或停在靜態畫面。
+8. **隨朗讀**：會自己播放的元件（`terminal`、`lottie`、`physics`、`mark`）翻頁就開始，口語稿還沒講到就播完了；要跟著句子動時設 `auto: false`，再用 `record` 的 `at` 觸發。各元件的寫法見其 README「隨朗讀」，選法見 `agentdeck docs speech-actions`。
 
 ## 預覽
 
