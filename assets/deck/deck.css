@@ -53,6 +53,9 @@ body>header :is(.deck-edit-bar button,.reader-settings-toggle):hover{background:
 .deck-edit-bar button[aria-pressed=true]{background:var(--deck-primary);color:#fff;border-color:var(--deck-primary)}
 .deck-speech-bar{display:contents}
 .deck-edit-bar [data-rate]{min-width:3.4em}
+.deck-volume{display:inline-flex;align-items:center;gap:4px;font-size:14px;font-weight:400;white-space:nowrap}
+.deck-volume input{width:72px;margin:0;accent-color:var(--deck-accent)}
+body>header .deck-volume{padding:0 6px;border-radius:8px;background:#ffffffe6;min-height:36px}
 .deck-cc{position:fixed;left:50%;bottom:5vh;transform:translateX(-50%);z-index:9000;max-width:min(80vw,1100px);padding:.35em .9em;border-radius:6px;background:#000000a6;color:#fff;font-size:clamp(18px,2.4vw,30px);line-height:1.45;text-align:center;pointer-events:none;text-shadow:0 1px 2px #000}
 .deck-cc[hidden]{display:none}
 .deck-marks{position:fixed;inset:0;z-index:8999;pointer-events:none}
