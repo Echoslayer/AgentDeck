@@ -538,7 +538,7 @@
     syncSpeak();
   }
   function playAudio(run, p) {
-    player = new Audio(p.audio);
+    const audio = player = new Audio(p.audio);
     player.playbackRate = rate;
     player.volume = volume / 100;
     player.onended = () => finished(run);
@@ -557,14 +557,34 @@
       if ((at || !parts.length) && ci !== lastCc && (ci === i || performance.now() - ccSince >= CC_MIN)) { lastCc = ci; caption(parts[ci] ?? ''); }
       requestAnimationFrame(tick);
     };
-    player.onerror = () => {
-      if (run !== speakRun) return;
+    const fallback = () => {
+      if (run !== speakRun || player !== audio) return;
       console.warn(`${p.id}: 音檔無法播放（${p.audio}），改用內建語音`);
+      audio.pause();
       player = null;
-      if (!sayText(run, p)) finished(run);
+      if (!sayText(run, p)) playbackError(run, '音檔無法播放，也沒有可用的內建語音。');
     };
-    player.play().then(() => { if (last < 0) tick(); }, () => { /* 載入失敗由 onerror 處理；停止時的中斷不需處理 */ });
+    audio.onerror = fallback;
+    audio.play().then(() => { if (run === speakRun && player === audio && last < 0) tick(); }, error => {
+      if (run !== speakRun || player !== audio) return; // 停止或換頁造成的舊請求不影響新播放
+      if (error?.name === 'NotSupportedError') return fallback();
+      playbackError(run, error?.name === 'NotAllowedError'
+        ? '瀏覽器未允許播放音訊，請按播放按鈕或 R 重試。'
+        : '音訊播放中斷，請按播放按鈕或 R 重試。');
+    });
     return true;
+  }
+  function playbackError(run, message) {
+    if (run !== speakRun) return;
+    speak(false);
+    let status = document.getElementById('deck-speech-error');
+    if (!status) {
+      status = document.createElement('p');
+      status.id = 'deck-speech-error';
+      status.setAttribute('role', 'status');
+      document.querySelector('body>header').after(status);
+    }
+    status.textContent = message;
   }
   function sayText(run, p) {
     // 逐句念：長段落在部分瀏覽器會中途被截斷，且改語速能從下一句生效。
@@ -591,6 +611,7 @@
     return true;
   }
   function speak(on = !(speaking || auto)) {
+    document.getElementById('deck-speech-error')?.remove();
     const run = ++speakRun, p = currentPage();
     clearTimeout(autoTimer);
     tts?.cancel();

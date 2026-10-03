@@ -23,7 +23,7 @@ function findFfmpeg(given) {
   }
   return null;
 }
-async function launch(chromium) {
+export async function launch(chromium) {
   for (const channel of ['chrome', 'msedge', undefined]) {
     try { return { browser: await chromium.launch({ channel }), name: channel ?? 'Playwright Chromium' }; } catch {}
   }
@@ -76,7 +76,7 @@ const placeCursor = ([x, y]) => { const c = document.getElementById('agentdeck-c
 const setValue = (e, v) => { e.value = v; for (const t of ['input', 'change']) e.dispatchEvent(new Event(t, { bubbles: true })); };
 
 // dry：只驗證步驟能執行（export --check），不等待、不顯示游標。
-async function runStep(pg, s, { cursor = false, dry = false } = {}) {
+export async function runStep(pg, s, { cursor = false, dry = false } = {}) {
   if (s.wait !== undefined) return dry ? undefined : pg.waitForTimeout(s.wait);
   // arrow／box／clear 是畫面標註，交給簡報自己的 deck-editor 畫（docs/adr/0024）；at 只用於朗讀同步，錄影時依序執行。
   if (s.arrow || s.box || s.clear) {

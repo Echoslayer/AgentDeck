@@ -132,3 +132,5 @@ body:not(.is-zoomed)>main>.stage:has(>.deck-cover,>.deck-end){width:min(100%,max
 body:not(.is-zoomed)>main:has(>.stage>.deck-cover,>.stage>.deck-end){padding-inline:16px}
 body:not(.is-zoomed)>main>.stage:has(>.deck-cover,>.deck-end){width:100%}
 }
+
+#deck-speech-error{margin:8px auto;padding:10px 16px;max-width:1100px;border:1px solid currentColor;border-radius:6px;background:var(--deck-bg,#fff);color:var(--deck-primary,#173c58)}

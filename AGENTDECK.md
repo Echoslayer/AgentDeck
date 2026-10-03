@@ -76,7 +76,7 @@
 
 第一次製作只做到上面的步驟，每頁寫 `instruction` 與需要的 `explain`。以下兩項都要等內容經人播放確認、且人明確要求後，才在下一輪補上；即使人一開始就提到，也先完成內容。內容還在改時，句數、畫面與版面一變，這些就得重寫。
 
-1. **語音與動作**：`speech`、`audio`、`cues`，以及帶 `at` 或標註的 `record`（格式見下方「進階欄位」；寫法建議 `agentdeck docs speech-actions`）。
+1. **語音與動作**：`speech`、`audio`、`cues`，以及帶 `at` 或標註的 `record`（格式見下方「進階欄位」；寫法建議 `agentdeck docs speech-actions`）。可用 `agentdeck speech build <narration.json> --page <id>` 製作或重建單頁音檔（macOS），再執行 `agentdeck check speech [入口資料夾]` 檢查音檔、時間點與動作；資料檢查不取代多語速實播。
 2. **輸出 PPT**：先跑 `agentdeck export --check` 回報環境缺什麼，為需要示範的互動頁寫 `record`（見「進階欄位」），再以 `agentdeck export` 輸出 `dist/<名稱>.pptx`（ADR 0021）；匯出會列出內容區縮得過小的頁，依提示拆頁或降低高度，再逐頁檢查文字有無溢出。動作、標註與錄影怎麼轉進 PPT 仍是暫行做法：只有 `box`／`arrow`／`clear` 的頁改畫成 PPT 原生紅框與箭頭，按一下依序出現（ADR 0025）；含 `click`／`set`／`drag` 的頁照順序錄影、忽略 `at`，不帶朗讀時間。不要為了匯出而改寫播放用的步驟，也不要向人保證 PPT 會保留朗讀同步。
 
 ## 平行製作（環境支援 subagent 時）
