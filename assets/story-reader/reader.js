@@ -45,7 +45,13 @@ const shellObserver = new ResizeObserver(entries => {
 });
 for (const element of document.querySelectorAll('body>header, body>nav')) shellObserver.observe(element);
 
-let current = 0;
+// 網址 #頁面id 指向該頁：可分享單頁連結、重新整理停在原頁；不符的 hash（頁內錨點）不影響翻頁。
+const pageFromHash = () => {
+  let id = location.hash.slice(1);
+  try { id = decodeURIComponent(id); } catch { /* 非法編碼視為不符 */ }
+  return pages.findIndex(p => p.id === id);
+};
+let current = Math.max(0, pageFromHash());
 const answers = new Map();
 const states = new Map();
 let cleanup;
@@ -118,7 +124,13 @@ function show() {
   }
   document.dispatchEvent(new CustomEvent('story:render', { detail: { page: p, root } }));
   annotations.render(p.id);
+  // replaceState：翻頁不堆進瀏覽器歷史，上一頁鍵仍回到前一個網站
+  if (pageFromHash() !== current) try { history.replaceState(history.state, '', `#${encodeURIComponent(p.id)}`); } catch { /* 沙箱或不允許改網址時略過 */ }
 }
+window.addEventListener('hashchange', () => {
+  const i = pageFromHash();
+  if (i >= 0 && i !== current) { current = i; show(); window.scrollTo(0, 0); }
+});
 function move(delta) {
   current = delta > 0 && current === pages.length - 1 ? 0 : Math.max(0, Math.min(pages.length - 1, current + delta));
   show();
