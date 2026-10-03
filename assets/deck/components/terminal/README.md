@@ -4,11 +4,13 @@
 重播一段終端機操作：指令逐字打出、輸出逐行出現，可暫停、拖時間軸。適合 CLI 教學、部署流程、agent 操作示範。只要靜態呈現指令與輸出時用 `code` 的 `prompt` 模式。
 
 ## API
-`deck.terminal(key, source, { prompt?, cols?, rows?, caption?, hint? })`
+`deck.terminal(key, source, { prompt?, cols?, rows?, auto?, caption?, hint? })`
 - `source`：兩種格式擇一。
   - **腳本**（字串）：以 `prompt`（預設 `'$ '`）開頭的行是指令，播放時逐字打出；其餘行是輸出，一次出現一行。節奏固定，每次播放相同。
   - **asciinema 錄製檔**：以 `asciinema rec` 錄下的 asciicast v2 內容（`{"version": 2, …}` 開頭的整段文字），直接貼成字串；不要用網址或檔案路徑（`file://` 無法讀檔）。
 - `cols`／`rows`：終端機欄數與列數，預設 72×12；錄製檔請填錄製時的大小。
+- `auto`：預設 `true`，翻頁就播放。`false` 時停在開頭，下方出現「下一步」與「從頭」：每按一次「下一步」播到下一個指令前停住（腳本自動在第二個指令起放停頓點；錄製檔用錄製時的 marker）；播放中多按的次數會記住，停下後接著播。
+- **隨朗讀**：`auto: false` 加上 `record: [{ at: 1, click: '[data-key=k] .deck-terminal-next' }, { at: 2, click: '[data-key=k] .deck-terminal-next' }]`，一句一個指令。「下一步」依序前進，重念本頁前先翻頁或按「從頭」。
 - `caption`：說明，可現場修改。指令與輸出**不開放現場編輯**，要改請改 `story.js`。
 - `hint`：操作提示；縮圖不顯示，傳空字串隱藏。
 - 需要套件 `asciinema-player`：在元件 js 之前引用 `vendor/asciinema-player/asciinema-player.min.js`（`agentdeck add` 會印出）。播放器樣式 `asciinema-player.css` 由元件依自己的位置自動載入，不用另外引用。

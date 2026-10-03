@@ -7,6 +7,7 @@
 `deck.celebrate(key, html)`
 - `html`：要包住的內容，通常是其他元件的輸出或一個按鈕，例如 `deck.celebrate('quiz', deck.predict(...))`（按「揭曉」時噴彩帶）或 `'<button type="button">上線了 🎉</button>'`。
 - 包住的任何 `<button>` 被按下都會觸發；按鈕標示為收合（`aria-expanded="false"`，例如 predict 再按一次收回答案）時不觸發。
+- **隨朗讀**：`record: [{ at: 3, click: '[data-key=k] button' }]`，宣布那句噴彩帶。包住 predict 時點「揭曉」按鈕即可。
 - 沒有靜態後備：縮圖與匯出只顯示包住的內容。
 - 需要套件 `confetti`：在元件 js 之前引用 `vendor/confetti/confetti.browser.js`；包住的元件也要照常引用。
 

@@ -26,7 +26,15 @@
 | 換一個重點 | `clear` 後再標下一個 | 相鄰的標註不帶 `text`，或分開在不同句 |
 | 切換樣本、改參數、看結果變化 | `set`（優先）或 `click` | `set` 指定值可重播；切換型 `click` 重播時可能切回去 |
 | 旋轉、拖曳畫布 | `drag` | 只用在畫布類元件 |
+| 講到某個詞才畫重點 | `mark` 設 `auto: false`，`click` `[data-mark="n"]` | 一句一個標記；再點不會收回 |
+| 一句執行一個終端機指令 | `terminal` 設 `auto: false`，`click` `.deck-terminal-next` | 依序前進；重念前先翻頁或按「從頭」 |
+| 講到「放開」「完成」才開始動畫 | `physics`／`lottie` 設 `auto: false`，`click` 開始按鈕或 `.deck-fallback` | 每次都從頭，重播安全 |
+| 聚焦網路圖的一個節點 | `network` 的聚焦選單，`set` 節點 id（`''` 為全部） | 不要 `click` 畫布 |
+| 指出 sankey 節點或 treemap 方塊 | `box`／`arrow` 指向 `[data-node="名稱"]` | 名稱要與資料完全相同 |
+| 宣布結果時噴彩帶 | `celebrate` 包住的按鈕，`click` | 只用一次 |
 | 下載、送出、開新頁 | 不寫進有 `at` 的 `record` | 改用標註指出位置，由講者手動操作 |
+
+會自己播放的元件（`terminal`、`lottie`、`physics`、`mark`）在翻頁時就開始，朗讀還沒講到就播完了；要跟著句子動時一律設 `auto: false`，再用上表的動作觸發。各元件的寫法見其 README 的「隨朗讀」。
 
 能用標註表達的就不要操作元件。標註只疊在畫面上，不改元件狀態，重播與換頁都不會留下副作用。
 

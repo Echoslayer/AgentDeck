@@ -8,6 +8,8 @@
 - `nodes`：節點陣列；字串即 id，或 `{ id, label?, group? }`。`group` 決定顏色（依出現順序取主色、輔色、突顯色、灰），最多四組並自動產生圖例。
 - `edges`：`[來源 id, 目標 id]` 陣列。
 - `directed`：`true` 時畫箭頭。
+- 下方「聚焦」選單：選一個節點只留它與鄰居（與點節點相同），選「全部」還原；縮圖不顯示。
+- **隨朗讀**：`record: [{ at: 2, set: '[data-key=k] select', value: '<節點 id>' }, { at: 4, set: '[data-key=k] select', value: '' }]`；`value: ''` 為全部。
 - `caption`、圖例文字可現場修改；節點與連線**不開放現場編輯**。
 - 版面在產生時就算好（cytoscape 的 cose 排版，起始位置固定，每次結果相同），縮圖、匯出與動態版位置一致；結果比較高時自動轉成橫向。未下載套件時排成圓形。
 - 需要套件 `cytoscape`：在元件 js 之前引用 `vendor/cytoscape/cytoscape.min.js`。

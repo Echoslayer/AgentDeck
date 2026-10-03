@@ -4,12 +4,14 @@
 一段文字裡的關鍵詞，在翻到這頁時依序用手繪筆觸畫出：螢光筆、底線、圈選、框、刪除線、括號。讓觀眾的視線跟著講者走。整頁只講一句話用 `focus`。
 
 ## API
-`deck.mark(key, html, { type?, types?, color?, gap? })`
+`deck.mark(key, html, { type?, types?, color?, gap?, auto? })`
 - `html`：一段文字，用 `==詞==` 標出要強調的部分（可多處）；可含 `<br>` 等行內標記。
 - `type`：所有標記的類型，預設 `'highlight'`。可用 `highlight`、`underline`、`circle`、`box`、`strike-through`、`crossed-off`、`bracket`。
 - `types`：依出現順序逐一指定類型，未指定的用 `type`。
 - `color`：`highlight`（預設）／`accent`／`primary`。
 - `gap`：翻頁後幾毫秒開始畫，預設 500。
+- `auto`：預設 `true`，翻頁後依序畫完。`false` 時翻頁不畫，點到標記才畫那一個（再點不會收回）；第 n 個標記為 `[data-mark="n"]`。
+- **隨朗讀**：`auto: false` 加上 `record: [{ at: 2, click: '[data-key=k] [data-mark="1"]' }, { at: 4, click: '[data-key=k] [data-mark="2"]' }]`，講到那句才畫（`agentdeck docs speech-actions`）。
 - 整段可現場修改；改字時保留 `==` 標出的範圍（編輯後的標記以 span 保存）。
 - 靜態後備（縮圖、匯出、未下載套件）以 CSS 畫同類型的標記。
 - 需要套件 `rough-notation`：在元件 js 之前引用 `vendor/rough-notation/rough-notation.iife.js`。

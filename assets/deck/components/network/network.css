@@ -8,3 +8,6 @@
 .deck-network-legend{display:flex;flex-wrap:wrap;gap:6px 18px;margin:0;padding:0;list-style:none;font-size:14px;color:var(--muted)}
 .deck-network-legend li::before{content:"";display:inline-block;width:10px;height:10px;border-radius:50%;background:var(--c);margin-right:6px}
 .deck-network figcaption{font-size:14px;color:var(--muted)}
+.deck-network-focus{font-size:14px;color:var(--muted);display:flex;gap:8px;align-items:center}
+.deck-network-focus select{font:inherit;color:var(--ink);background:var(--card);border:1px solid var(--line);border-radius:6px;padding:2px 6px}
+.mini-page .deck-network-focus{display:none}
