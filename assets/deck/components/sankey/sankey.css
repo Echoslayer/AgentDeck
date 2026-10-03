@@ -3,7 +3,7 @@
 .deck-sankey svg{width:100%;height:auto;max-height:60vh;overflow:visible}
 .deck-sankey-links path{fill:none;stroke-opacity:.28;transition:stroke-opacity .15s}
 .deck-sankey-links path:hover{stroke-opacity:.6}
-.deck-sankey-labels text{font-size:15px;fill:var(--ink);dominant-baseline:middle;paint-order:stroke;stroke:var(--card);stroke-width:4px;stroke-linejoin:round}
-.deck-sankey-labels tspan{fill:var(--muted);font-size:13px}
+.deck-sankey-nodes text{font-size:15px;fill:var(--ink);dominant-baseline:middle;paint-order:stroke;stroke:var(--card);stroke-width:4px;stroke-linejoin:round}
+.deck-sankey-nodes tspan{fill:var(--muted);font-size:13px}
 .deck-sankey-list{margin:0;padding-left:1.2em}
 .deck-sankey figcaption{font-size:14px;color:var(--muted)}

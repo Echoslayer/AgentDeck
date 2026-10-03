@@ -8,3 +8,4 @@
 .deck-mark:not(.deck-live-on) :is(.deck-mark-strike-through,.deck-mark-crossed-off){text-decoration:line-through 3px var(--c)}
 /* rough-notation 的 svg 疊在文字下方（螢光筆）或上方 */
 .deck-mark .rough-annotation{pointer-events:none}
+.deck-mark[data-auto=false].deck-live-on [data-mark]{cursor:pointer}

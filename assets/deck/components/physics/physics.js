@@ -20,7 +20,7 @@ function check(key, bodies) {
 const half = b => (b.shape === 'ball' ? b.r ?? 3 : b.size[1] / 2);
 const fill = b => `var(${COLORS[b.color ?? (b.fixed ? 'muted' : 'primary')]})`;
 
-deck.define('physics', (key, bodies, { gravity = 1, caption = '', hint = '拖曳物體可以丟出去；按「重來」回到初始狀態。' } = {}) => {
+deck.define('physics', (key, bodies, { gravity = 1, auto = true, caption = '', hint = '拖曳物體可以丟出去；按「重來」回到初始狀態。' } = {}) => {
   check(key, bodies);
   const shapes = bodies.map(b => {
     const [x, y] = b.at;
@@ -33,8 +33,8 @@ deck.define('physics', (key, bodies, { gravity = 1, caption = '', hint = '拖曳
     return pin + body + v + label;
   }).join('');
   const svg = `<svg class="deck-fallback" viewBox="0 0 ${W} ${H}" aria-hidden="true"><defs><marker id="${key}-v" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto"><path d="M0 0L10 5L0 10z"/></marker></defs><g style="--arrow:url(#${key}-v)">${shapes}</g></svg>`;
-  return `<figure class="deck-physics" data-key="${key}" data-world="${esc(JSON.stringify({ bodies, gravity }))}"><div class="deck-view">${svg}</div>`
-    + `<div class="deck-physics-bar"><button type="button">重來</button>${hint ? `<p class="deck-hint">${hint}</p>` : ''}</div>`
+  return `<figure class="deck-physics" data-key="${key}" data-world="${esc(JSON.stringify({ bodies, gravity, auto }))}"><div class="deck-view">${svg}</div>`
+    + `<div class="deck-physics-bar"><button type="button">${auto ? '重來' : '開始'}</button>${hint ? `<p class="deck-hint">${hint}</p>` : ''}</div>`
     + (caption ? `<figcaption data-key="${key}-caption" data-edit>${caption}</figcaption>` : '') + '</figure>';
 }, {
   tier: 'special',
@@ -53,7 +53,7 @@ deck.define('physics', (key, bodies, { gravity = 1, caption = '', hint = '拖曳
 
 function live(el) {
   if (!window.Matter) throw new Error('matter-js 未載入');
-  const M = Matter, { bodies, gravity } = JSON.parse(el.dataset.world);
+  const M = Matter, { bodies, gravity, auto } = JSON.parse(el.dataset.world);
   const view = el.querySelector('.deck-view');
   const canvas = Object.assign(document.createElement('canvas'), { className: 'deck-canvas' });
   view.append(canvas);
@@ -61,6 +61,7 @@ function live(el) {
   const ink = token('--ink'), muted = token('--muted');
   const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
   let engine, items, raf, mouseC;
+  const mouse = M.Mouse.create(canvas); // 重來時沿用，避免重複掛事件
 
   const build = () => {
     engine = M.Engine.create({ gravity: { y: gravity } });
@@ -74,7 +75,6 @@ function live(el) {
     for (const i of items) if (i.b.pin) M.Composite.add(engine.world, M.Constraint.create({ pointA: { x: i.b.pin[0] * S, y: i.b.pin[1] * S }, bodyB: i.body, stiffness: 1 }));
     // 世界外圍的牆，避免物體飛出畫面
     M.Composite.add(engine.world, [[-5, H / 2, 10, H * 3], [W + 5, H / 2, 10, H * 3], [W / 2, -H, W * 2, 10]].map(([x, y, w, h]) => M.Bodies.rectangle(x * S, y * S, w * S, h * S, { isStatic: true })));
-    const mouse = M.Mouse.create(canvas);
     mouseC = M.MouseConstraint.create(engine, { mouse, constraint: { stiffness: 0.2 } });
     M.Composite.add(engine.world, mouseC);
   };
@@ -98,15 +98,16 @@ function live(el) {
     }
   };
 
-  // 依實際經過時間推進（120Hz 螢幕不會變兩倍速）；切走分頁回來時最多補一格
+  // 依實際經過時間推進（120Hz 螢幕不會變兩倍速）；每步最多 1/60 秒（matter 建議），低幀率時變慢而不失準
   let last = 0;
-  const loop = now => { M.Engine.update(engine, last ? Math.min(now - last, 33) : 1000 / 60); last = now; draw(); raf = requestAnimationFrame(loop); };
+  const loop = now => { M.Engine.update(engine, Math.min(last ? now - last : 1000 / 60, 1000 / 60)); last = now; draw(); raf = requestAnimationFrame(loop); };
   const reset = () => { cancelAnimationFrame(raf); last = 0; if (engine) M.Engine.clear(engine); build(); if (reduced) draw(); else raf = requestAnimationFrame(loop); };
   // 減少動態：不自動播放，按「重來」才開始
   const btn = el.querySelector('.deck-physics-bar button');
-  const start = () => { if (reduced) { cancelAnimationFrame(raf); last = 0; raf = requestAnimationFrame(loop); } else reset(); };
+  // 按鈕一律從初始狀態開始（朗讀動作 click 重播安全）；auto: false 或減少動態時，進頁只畫初始狀態
+  const start = () => { reset(); if (reduced) { last = 0; raf = requestAnimationFrame(loop); } };
   btn.addEventListener('click', start);
-  reset();
-  return () => { cancelAnimationFrame(raf); btn.removeEventListener('click', start); M.Mouse.clearSourceEvents?.(mouseC.mouse); M.Engine.clear(engine); canvas.remove(); };
+  if (auto) reset(); else { build(); draw(); }
+  return () => { cancelAnimationFrame(raf); btn.removeEventListener('click', start); M.Mouse.clearSourceEvents?.(mouse); M.Engine.clear(engine); canvas.remove(); };
 }
 })();

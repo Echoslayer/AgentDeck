@@ -4,10 +4,12 @@
 播放設計師做好的向量動畫（LottieFiles 下載或 After Effects 以 Bodymovin 匯出的 JSON）：圖示動畫、產品示意、流程動畫。只是要讓文字出現或移動時用 CSS 即可，不必用本元件。
 
 ## API
-`deck.lottie(key, data, { frame?, loop?, caption?, hint? })`
+`deck.lottie(key, data, { frame?, loop?, auto?, caption?, hint? })`
 - `data`：Lottie JSON **物件**（含 `w`、`h`、`layers`）。把 `.json` 檔內容貼進 `story.js`，例如 `const anim = { … };`；不要用網址或檔案路徑（`file://` 無法讀檔）。
 - `frame`：縮圖、匯出與「減少動態」時停在第幾格；預設最後一格。
-- `loop`：是否重複播放，預設 `true`。點動畫可暫停／繼續。
+- `loop`：是否重複播放，預設 `true`。
+- `auto`：預設 `true`，翻頁就播放，點動畫可暫停／繼續。`false` 時停在第一格，點一下從頭播（每次都從頭，重播安全）。
+- **隨朗讀**：`auto: false` 加上 `record: [{ at: 2, click: '[data-key=k] .deck-fallback' }]`。
 - `caption` 可現場修改；動畫本身不開放編輯。
 - 靜態畫面在產生時就用 lottie 畫成 SVG，縮圖與匯出看得到。
 - 需要套件 `lottie`：在元件 js 之前引用 `vendor/lottie/lottie_svg.min.js`（SVG 渲染器版）。

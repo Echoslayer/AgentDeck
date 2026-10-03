@@ -27,7 +27,7 @@ deck.define('treemap', (key, data, { unit = '', caption = '' } = {}) => {
     const shade = Math.round(100 - (d.parent === root ? 0 : (d.parent.children.indexOf(d) % 4) * 12));
     const small = (d.x1 - d.x0) < 18 || (d.y1 - d.y0) < 10;
     const X = v => f(v / 1.6), Y = v => f(v / 0.9); // 160×90 → 百分比
-    return `<div class="deck-treemap-tile${small ? ' is-small' : ''}" style="left:${X(d.x0)}%;top:${Y(d.y0)}%;width:${X(d.x1 - d.x0)}%;height:${Y(d.y1 - d.y0)}%;--c:color-mix(in srgb,var(${PALETTE[i % PALETTE.length]}) ${shade}%,#fff)" title="${esc(d.ancestors().reverse().slice(1).map(a => a.data.name).join(' / '))}：${fmt(d.value)}">`
+    return `<div class="deck-treemap-tile${small ? ' is-small' : ''}" data-node="${esc(d.data.name)}" style="left:${X(d.x0)}%;top:${Y(d.y0)}%;width:${X(d.x1 - d.x0)}%;height:${Y(d.y1 - d.y0)}%;--c:color-mix(in srgb,var(${PALETTE[i % PALETTE.length]}) ${shade}%,#fff)" title="${esc(d.ancestors().reverse().slice(1).map(a => a.data.name).join(' / '))}：${fmt(d.value)}">`
       + `<b>${esc(d.data.name)}</b><small>${fmt(d.value)}・${Math.round(d.value / total * 100)}%</small></div>`;
   }).join('');
   return `<figure class="deck-treemap" data-key="${key}"><div class="deck-treemap-area" role="img" aria-label="${esc(root.leaves().map(d => `${d.data.name} ${fmt(d.value)}`).join('；'))}">${tiles}</div>${legend}${cap}</figure>`;

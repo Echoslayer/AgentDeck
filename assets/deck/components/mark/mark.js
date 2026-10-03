@@ -5,13 +5,13 @@
 const TYPES = ['highlight', 'underline', 'circle', 'box', 'strike-through', 'crossed-off', 'bracket'];
 const COLORS = { primary: '--deck-primary', accent: '--deck-accent', highlight: '--deck-highlight' };
 
-deck.define('mark', (key, html, { type = 'highlight', types = [], color = 'highlight', gap = 500 } = {}) => {
+deck.define('mark', (key, html, { type = 'highlight', types = [], color = 'highlight', gap = 500, auto = true } = {}) => {
   if (typeof html !== 'string' || !html.includes('==')) throw new Error(`deck.mark(${key}): 用 ==詞== 標出要強調的部分`);
   for (const t of [type, ...types]) if (!TYPES.includes(t)) throw new Error(`deck.mark(${key}): type 只能是 ${TYPES.join('、')}`);
   if (!COLORS[color]) throw new Error(`deck.mark(${key}): color 只能是 ${Object.keys(COLORS).join('、')}`);
   let i = 0;
-  const body = html.replace(/==(.+?)==/g, (_, t) => `<span class="deck-mark-${types[i++] ?? type}">${t}</span>`);
-  return `<p class="deck-mark" data-key="${key}" data-edit data-gap="${gap}" style="--c:var(${COLORS[color]})">${body}</p>`;
+  const body = html.replace(/==(.+?)==/g, (_, t) => `<span class="deck-mark-${types[i] ?? type}" data-mark="${++i}">${t}</span>`);
+  return `<p class="deck-mark" data-key="${key}" data-edit data-gap="${gap}" data-auto="${auto}" style="--c:var(${COLORS[color]})">${body}</p>`;
 }, {
   tier: 'special',
   vendor: ['rough-notation'],
@@ -28,8 +28,10 @@ function live(el) {
     const type = span.className.slice('deck-mark-'.length);
     return RoughNotation.annotate(span, { type, color, padding: type === 'circle' ? 6 : 2, strokeWidth: type === 'highlight' ? 1 : 2, iterations: 2, animate: !reduced, animationDuration: 700, multiline: true, ...(type === 'bracket' ? { brackets: ['left', 'right'] } : {}) });
   });
-  // 頁面淡入後再開始畫
-  const timer = setTimeout(() => RoughNotation.annotationGroup(list).show(), +el.dataset.gap);
-  return () => { clearTimeout(timer); list.forEach(a => a.remove()); };
+  // auto：頁面淡入後依序畫完。auto: false：等點擊（講者或朗讀動作 click [data-mark="n"]）才畫那一個；再點不會收回，重播安全
+  const timer = el.dataset.auto === 'true' && setTimeout(() => RoughNotation.annotationGroup(list).show(), +el.dataset.gap);
+  const onClick = e => { const m = e.target.closest('[data-mark]'); if (m && el.contains(m)) list[m.dataset.mark - 1].show(); };
+  el.addEventListener('click', onClick);
+  return () => { clearTimeout(timer); el.removeEventListener('click', onClick); list.forEach(a => a.remove()); };
 }
 })();

@@ -46,6 +46,8 @@ deck.define('network', (key, nodes, edges, { directed = false, caption = '', hin
   const legend = groups.length ? `<ul class="deck-network-legend">${groups.map((g, i) => `<li style="--c:var(${GROUPS[i % GROUPS.length]})" data-key="${key}-g${i + 1}" data-edit>${esc(g)}</li>`).join('')}</ul>` : '';
   const data = { nodes: nodes.map((d, i) => ({ id: d.id, label: d.label ?? d.id, g: Math.max(0, groups.indexOf(d.group)) % GROUPS.length, x: at[d.id].x, y: at[d.id].y })), edges, directed };
   return `<figure class="deck-network" data-key="${key}" data-graph="${esc(JSON.stringify(data))}" style="--ratio:${f(W / H)}"><div class="deck-view">${svg}</div>`
+    // 聚焦選單：講者現場用，朗讀動作以 set 指定節點 id（空字串為全部）
+    + `<label class="deck-network-focus">聚焦 <select><option value="">全部</option>${nodes.map(d => `<option value="${esc(d.id)}">${esc(d.label ?? d.id)}</option>`).join('')}</select></label>`
     + legend + (caption ? `<figcaption data-key="${key}-caption" data-edit>${caption}</figcaption>` : '')
     + (hint ? `<p class="deck-hint">${hint}</p>` : '') + '</figure>';
 }, {
@@ -91,15 +93,21 @@ function live(el) {
       { selector: 'node.focus', style: { 'border-width': 4, 'border-color': hl } },
     ],
   });
-  // 點節點：自己與鄰居保留，其餘淡出；點空白處還原
-  cy.on('tap', e => {
+  // 聚焦一個節點：自己與鄰居保留，其餘淡出；id 為空時還原。點節點與聚焦選單共用
+  const select = el.querySelector('.deck-network-focus select');
+  const focus = id => {
     cy.elements().removeClass('faded near focus');
-    if (e.target === cy || !e.target.isNode()) return;
-    const near = e.target.closedNeighborhood();
+    select.value = id;
+    const n = id && cy.getElementById(id);
+    if (!n?.length) return;
+    const near = n.closedNeighborhood();
     cy.elements().not(near).addClass('faded');
     near.edges().addClass('near');
-    e.target.addClass('focus');
-  });
-  return () => { cy.destroy(); host.remove(); };
+    n.addClass('focus');
+  };
+  cy.on('tap', e => focus(e.target !== cy && e.target.isNode() ? e.target.id() : ''));
+  const onChange = () => focus(select.value);
+  select.addEventListener('change', onChange);
+  return () => { select.removeEventListener('change', onChange); cy.destroy(); host.remove(); };
 }
 })();

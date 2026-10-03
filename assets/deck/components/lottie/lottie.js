@@ -14,10 +14,10 @@ function still(data, frame) {
   return svg;
 }
 
-deck.define('lottie', (key, data, { frame, loop = true, caption = '', hint = '' } = {}) => {
+deck.define('lottie', (key, data, { frame, loop = true, auto = true, caption = '', hint = '' } = {}) => {
   if (!(data && typeof data === 'object' && Array.isArray(data.layers) && data.w && data.h)) throw new Error(`deck.lottie(${key}): data 需為 Lottie JSON 物件（含 w、h、layers）`);
   const svg = still(data, frame);
-  return `<figure class="deck-lottie" data-key="${key}" data-anim="${esc(JSON.stringify(data))}" data-loop="${loop}" style="--ratio:${data.w}/${data.h}">`
+  return `<figure class="deck-lottie" data-key="${key}" data-anim="${esc(JSON.stringify(data))}" data-loop="${loop}" data-auto="${auto}" style="--ratio:${data.w}/${data.h}">`
     + `<div class="deck-view"><div class="deck-fallback">${svg}</div></div>`
     + (caption ? `<figcaption data-key="${key}-caption" data-edit>${caption}</figcaption>` : '')
     + (hint ? `<p class="deck-hint">${hint}</p>` : '') + '</figure>';
@@ -36,9 +36,11 @@ function live(el) {
   if (reduced) return null; // 減少動態：停在靜態畫面
   box.innerHTML = '';
   const data = JSON.parse(el.dataset.anim);
-  const anim = lottie.loadAnimation({ container: box, renderer: 'svg', autoplay: true, loop: el.dataset.loop === 'true', animationData: data });
-  // 點一下重播或暫停
-  const toggle = () => (anim.isPaused ? anim.play() : anim.pause());
+  const auto = el.dataset.auto === 'true';
+  const anim = lottie.loadAnimation({ container: box, renderer: 'svg', autoplay: auto, loop: el.dataset.loop === 'true', animationData: data });
+  // auto：點一下暫停／繼續。auto: false：停在第一格，點一下從頭播（朗讀動作 click 重播安全）
+  if (!auto) anim.goToAndStop(0, true);
+  const toggle = () => (!auto ? anim.goToAndPlay(0, true) : anim.isPaused ? anim.play() : anim.pause());
   box.addEventListener('click', toggle);
   return () => { box.removeEventListener('click', toggle); anim.destroy(); };
 }

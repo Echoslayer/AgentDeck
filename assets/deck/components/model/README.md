@@ -13,6 +13,7 @@
   - `color`：`primary`／`accent`／`highlight`／`muted`，預設 `primary`；明暗面自動產生。
   - `label`：有標籤的零件列入右側圖例（可現場修改）。
 - `caption` 可現場修改。
+- **隨朗讀**：`record: [{ at: 2, drag: '[data-key=k] .deck-canvas', by: [320, 0] }]` 轉到背面。
 - 靜態畫面在產生時就用 zdog 畫成 SVG，縮圖與匯出使用。
 - 需要套件 `zdog`：在元件 js 之前引用 `vendor/zdog/zdog.dist.min.js`。
 

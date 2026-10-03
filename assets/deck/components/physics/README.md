@@ -4,7 +4,7 @@
 2D 物理模擬：落下、彈跳、碰撞、擺錘、堆疊倒塌。講者按「重來」重播，觀眾或講者可拖曳物體丟出去。適合物理、工程直覺的教學，或用「骨牌倒下」比喻連鎖反應。要精確數值或公式推導時用 `trend`／`math`。
 
 ## API
-`deck.physics(key, bodies, { gravity?, caption?, hint? })`
+`deck.physics(key, bodies, { gravity?, auto?, caption?, hint? })`
 - 世界大小固定 100×60，左上為原點、y 向下。
 - `bodies`：物體陣列，每個為
   - `shape`：`'ball'`（圓，`r` 半徑，預設 3）或 `'box'`（矩形，`size: [寬, 高]`，可加 `angle` 度數）。
@@ -16,6 +16,8 @@
   - `color`：`primary`／`accent`／`highlight`／`muted`；固定物預設 `muted`，其餘預設 `primary`。
   - `label`：物體上方的短標籤。
 - `gravity`：重力倍數，預設 1；0 為無重力（只看碰撞）。
+- `auto`：預設 `true`，翻頁就開始，按鈕為「重來」。`false` 時只畫初始狀態，按鈕為「開始」。兩者按下都從初始狀態重跑（重播安全）。
+- **隨朗讀**：`auto: false` 加上 `record: [{ at: 2, click: '[data-key=k] .deck-physics-bar button' }]`，講到那句才開始。
 - `caption` 可現場修改；物體設定**不開放現場編輯**。
 - 靜態後備為初始狀態（含初速度箭頭與繩子），縮圖與匯出使用。
 - 需要套件 `matter`：在元件 js 之前引用 `vendor/matter/matter.min.js`。

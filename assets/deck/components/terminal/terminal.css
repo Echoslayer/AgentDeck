@@ -15,3 +15,6 @@
   --term-color-8:var(--muted);--term-color-9:var(--deck-highlight);--term-color-10:var(--deck-accent);--term-color-11:var(--deck-highlight);
   --term-color-12:var(--deck-primary);--term-color-13:var(--deck-highlight);--term-color-14:var(--deck-accent);--term-color-15:#fff;
 }
+.deck-terminal-bar{display:flex;gap:8px}
+.deck-terminal-bar button{padding:4px 14px;font-size:14px}
+.mini-page .deck-terminal-bar{display:none}
