@@ -1,6 +1,6 @@
 # 0024. 講者動作隨朗讀執行：record 步驟加 at，新增 arrow、box、clear 與 cues
 
-- 狀態：已接受
+- 狀態：已接受（決策 6 的「標註也錄影」被 [0025](0025-native-pptx-annotations.md) 取代）
 - 日期：2026-10-02
 
 ## 背景

@@ -11,17 +11,14 @@ const CATALOG = path.join(COMPONENTS, 'CATALOG.md');
 
 // 核心副本：update core 整份覆蓋。路徑相對於上游根目錄，也就是下游工作區根目錄。
 // templates/blank 保留可直接預覽的骨架；new 建立主題工作區根入口與 resources/<topic>/ 內容（契約 2）。
-export function coreFiles() {
-  return [
-    'LICENSE',
-    'AGENTDECK.md',
-    'assets/deck/deck-core.js',
-    'assets/deck/deck-editor.js',
-    'assets/deck/deck.css',
-    ...listFiles(path.join(UP, 'assets', 'story-reader')).map(f => `assets/story-reader/${f}`),
-    ...listFiles(path.join(UP, 'templates', 'blank')).map(f => `templates/blank/${f}`),
-  ];
-}
+const CORE = ['LICENSE', 'AGENTDECK.md', 'assets/deck/deck-core.js', 'assets/deck/deck-editor.js', 'assets/deck/deck.css'];
+const CORE_DIRS = ['assets/story-reader', 'templates/blank'];
+// root 預設上游；傳下游 ws.fw 時列出本地現有的核心副本。
+export const coreFiles = (root = UP) => [
+  ...CORE.filter(f => exists(path.join(root, f))),
+  ...CORE_DIRS.flatMap(d => listFiles(path.join(root, d)).map(f => `${d}/${f}`)),
+];
+export const isCore = f => CORE.includes(f) || CORE_DIRS.some(d => f.startsWith(`${d}/`));
 // 主題檔案，相對於主題資料夾；預設為上游 assets/theme/，init --theme 可換成本機資料夾（ADR 0019）。
 export const themeFiles = (dir = path.join(UP, 'assets', 'theme')) => listFiles(dir);
 

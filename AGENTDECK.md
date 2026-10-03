@@ -151,7 +151,7 @@ const story = {
 - 文字欄位（`section`、`title`、`lead`、`point`、`detail`）同樣以 HTML 插入，不解析 Markdown：程式碼寫 `<code>`，字面的 `<`、`&` 要跳脫。
 - HTML 字串只接受作者審查過的本地內容，不可塞入網址參數、讀者輸入或遠端文字。
 - 縮圖以約 1000px 寬縮放同一份內容；超長頁面會被裁切，應拆頁。SVG 若用到 `id`，另提供沒有重複 id 的 `previewArt`。
-- **講稿**：只顯示在右側「講稿」分頁與簡報者視窗，不出現在投影畫面（ADR 0020）。第一輪寫 `instruction`，二次迭代寫需要的 `explain`；`speech`、`audio`、`cues` 是進階欄位，格式見下方「進階欄位」，第一輪不讀也不寫。可用 `<b>`、`<br>`。封面與結尾以 `deck.cover({ …, instruction, speech, audio, explain })`、`deck.end({ instruction, speech, audio, explain })` 傳入。
+- **講稿**：只顯示在右側「講稿」分頁與簡報者視窗，不出現在投影畫面（ADR 0020）。第一輪寫 `instruction`，二次迭代寫需要的 `explain`；`speech`、`audio`、`cues` 是進階欄位，格式見下方「進階欄位」，第一輪不讀也不寫。可用 `<b>`、`<br>`。封面與結尾以 `deck.cover({ …, instruction, speech, audio, cues, record, explain })`、`deck.end({ instruction, speech, audio, cues, record, explain })` 傳入。
   - `instruction`（講者動作）：實作時每頁都寫。用口語寫這頁怎麼開口、指哪裡、操作什麼、強調什麼、怎麼接到下一頁，不重複畫面上的文字；一頁約二到五句。
   - `explain`（補充解釋）：第一輪不寫，整份完成後的講稿二次迭代才寫，只寫需要的頁。內容是畫面簡化或省略了什麼（簡化模型、略過的前提、只是代表案例），以及聽眾可能追問的原因與答法，例如「為什麼模型會把這個數字判錯」。每個說法都要回到素材或實測資料查證；查不到的列進 `plan.md`「待確認」，不寫成定論。二次迭代可以和處理註解一起做。
 - **題目（可選）**：`question: { prompt, choices: [{ value, label, feedback }], hideFuturePreviews? }`。`value` 為唯一的英數、`_`、`-`；`hideFuturePreviews: true` 在作答前遮住後續縮圖（不阻止翻頁）。答案保留到重新整理。

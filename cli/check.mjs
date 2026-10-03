@@ -8,6 +8,7 @@ import { fileURLToPath } from 'node:url';
 import { runInNewContext } from 'node:vm';
 import { createHash } from 'node:crypto';
 import { unzip } from './lib/zip.mjs';
+import { markClicks } from './lib/export.mjs';
 import { hashFile, listFiles } from './lib/util.mjs';
 
 const UP = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
@@ -324,6 +325,7 @@ try {
     assert.deepEqual([...new Set([...files.keys()].map(f => f.split('/')[1]))].sort(), ['agentdeck', 'attachments', 'candidates', 'index.html', 'resources']);
     assert.ok(![...files.keys()].some(f => f.endsWith('/plan.md') || f.includes('/vendor/three/') || f.includes('/templates/') || f.includes('/dist/') || /\/(?:agentdeck\.json|vendor\.json|AGENTDECK\.md)$/.test(f)), 'zip 不應含製作設定、計畫或未引用的套件');
     assert.ok(!files.has(`${top}/demo/index.html`));
+    assert.ok(![...files.keys()].some(f => /\/components\/(?:globe|trend)\//.test(f) || (f.includes('/agentdeck/assets/') && f.endsWith('.md'))), 'zip 不應含未引用的元件或製作說明');
     packedRefs(files, top, ['candidates', 'attachments']);
     for (const [entry, topic, expected] of [['index.html', 'demo', 'resources/demo/img/probe.png'], ['candidates/alt/index.html', 'alt', '../../resources/alt/img/probe.png']]) {
       const packed = files.get(`${top}/${entry}`).toString('utf8');
@@ -433,6 +435,17 @@ try {
     fs.mkdirSync(probe, { recursive: true });
     fs.writeFileSync(path.join(probe, 'index.html'), '<script src="../../examples/weighted-ranking/compute.js"></script>\n');
     assert.match(run(['pack', path.relative(UP, probe), '--out', out], UP, true), /examples/);
+  });
+
+  step('export 把標註步驟分成 PPT 的「按一下」', () => {
+    assert.deepEqual(markClicks([{ box: '.a' }, { box: '.b' }, { clear: true }, { box: '.c' }], [['a'], ['b'], [], ['c']]), [
+      [{ name: 'a', delay: 0 }], [{ name: 'b', delay: 0 }],
+      [{ name: 'a', out: true, delay: 0 }, { name: 'b', out: true, delay: 0 }, { name: 'c', delay: 0 }],
+    ]);
+    assert.deepEqual(markClicks([{ box: '.a', at: 1 }, { wait: 300 }, { arrow: '.b' }, { clear: true, at: 2 }], [['a'], [], ['b'], []]), [
+      [{ name: 'a', delay: 0 }, { name: 'b', delay: 300 }],
+      [{ name: 'a', out: true, delay: 0 }, { name: 'b', out: true, delay: 0 }],
+    ]);
   });
 
   console.log(`\n全部通過（${passed} 項）`);

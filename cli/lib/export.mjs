@@ -143,7 +143,7 @@ function measureMarks(steps) {
 // 把步驟分成「按一下」：有 at 時每個帶 at 的步驟開新的一下，其後的步驟併入；沒有 at 時每個 box／arrow 各一下，
 // clear 讓先前的標註在下一下消失（最後一步是 clear 時自成一下）。同一下裡的 wait 成為後續效果的延遲。
 // 回傳 [[{ name, out, delay }]]。
-function markClicks(steps, names) {
+export function markClicks(steps, names) {
   const anyAt = steps.some(s => s.at !== undefined);
   const clicks = [];
   let visible = [], pending = [], t = 0;

@@ -119,7 +119,8 @@ AgentDeck 是上游框架；每份簡報以 `npx -y github:Echoslayer/AgentDeck 
 - **準備環境**：clone 後執行 `node cli/agentdeck.mjs vendor`（下游工作區用 `agentdeck vendor`），依清單下載並驗證雜湊；重跑會略過已就緒的檔案。加 `--check` 只檢查不下載。沒下載時，用到套件的元件顯示靜態後備。
 - **引用**：下游根 `index.html` 以相對路徑引用，例如 `<script src="agentdeck/vendor/three/three.min.js"></script>`；相關入口改用 `../../agentdeck/vendor/`。只收能在 `file://` 下以 `<script>` 載入的檔案（UMD／IIFE、css、字型、圖片），不走 CDN。
 - **新增套件**：經人同意後在 `vendor.json` 加一項；`sha256` 先留空，執行 `agentdeck vendor` 會印出實際雜湊，確認來源後填回。
-- **交付給別人**：在簡報單位內 `agentdeck pack`，帶入根 `index.html`、單位資源、相關入口、`agentdeck/` 內的框架與引用的套件（含授權檔），缺少的套件會先下載；排除製作骨架、企劃、CLI 記錄與既有打包產物。解壓後第一層只有 `index.html`、`resources/`、`agentdeck/`（與相關群組），根頁直接播放，不使用跳轉或 `<base>`。`pack <入口資料夾>` 可選某個相關入口作交付首頁；通常打包完整單位。
+- **交付給別人**：在簡報單位內 `agentdeck pack`，帶入根 `index.html`、單位資源、相關入口、`agentdeck/` 內的框架、入口引用的元件與套件（含授權檔），缺少的套件會先下載；排除未引用的元件、製作說明（`*.md`）、製作骨架、企劃、CLI 記錄與既有打包產物。解壓後第一層只有 `index.html`、`resources/`、`agentdeck/`（與相關群組），根頁直接播放，不使用跳轉或 `<base>`。`pack <入口資料夾>` 可選某個相關入口作交付首頁；通常打包完整單位。
+  - 不想讓轉寄出去的 zip 被他人打開：`pack` 本身不加密，改用 AES 加密壓縮另行包裝，例如 `7z a -p -mhe=on deck.7z dist/<檔名>.zip`（`-mhe=on` 連檔名一起加密），密碼走另一個管道給對方。避免 `zip -e`（ZipCrypto 可被破解）。解壓後內容即為明文；要能收回權限須改放需登入的伺服器。
 - **輸出 PPT（可選，進階）**：內容確認後才用 `agentdeck export`，輸出 `dist/<名稱>.pptx`；需要 Chrome／Edge，錄影另需 ffmpeg。細節見 [`getting-started.md`「內容確認後的下一輪」](docs/getting-started.md#內容確認後的下一輪)（[ADR 0021](docs/adr/0021-pptx-export.md)、[0025](docs/adr/0025-native-pptx-annotations.md)）。
 
 ## 更新閱讀器
