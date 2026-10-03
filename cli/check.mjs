@@ -276,6 +276,11 @@ try {
   });
 
   step('pack 產生只含工作區檔案的 zip', () => {
+    // 使用已下載的匯出套件快取；pack 仍會驗證雜湊。
+    for (const name of ['html-to-image', 'jspdf', 'pptxgenjs']) {
+      const cached = path.join(UP, 'vendor', name);
+      if (fs.existsSync(cached)) fs.cpSync(cached, path.join(ws, 'agentdeck/vendor', name), { recursive: true });
+    }
     const index = path.join(ws, 'index.html');
     const html = fs.readFileSync(index, 'utf8')
       .replace('<link rel="stylesheet" href="resources/demo/story.css">', "<link rel='stylesheet' href='agentdeck/assets/deck/components/list/list.css?v=1#style'>\n<link rel=\"stylesheet\" href=\"resources/demo/story.css\">")
@@ -319,7 +324,7 @@ try {
     const [zipFile] = fs.readdirSync(out);
     const files = unzip(fs.readFileSync(path.join(out, zipFile)));
     const top = zipFile.replace(/\.zip$/, '');
-    for (const p of ['index.html', 'candidates/alt/index.html', 'candidates/alt/detail.html', 'attachments/appendix/index.html', 'resources/demo/edits.js', 'resources/demo/img/probe.png', 'resources/demo/img/dormant.png', 'resources/alt/img/probe.png', 'resources/loose.png', 'agentdeck/vendor/fixture/probe.js', 'agentdeck/assets/deck/components/list/list.js', 'agentdeck/assets/story-reader/reader.js', 'agentdeck/LICENSE']) {
+    for (const p of ['index.html', 'candidates/alt/index.html', 'candidates/alt/detail.html', 'attachments/appendix/index.html', 'resources/demo/edits.js', 'resources/demo/img/probe.png', 'resources/demo/img/dormant.png', 'resources/alt/img/probe.png', 'resources/loose.png', 'agentdeck/vendor/fixture/probe.js', 'agentdeck/assets/deck/components/list/list.js', 'agentdeck/assets/story-reader/reader.js', 'agentdeck/assets/story-reader/export.js', 'agentdeck/vendor/html-to-image/html-to-image.js', 'agentdeck/vendor/jspdf/jspdf.umd.min.js', 'agentdeck/vendor/pptxgenjs/pptxgen.bundle.js', 'agentdeck/LICENSE']) {
       assert.ok(files.has(`${top}/${p}`), `zip 缺少 ${p}`);
     }
     assert.deepEqual([...new Set([...files.keys()].map(f => f.split('/')[1]))].sort(), ['agentdeck', 'attachments', 'candidates', 'index.html', 'resources']);

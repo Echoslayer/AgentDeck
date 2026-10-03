@@ -780,6 +780,7 @@ textarea{flex:1;font:inherit;font-size:16px;background:#2c2e26;color:inherit;bor
 
   function setEditing(on) {
     editing = on;
+    window.storyReader.annotations?.setEditing(on);
     document.body.classList.toggle('is-editing', on);
     const toggle = document.getElementById('edit-toggle');
     toggle.setAttribute('aria-pressed', String(on));

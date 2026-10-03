@@ -13,7 +13,7 @@ import {
 } from './lib/util.mjs';
 import {
   coreFiles, isCore, themeFiles, componentNames, componentManifest, requireComponent, buildIndex, resolveDoc,
-  linkedDocs, catalogSection, migrationPath, upstreamVendor,
+  linkedDocs, catalogSection, migrationPath, upstreamVendor, READER_VENDOR,
 } from './lib/registry.mjs';
 import { zip } from './lib/zip.mjs';
 import { exportEnv, exportPptx, checkRecords } from './lib/export.mjs';
@@ -124,7 +124,7 @@ async function init(args, opts) {
   writeText(path.join(target, 'resources', '.gitkeep'), '');
   writeJson(path.join(fw, 'vendor.json'), {
     $comment: '第三方套件清單（docs/adr/0011）：清單進 git，本體下載到 vendor/<name>/。由 agentdeck add 登記，agentdeck vendor 下載。',
-    packages: {},
+    packages: Object.fromEntries(READER_VENDOR.map(name => [name, upstreamVendor().packages[name]])),
   });
   writeText(path.join(target, '.gitignore'), [
     '# AgentDeck 工作區（agentdeck init 產生）',
@@ -522,6 +522,10 @@ function join(args, opts, ws) {
 // ---- vendor ----
 async function vendorCmd(args, opts, ws) {
   const manifest = readJson(path.join(ws.fw, 'vendor.json'));
+  // 舊工作區更新核心後也能取得匯出依賴，不改寫其 vendor.json。
+  if (exists(path.join(ws.fw, 'assets/story-reader/export.js'))) {
+    manifest.packages = { ...Object.fromEntries(READER_VENDOR.map(name => [name, upstreamVendor().packages[name]])), ...manifest.packages };
+  }
   const all = Object.keys(manifest.packages ?? {});
   const names = args.length ? args : all;
   let failed = 0;
@@ -608,6 +612,9 @@ async function pack(args, opts, ws) {
     else if (!(ws.upstream && deckRel === 'examples') && r.startsWith('examples/')) fail(`正式簡報不得引用 examples；請將需要的程式與資料改寫到主題內：${ref}`);
     else if (!ws.upstream && (r === FW || r.startsWith(`${FW}/`))) fail(`入口只可引用 ${FW}/ 內的 assets、vendor 與 components：${ref}`);
     else { log(`注意：帶入非標準位置的檔案 ${r}`); dirs.add(r); }
+  }
+  if (dirs.has(`${P}assets`) && exists(path.join(ws.fw, 'assets/story-reader/export.js'))) {
+    for (const name of READER_VENDOR) packages.add(name);
   }
   if (packages.size) await vendorCmd([...packages], {}, ws);
   for (const {ref, full} of refs) {
