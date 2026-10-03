@@ -31,6 +31,15 @@ document.getElementById('progress').max = pages.length;
 // 製作署名：常駐在翻頁列右下角的內距內，每頁可見、不佔版面。
 document.querySelector('body>nav')?.insertAdjacentHTML('beforeend', '<a class="made-with" href="https://github.com/Echoslayer/AgentDeck" target="_blank" rel="noopener" title="本簡報以 AgentDeck 製作">以 AgentDeck 製作</a>');
 
+const preferences = createPreferences();
+// 外殼高度隨工具列換行與導覽尺寸更新，內容保留實際所需空間。
+const shellObserver = new ResizeObserver(entries => {
+  for (const { target } of entries) {
+    document.body.style.setProperty(`--reader-${target.tagName.toLowerCase()}-height`, `${target.getBoundingClientRect().height}px`);
+  }
+});
+for (const element of document.querySelectorAll('body>header, body>nav')) shellObserver.observe(element);
+
 let current = 0;
 const answers = new Map();
 const states = new Map();
@@ -40,6 +49,8 @@ window.storyReader = Object.freeze({
   get index() { return current; },
   get page() { return pages[current]; },
   refresh: () => renderPreviews(),
+  preferences,
+  navigationDelta: preferences.navigationDelta,
   go(i) {
     if (!Number.isInteger(i) || i < 0 || i >= pages.length) throw new Error(`storyReader.go: 頁序需為 0–${pages.length - 1}，收到 ${i}`);
     current = i;
@@ -162,7 +173,134 @@ document.getElementById('index-list').onclick = e => {
   window.scrollTo(0, 0);
 };
 document.addEventListener('keydown', e => {
-  if (e.target.isContentEditable || ['BUTTON', 'A', 'INPUT', 'SELECT', 'TEXTAREA', 'SUMMARY'].includes(e.target.tagName) || e.altKey || e.ctrlKey || e.metaKey) return;
-  if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') { e.preventDefault(); move(e.key === 'ArrowRight' ? 1 : -1); }
+  const delta = preferences.navigationDelta(e);
+  if (delta) { e.preventDefault(); move(delta); }
 });
 show();
+
+// 設定模組：封裝對話框、草稿、驗證與翻頁鍵；不依賴編輯器的 DOM 或狀態。
+// 留在同一支交付檔內，讓既有簡報更新核心後不必修改 script 清單。
+function createPreferences() {
+  const storageKey = 'agentdeck-navigation-keys';
+  const keys = { prev: 'a', next: 'd' };
+  const validKeys = value => value && /^[a-z]$/.test(value.prev) && /^[a-z]$/.test(value.next)
+    && value.prev !== value.next && !/[encrps]/.test(value.prev + value.next);
+  try {
+    const saved = JSON.parse(localStorage.getItem(storageKey));
+    if (validKeys(saved)) Object.assign(keys, saved);
+  } catch { /* 無法讀取時採用預設值 */ }
+
+  const dialog = document.createElement('dialog');
+  dialog.id = 'reader-settings';
+  dialog.setAttribute('aria-labelledby', 'reader-settings-title');
+  dialog.innerHTML = `<form method="dialog">
+    <div class="reader-settings-heading"><h2 id="reader-settings-title">設定</h2>
+    <p>個人偏好儲存在此瀏覽器。</p></div>
+    <div class="reader-settings-content">
+    <fieldset><legend>基本操作</legend><p>翻頁快捷鍵</p>
+      <label>上一頁 <input name="prev" maxlength="1" pattern="[a-zA-Z]" required></label>
+      <label>下一頁 <input name="next" maxlength="1" pattern="[a-zA-Z]" required></label>
+      <p>←／→ 固定保留。字母不可重複；E、N、C、R、P、S 為保留鍵。</p>
+    </fieldset>
+    <details id="reader-personal-settings" hidden><summary>個人客製</summary>
+      <p>調整朗讀、字幕與講者視窗。</p>
+    </details>
+    </div>
+    <div class="reader-settings-footer"><p role="status"></p>
+    <div class="reader-settings-actions"><button type="button" data-reset title="將所有設定填回預設值，儲存後套用">恢復預設</button>
+      <button type="button" data-cancel>取消</button><button type="submit">儲存</button></div></div>
+  </form>`;
+  document.body.append(dialog);
+  const form = dialog.querySelector('form');
+  const status = dialog.querySelector('[role="status"]');
+  const personal = dialog.querySelector('details');
+  const controls = [];
+  const button = document.createElement('button');
+  button.type = 'button';
+  button.textContent = '設定';
+  button.className = 'reader-settings-toggle';
+  button.setAttribute('aria-haspopup', 'dialog');
+  button.onclick = () => {
+    for (const name of ['prev', 'next']) form.elements[name].value = keys[name];
+    for (const { field, input } of controls) fill(input, field.get());
+    status.textContent = '';
+    dialog.showModal();
+  };
+  document.querySelector('body>header').append(button);
+  dialog.querySelector('[data-cancel]').onclick = () => dialog.close();
+  dialog.querySelector('[data-reset]').onclick = () => {
+    form.elements.prev.value = 'a';
+    form.elements.next.value = 'd';
+    for (const { field, input } of controls) fill(input, field.default);
+    status.textContent = '已填入預設值，儲存後套用。';
+  };
+  function fill(input, value) {
+    if (input.type === 'checkbox') input.checked = value;
+    else input.value = String(value);
+  }
+  function read(input) {
+    return input.type === 'checkbox' ? input.checked : Number(input.value);
+  }
+  form.onsubmit = e => {
+    e.preventDefault();
+    const value = { prev: form.elements.prev.value.toLowerCase(), next: form.elements.next.value.toLowerCase() };
+    if (!validKeys(value)) {
+      status.textContent = '請使用不同且未保留的英文字母。';
+      return;
+    }
+    // 所有欄位先驗證再套用，取消與恢復預設都只影響草稿。
+    if (!form.reportValidity()) return;
+    const values = controls.map(({ input }) => read(input));
+    if (controls.some(({ field }, i) => field.options ? !field.options.includes(values[i])
+      : field.type === 'number' && (!Number.isFinite(values[i]) || values[i] < field.min || values[i] > field.max))) return;
+    Object.assign(keys, value);
+    let persisted = true;
+    try { localStorage.setItem(storageKey, JSON.stringify(value)); } catch { persisted = false; }
+    controls.forEach(({ field }, i) => { if (field.set(values[i]) === false) persisted = false; });
+    if (!persisted) {
+      status.textContent = '已套用；部分設定無法儲存，重新整理後可能恢復原值。';
+      return;
+    }
+    dialog.close();
+  };
+
+  return Object.freeze({
+    get isOpen() { return dialog.open; },
+    // 擴充功能只提供標籤、欄位與讀寫行為，不需操作設定視窗。
+    // set 回傳 false 表示本次已套用，但持久儲存失敗。
+    register({ title, fields, help }) {
+      const group = document.createElement('fieldset');
+      const legend = document.createElement('legend');
+      legend.textContent = title;
+      group.append(legend);
+      for (const field of fields) {
+        const label = document.createElement('label');
+        label.append(field.label);
+        const input = document.createElement(field.options ? 'select' : 'input');
+        input.setAttribute('aria-label', field.label);
+        if (field.options) {
+          for (const value of field.options) input.add(new Option(`${value}×`, String(value)));
+        } else {
+          input.type = field.type;
+          if (field.type === 'number') { input.min = field.min; input.max = field.max; input.required = true; }
+        }
+        fill(input, field.get());
+        label.append(input);
+        group.append(label);
+        controls.push({ field, input });
+      }
+      if (help) { const p = document.createElement('p'); p.textContent = help; group.append(p); }
+      personal.append(group);
+      personal.hidden = false;
+    },
+    navigationDelta(e) {
+      if (e.defaultPrevented || e.isComposing || e.altKey || e.ctrlKey || e.metaKey || dialog.open
+        || e.target.isContentEditable || e.target.closest?.('input, select, textarea, [role="slider"], [role="textbox"]')) return 0;
+      const key = e.key.toLowerCase();
+      if (key === keys.prev) return -1;
+      if (key === keys.next) return 1;
+      if (e.target.closest?.('button, a, summary')) return 0;
+      return e.key === 'ArrowRight' ? 1 : e.key === 'ArrowLeft' ? -1 : 0;
+    },
+  });
+}

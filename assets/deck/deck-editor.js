@@ -381,12 +381,13 @@
     ccBox.textContent = text;
     ccBox.hidden = !(cc && text);
   }
-  function toggleCc() {
-    cc = !cc;
-    try { localStorage.setItem(CC_KEY, cc ? '1' : '0'); } catch { /* 只影響這次播放 */ }
+  function setCc(value) {
+    cc = value;
     caption(ccText);
     syncSpeak();
+    return persist(CC_KEY, cc ? '1' : '0');
   }
+  const toggleCc = () => setCc(!cc);
 
   // ── 講者動作（docs/adr/0024）：record 步驟帶 at（第幾句，1 起算）時，朗讀到那句就執行；其後沒有 at 的步驟
   //    屬於同一組依序執行，wait 依語速縮短。沒有任何 at 的 record 只給匯出錄影，播放不執行。
@@ -595,12 +596,13 @@
     auto = true;
     speak(true);
   }
-  function cycleRate() {
-    rate = RATES[(RATES.indexOf(rate) + 1) % RATES.length];
-    try { localStorage.setItem(RATE_KEY, String(rate)); } catch { /* 只影響這次播放 */ }
+  function setRate(value) {
+    rate = RATES.includes(value) ? value : 1;
     if (player) player.playbackRate = rate;
     syncSpeak();
+    return persist(RATE_KEY, String(rate));
   }
+  const cycleRate = () => setRate(RATES[(RATES.indexOf(rate) + 1) % RATES.length]);
   function syncSpeak() {
     const p = currentPage();
     for (const doc of [document, presenter && !presenter.closed && presenter.document]) {
@@ -694,16 +696,20 @@
   // 簡報者視窗：同源的空白視窗，由本頁直接寫入與更新；字級存在講者本機。
   const SIZE_KEY = 'agentdeck-presenter-size';
   let size = 26;
-  try { size = Number(localStorage.getItem(SIZE_KEY)) || size; } catch { /* 無法存取儲存空間時用預設字級 */ }
+  try { size = Math.min(56, Math.max(14, Number(localStorage.getItem(SIZE_KEY)) || size)); } catch { /* 無法存取儲存空間時用預設字級 */ }
   // 講稿、註解可在簡報者視窗個別開關，同樣存在講者本機。
   const SHOW_KEY = 'agentdeck-presenter-show';
   const show = { notes: true, comments: true };
-  try { Object.assign(show, JSON.parse(localStorage.getItem(SHOW_KEY))); } catch { /* 預設兩者都顯示 */ }
-  function toggleShow(name) {
-    show[name] = !show[name];
-    try { localStorage.setItem(SHOW_KEY, JSON.stringify(show)); } catch { /* 只影響下次開啟 */ }
+  try {
+    const saved = JSON.parse(localStorage.getItem(SHOW_KEY));
+    for (const name of ['notes', 'comments']) if (typeof saved?.[name] === 'boolean') show[name] = saved[name];
+  } catch { /* 預設兩者都顯示 */ }
+  function setShow(name, value) {
+    show[name] = value;
     renderPresenter();
+    return persist(SHOW_KEY, JSON.stringify(show));
   }
+  const toggleShow = name => setShow(name, !show[name]);
   function openPresenter() {
     presenter = window.open('', 'agentdeck-presenter', 'width=780,height=720');
     try {
@@ -718,7 +724,9 @@
     doc.head.innerHTML = `<meta charset="utf-8"><style>${PRESENTER_CSS}</style>`;
     doc.body.innerHTML = '<div id="root"></div>';
     presenter.onkeydown = e => {
-      if (e.target.tagName === 'TEXTAREA') return;
+      if (window.storyReader.preferences.isOpen || e.isComposing || e.ctrlKey || e.metaKey || e.altKey || e.target.isContentEditable || ['INPUT', 'SELECT', 'TEXTAREA'].includes(e.target.tagName)) return;
+      const delta = window.storyReader.navigationDelta(e);
+      if (delta) { e.preventDefault(); document.getElementById(delta > 0 ? 'next' : 'prev').click(); return; }
       if (e.key === 'ArrowRight' || e.key === 'PageDown') document.getElementById('next').click();
       if (e.key === 'ArrowLeft' || e.key === 'PageUp') document.getElementById('prev').click();
       if (e.key.toLowerCase() === 'r' && !e.ctrlKey && !e.metaKey && !e.altKey) { auto = false; speak(); }
@@ -737,8 +745,8 @@
   }
   function setSize(value) {
     size = Math.min(56, Math.max(14, value));
-    try { localStorage.setItem(SIZE_KEY, String(size)); } catch { /* 只影響下次開啟的字級 */ }
-    presenter.document.documentElement.style.setProperty('--size', `${size}px`);
+    if (presenter && !presenter.closed) presenter.document.documentElement.style.setProperty('--size', `${size}px`);
+    return persist(SIZE_KEY, String(size));
   }
   function renderPresenter() {
     if (!presenter || presenter.closed) return;
@@ -783,6 +791,11 @@ textarea{flex:1;font:inherit;font-size:16px;background:#2c2e26;color:inherit;bor
   function setBarHidden(hidden) {
     if (hidden && editing) setEditing(false);
     document.body.classList.toggle('deck-bar-hidden', hidden);
+    const toggle = document.getElementById('edit-hide');
+    toggle.textContent = hidden ? '展開工具' : '收合';
+    toggle.title = hidden ? '展開工具列（E）' : '收合工具列（E）';
+    toggle.setAttribute('aria-label', toggle.title);
+    toggle.setAttribute('aria-expanded', String(!hidden));
   }
 
   async function save() {
@@ -812,6 +825,32 @@ textarea{flex:1;font:inherit;font-size:16px;background:#2c2e26;color:inherit;bor
 
   document.addEventListener('story:render', () => { if (editing) decorate(); });
 
+  // 編輯／講者層擁有偏好的語意與套用行為；設定模組只負責呈現及草稿。
+  function persist(key, value) {
+    try { localStorage.setItem(key, value); return true; } catch { return false; }
+  }
+  function registerPreferences() {
+    const preferences = window.storyReader.preferences;
+    preferences.register({
+      title: '朗讀與字幕',
+      fields: [
+        { label: '朗讀速度', options: RATES, default: 1, get: () => rate, set: setRate },
+        { label: '顯示字幕', type: 'checkbox', default: false, get: () => cc, set: setCc },
+      ],
+      help: 'R：朗讀 · P：全部播放 · S：字幕。內建語音的新語速從下一句開始套用。',
+    });
+    preferences.register({
+      title: '講者視窗',
+      fields: [
+        { label: '講稿字級（14–56 px）', type: 'number', min: 14, max: 56, default: 26, get: () => size, set: setSize },
+        ...[['notes', '顯示講稿'], ['comments', '顯示註解']].map(([name, label]) => ({
+          label, type: 'checkbox', default: true, get: () => show[name], set: value => setShow(name, value),
+        })),
+      ],
+      help: '只影響講者視窗。E：工具列 · N：講稿 · C：註解 · Ctrl／⌘ + S：另存修改。',
+    });
+  }
+
   document.addEventListener('DOMContentLoaded', () => {
     const bar = document.createElement('div');
     bar.className = 'deck-edit-bar';
@@ -820,7 +859,7 @@ textarea{flex:1;font:inherit;font-size:16px;background:#2c2e26;color:inherit;bor
       + '<button type="button" id="edit-discard" title="捨棄未另存的修改" hidden>捨棄</button>'
       + '<button type="button" id="edit-presenter" title="開啟簡報者視窗：講稿、計時與註解（拖到講者螢幕）">🎤 講者</button>'
       + (story.pages.some(canSpeak) ? `<span class="deck-speech-bar">${controlsHtml()}</span>` : '')
-      + '<button type="button" id="edit-hide" title="隱藏編輯列（按 E 重新顯示）" aria-label="隱藏編輯列">✕</button>';
+      + '<button type="button" id="edit-hide" title="收合工具列（E）" aria-label="收合工具列（E）" aria-expanded="true">收合</button>';
     document.querySelector('body>header').append(bar);
     document.getElementById('edit-toggle').onclick = () => setEditing(!editing);
     document.getElementById('edit-save').onclick = save;
@@ -829,12 +868,13 @@ textarea{flex:1;font:inherit;font-size:16px;background:#2c2e26;color:inherit;bor
       dirty = false;
       location.reload();
     };
-    document.getElementById('edit-hide').onclick = () => setBarHidden(true);
+    document.getElementById('edit-hide').onclick = () => setBarHidden(!document.body.classList.contains('deck-bar-hidden'));
     document.getElementById('edit-presenter').onclick = openPresenter;
     wireSpeak(bar);
 
     buildSide();
     renderNotes();
+    registerPreferences();
     // 全部播放時換頁（自動或手動）接著念新的一頁；單頁朗讀則在換頁時停止。同一頁重繪不影響。
     document.addEventListener('story:render', () => {
       clearMarks();
@@ -872,6 +912,7 @@ textarea{flex:1;font:inherit;font-size:16px;background:#2c2e26;color:inherit;bor
       document.execCommand('insertText', false, e.clipboardData.getData('text/plain'));
     });
     document.addEventListener('keydown', e => {
+      if (e.isComposing || window.storyReader.preferences.isOpen) return;
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 's') { e.preventDefault(); save(); return; }
       const typing = e.target.isContentEditable || ['INPUT', 'SELECT', 'TEXTAREA'].includes(e.target.tagName);
       if (!typing && !e.ctrlKey && !e.metaKey && !e.altKey && e.key.toLowerCase() === 'e') {
