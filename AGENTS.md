@@ -42,6 +42,11 @@
 
 - `node cli/check.mjs`：在暫存資料夾跑 `init`／`new`／`add`／`catalog`／`docs`／`diff`／`status`／`update core`／`pack`，驗證下游工作區只引用自身檔案，完成後清理。
 - `node examples/check.cjs`：互動組合範例的運算與本機引用。
+- **瀏覽器驗證**（元件外觀、動態內容、朗讀）以 Chrome headless 截圖時：
+  - 視窗最小寬度約 500px，`--window-size` 小於此值時以 500 排版再裁切，看起來像溢出；手機寬度要在真實瀏覽器或裝置模擬確認。
+  - `--virtual-time-budget` 會快轉計時器，但 `requestAnimationFrame` 與 CSS 動畫不跟著前進；驗證動畫、物理模擬或朗讀動作要用真實時間等待後再截圖（例如以 DevTools Protocol 的 `Page.captureScreenshot`）。
+  - 預設擋自動播放，測音檔加 `--autoplay-policy=no-user-gesture-required`。不出聲測朗讀時，在 `deck-editor.js` 之前以計時器替換 `window.speechSynthesis`（`speak` 依序呼叫 `onstart`、`onend`）。
+  - 測試頁放在 `playground/<topic>/`，不進 git。
 
 ## Commit
 

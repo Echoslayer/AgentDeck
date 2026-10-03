@@ -116,7 +116,7 @@ demo/
 | 講者能回答追問 | 「補充解釋」 | 為需要的頁寫 `explain`，查不到的列進 `plan.md`「待確認」 |
 | 照稿念或無人播放 | 「補逐字稿」 | 寫 `speech`，可按 R／P 朗讀 |
 | 用真人錄音 | 「用這些音檔」並提供檔案 | 放進 `resources/<name>/audio/`，填 `audio`；要精準對齊再填 `cues` |
-| 畫面跟著念（紅框、箭頭、操作元件） | 「畫面跟著念」 | 在 `record` 加 `at`（寫法見 `agentdeck docs speech-actions`，[ADR 0024](adr/0024-speech-synced-actions.md)） |
+| 畫面跟著念（紅框、箭頭、操作元件） | 「畫面跟著念」 | 在 `record` 加 `at`；會自己播放的元件（終端機、動畫、物理模擬、手繪標記）改成講到那句才開始（寫法見 `agentdeck docs speech-actions`，[ADR 0024](adr/0024-speech-synced-actions.md)） |
 | PowerPoint 檔 | 「輸出 PPT」 | 先 `export --check`，再 `export` 到 `dist/<名稱>.pptx`（[ADR 0021](adr/0021-pptx-export.md)、[0025](adr/0025-native-pptx-annotations.md)） |
 
 PPT 不保留朗讀同步：只有紅框／箭頭的頁會變成 PPT 原生標註，按一下依序出現；有點擊、拖曳等操作的頁則錄成影片。
