@@ -6,6 +6,7 @@
 
 | 需要表達 | 試玩 | 實作前必讀 |
 | --- | --- | --- |
+| 需求缺口如何推動專案逐步長出能力 | [專案演進](project-growth/index.html) | [連動與驗收](project-growth/IMPLEMENTATION.md) |
 | 聚合尺度如何改變空間細節 | [解析度比較](resolution-comparison/index.html) | [資料與改寫方式](resolution-comparison/IMPLEMENTATION.md) |
 | 多組數值如何經門檻與投票形成結果 | [門檻與共識](threshold-consensus/index.html) | [投票與對齊條件](threshold-consensus/IMPLEMENTATION.md) |
 | 分項、權重與排名的關係 | [加權評分](weighted-ranking/index.html) | [計分與尺度假設](weighted-ranking/IMPLEMENTATION.md) |

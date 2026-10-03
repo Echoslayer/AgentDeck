@@ -34,6 +34,7 @@
 
 | 元件 | 表達的關係 | 技術 | 用在 | 不要用在 |
 | --- | --- | --- | --- | --- |
+| [evolution](evolution/README.md) | 能力逐階演進 | HTML／SVG，零依賴 | 專案如何因需求逐步長出功能 | 日期時程 → `timeline`；循環網路 → 自製 |
 | [surface](surface/README.md) | 兩因子 → 結果 | three.js | 製程窗口、參數掃描、DOE | 只有一個因子 → `trend`／`bars`；要讀精確數值 → 表格 |
 | [stack3d](stack3d/README.md) | 分層依賴 | three.js | 系統架構、技術堆疊（2–6 層） | 只是條列層次 → `list` |
 | [globe](globe/README.md) | 地點分布與流向 | three.js | 全球據點、供應鏈、跨區協作 | 需要精確地圖 → `figure` 包圖片 |
@@ -47,6 +48,7 @@
 | --- | --- |
 | 重點、條列、大綱、階層 | `list` |
 | 三個方案、幾個面向、並列、卡片 | `cards`（要動態輪播 → `cube`） |
+| 演進、逐步長出、漸進課程、專案成形 | `evolution` |
 | 流程、步驟、SOP、先後順序 | `steps` |
 | 一句話、結論、標語、金句 | `focus` |
 | 前後對比、A／B、導入前後、優缺點 | `compare` |
