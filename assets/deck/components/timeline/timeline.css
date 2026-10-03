@@ -1,0 +1,18 @@
+/* deck.timeline 樣式；結構由 timeline.js 產生，說明見 README.md。 */
+.deck-timeline{display:grid;grid-auto-columns:minmax(0,1fr);grid-auto-flow:column;margin:0;padding:0;list-style:none}
+.deck-timeline>li{position:relative;padding:34px 10px 0 0}
+/* 軸線與節點 */
+.deck-timeline>li::before{content:"";position:absolute;top:9px;left:0;right:0;border-top:2px dashed var(--line)}
+.deck-timeline>li::after{content:"";position:absolute;top:2px;left:0;width:16px;height:16px;border-radius:50%;background:var(--paper);border:2px solid var(--muted);box-sizing:border-box}
+.deck-timeline>li.deck-done::before{border-top:2px solid var(--deck-accent)}
+.deck-timeline>li.deck-done::after{background:var(--deck-accent);border-color:var(--deck-accent)}
+.deck-timeline>li.deck-now::after{width:22px;height:22px;top:-1px;left:-3px;background:var(--deck-highlight);border-color:var(--deck-highlight)}
+.deck-timeline time{display:block;font-size:15px;color:var(--muted);font-variant-numeric:tabular-nums}
+.deck-timeline span{display:block;margin-top:4px;font-size:18px;line-height:1.4}
+.deck-timeline .deck-now span{font-weight:600;color:var(--deck-highlight)}
+@media(max-width:700px){
+.deck-timeline{grid-auto-flow:row}
+.deck-timeline>li{padding:0 0 18px 30px}
+.deck-timeline>li::before{top:0;bottom:0;left:7px;right:auto;border-top:0;border-left:2px dashed var(--line)}
+.deck-timeline>li.deck-done::before{border-top:0;border-left:2px solid var(--deck-accent)}
+}

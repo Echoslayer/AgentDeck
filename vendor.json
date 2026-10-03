@@ -69,6 +69,42 @@
           "sha256": "7A2BFE96150786ED1908B8E63F98EBAB88875C1E79E28FAFF6649E0F11F77E52"
         }
       ]
+    },
+    "highlight": {
+      "version": "11.11.1",
+      "license": "BSD-3-Clause",
+      "homepage": "https://highlightjs.org/",
+      "note": "@highlightjs/cdn-assets 的瀏覽器版，內含常用語言；全域 hljs。",
+      "files": [
+        {
+          "path": "highlight.min.js",
+          "url": "https://unpkg.com/@highlightjs/cdn-assets@11.11.1/highlight.min.js",
+          "sha256": "C4A399DD6F488BC97A3546E3476747B3E714C99C57B9473154C6FB8D259B9381"
+        },
+        {
+          "path": "LICENSE",
+          "url": "https://unpkg.com/@highlightjs/cdn-assets@11.11.1/LICENSE",
+          "sha256": "6C081431591D9DF696C82DC598FE1423765B8A299B200ED00B281AFD0F64C490"
+        }
+      ]
+    },
+    "katex": {
+      "version": "0.16.22",
+      "license": "MIT",
+      "homepage": "https://katex.org/",
+      "note": "只用 renderToString 的 MathML 輸出，由瀏覽器原生排版；不需 KaTeX 的 css 與字型。",
+      "files": [
+        {
+          "path": "katex.min.js",
+          "url": "https://unpkg.com/katex@0.16.22/dist/katex.min.js",
+          "sha256": "E8D885505949F3A5F4ABDD5DD0D53696BD1371AD26FFBF4F310DCD77C8CDAE89"
+        },
+        {
+          "path": "LICENSE",
+          "url": "https://unpkg.com/katex@0.16.22/LICENSE",
+          "sha256": "766CCC1F306C885AA45542A9846BBD0A505B27A0374F146778171C2254CE18E3"
+        }
+      ]
     }
   }
 }

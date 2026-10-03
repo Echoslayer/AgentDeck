@@ -1,0 +1,13 @@
+/* deck.stepper 樣式；結構由 stepper.js 產生。 */
+.deck-stepper{display:grid;gap:12px}
+.deck-stepper-frame:not(.is-on){display:none}
+.deck-stepper-frame h4{margin:0 0 10px;font-size:17px;color:var(--deck-primary)}
+.deck-stepper-frame h4 small{font-size:13px;font-weight:400;color:var(--muted);font-variant-numeric:tabular-nums}
+.deck-stepper-ctrl{display:none;align-items:center;gap:6px}
+.deck-stepper-ctrl input{flex:1;accent-color:var(--deck-accent)}
+.deck-stepper-ctrl button{min-width:36px;height:32px;border:1px solid var(--line);border-radius:6px;background:var(--card);color:var(--ink);font-size:15px;cursor:pointer}
+.deck-stepper.deck-live-on .deck-stepper-ctrl{display:flex}
+.deck-stepper:not(.deck-live-on)>.deck-hint{display:none}
+/* 編輯模式攤開每一格，方便逐格改字 */
+body.is-editing #page .deck-stepper-frame{display:block;padding-bottom:12px;border-bottom:1px dashed var(--line)}
+body.is-editing #page .deck-stepper-ctrl{display:none}

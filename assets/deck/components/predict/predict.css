@@ -1,0 +1,11 @@
+/* deck.predict 樣式；結構由 predict.js 產生。未啟動（縮圖、匯出、編輯）時答案直接顯示。 */
+.deck-predict{display:grid;gap:14px;justify-items:start}
+.deck-predict-q{margin:0;font-size:24px;font-weight:600;color:var(--deck-primary)}
+.deck-predict ol{display:flex;flex-wrap:wrap;gap:10px;margin:0;padding:0;list-style:none;counter-reset:c}
+.deck-predict li{counter-increment:c;padding:8px 16px;border:1px solid var(--line);border-radius:6px;background:var(--card);font-size:18px}
+.deck-predict li::before{content:counter(c,upper-alpha) ". ";color:var(--muted)}
+.deck-predict-a{justify-self:stretch;padding:14px 18px;border-left:4px solid var(--deck-highlight);background:var(--tint);font-size:18px;line-height:1.6}
+.deck-predict>button{display:none;padding:8px 22px;border:0;border-radius:6px;background:var(--deck-primary);color:#fff;font-size:16px;cursor:pointer}
+.deck-predict.deck-live-on:not(body.is-editing *)>button{display:block}
+.deck-predict.deck-live-on:not(.is-open):not(body.is-editing *) .deck-predict-a{display:none}
+.deck-predict:is(.is-open,:not(.deck-live-on),body.is-editing *) li.is-correct{border-color:var(--deck-highlight);color:var(--deck-highlight);font-weight:600}

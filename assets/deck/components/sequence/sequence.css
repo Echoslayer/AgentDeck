@@ -1,0 +1,19 @@
+/* deck.sequence 樣式；結構由 sequence.js 產生，說明見 README.md。 */
+.deck-sequence{display:grid;row-gap:10px;font-size:16px}
+.deck-sequence>b{grid-row:1;justify-self:center;padding:8px 18px;border-radius:6px;background:var(--deck-primary);color:#fff;font-size:17px;z-index:1}
+/* 生命線：每欄正中一條虛線，從表頭貫穿到底 */
+.deck-sequence>i{grid-row:1/-1;justify-self:center;width:0;border-left:2px dashed var(--line)}
+.deck-sequence>p{position:relative;margin:0;z-index:1}
+.deck-seq-event{justify-self:center;padding:6px 14px;border:1px solid var(--line);border-radius:6px;background:var(--card)}
+.deck-seq-event.deck-hl{border-color:var(--deck-highlight);color:var(--deck-highlight);font-weight:600}
+.deck-seq-msg{display:flex;flex-direction:column;padding:0 calc(100% / (2 * var(--k)));text-align:center}
+.deck-seq-msg>span{display:block;padding-bottom:6px}
+/* 箭身與箭頭 */
+/* 箭身在文字下方（order），箭頭貼齊底邊 */
+.deck-seq-msg::before{content:"";order:1;border-top:2px solid var(--deck-accent)}
+.deck-seq-msg::after{content:"";position:absolute;bottom:-5px;right:calc(100% / (2 * var(--k)));border:6px solid transparent;border-left:10px solid var(--deck-accent);border-right:0}
+.deck-seq-msg.is-left::after{right:auto;left:calc(100% / (2 * var(--k)));border-left:0;border-right:10px solid var(--deck-accent)}
+.deck-seq-msg.is-lost::before{border-top-style:dashed;border-color:var(--deck-highlight)}
+.deck-seq-msg.is-lost::after{content:"✕";border:0;bottom:-11px;color:var(--deck-highlight);font-weight:700;font-size:16px;line-height:1}
+.deck-seq-msg.is-lost{color:var(--deck-highlight)}
+.deck-seq-msg.deck-hl>span{font-weight:600;color:var(--deck-highlight)}
