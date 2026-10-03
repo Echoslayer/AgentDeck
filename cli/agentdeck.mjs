@@ -2,6 +2,7 @@
 // AgentDeck CLI：只用於製作端，複製上游來源到下游並記錄版本（docs/adr/0016）。播放與交付的 zip 不需要它。
 import fs from 'node:fs';
 import path from 'node:path';
+import os from 'node:os';
 import readline from 'node:readline/promises';
 import { spawnSync } from 'node:child_process';
 import { parseArgs } from 'node:util';
@@ -31,7 +32,7 @@ const HELP = `AgentDeck CLI（docs/adr/0016）
   docs <名稱> [--code]     輸出元件／範例／指引／遷移說明的文件；--code 連同範例程式
   add <元件…> [--force]    複製元件到工作區並登記用到的套件
   diff [core|<元件>…]      副本相對於取得時與上游最新版的差異；--patch 顯示內容差異
-  update core              以上游核心覆蓋核心副本；--migrate 跨契約版本，--force 覆蓋本地修改
+  update core              備份後覆蓋核心；--check 唯讀預檢，--migrate 跨契約，--force 覆蓋本地修改
   new <主題>               建立根 index.html 與 resources/<主題>/ 內容
       --related <分類>     刻意共用同一主體的候選／附件，入口在 <分類>/<主題>/index.html
   join <主題>              把平行製作的 resources/<主題>/pages/ 依入口引用順序併回 story.js、story.css
@@ -385,9 +386,11 @@ function status(args, opts, ws) {
 // ---- update core ----
 function update(args, opts, ws) {
   requireDownstream(ws, 'update');
-  if (args[0] !== 'core') fail('用法：update core [--migrate] [--force]（元件以 diff 比對後由 agent 決定，或 add <元件> --force）');
+  if (args[0] !== 'core') fail('用法：update core [--check] [--migrate] [--force]（元件以 diff 比對後由 agent 決定，或 add <元件> --force）');
   const up = contractOf(UP);
   const from = ws.config.contract;
+  log(`來源：${UP}（commit ${upstreamCommit() ?? '未知'}；不自動查詢遠端）`);
+  log(`契約：${from} → ${up}${from === up ? '，相容' : '，需遷移'}；${opts.check ? '唯讀預檢' : '更新核心'}`);
   if (up < from) fail(`上游契約 ${up} 比工作區 ${from} 舊，請改用較新的來源。`);
   if (from === 0) fail('這是 workspace.cmd 建立的舊版工作區，不能就地 update core；依 docs 0-to-1 以 init 建立新工作區後搬移內容。');
   if (ws.legacy) fail(LEGACY);
@@ -397,18 +400,57 @@ function update(args, opts, ws) {
   if (missing.length) fail(`上游缺遷移說明 ${missing.map(s => s.name).join('、')}，無法升級；請回報上游。`);
 
   const changes = coreReport(ws);
-  const touched = changes.filter(c => ['local', 'both', 'local-missing'].includes(c.state));
+  const touched = changes.filter(c => c.state !== 'local-added' &&
+    hashFile(c.local) !== (ws.config.core?.files?.[c.file] ?? null));
+  const changed = changes.filter(c => c.state !== 'local-added');
+  log(`核心：${changed.length} 個檔案待更新；${touched.length} 個本地修改／刪除`);
+  for (const c of changed) log(`  ${STATES[c.state]} ${c.file}`);
+  log('保留：內容、入口、主題、元件、edits.js 與本地新增檔案');
   if (touched.length && !opts.force) {
     fail(`核心副本有本地修改，update core 會覆蓋：\n${touched.map(c => `  ${c.file}`).join('\n')}\n核心不承諾合併；需要的修改請回饋上游。確認後加 --force。`);
   }
   const files = coreFiles();
-  for (const f of files) copyFile(path.join(UP, f), path.join(ws.fw, f));
-  for (const c of changes.filter(c => c.state === 'upstream-removed')) fs.rmSync(c.local, { force: true });
+  // 更新只能寫 registry 所有的核心路徑；拒絕符號連結，避免寫到單位外。
+  for (const f of [...files, ...changed.map(c => c.file), MARKER]) {
+    if (path.posix.normalize(f) !== f || f.includes('\\')) fail(`非法核心路徑：${f}`);
+    if (f !== MARKER && !files.includes(f) &&
+        !/^(?:assets\/story-reader|templates\/blank)\//.test(f)) fail(`非核心路徑：${f}`);
+    const target = path.resolve(ws.fw, f);
+    if (!inside(ws.fw, target)) fail(`非法核心路徑：${f}`);
+    for (let p = target; inside(ws.root, p); p = path.dirname(p)) {
+      if (fs.lstatSync(p, { throwIfNoEntry: false })?.isSymbolicLink()) fail(`核心路徑不可為符號連結：${p}`);
+    }
+  }
+  if (opts.check) return log('結果：可更新核心；未寫入檔案。播放與內容遷移須另行驗證。');
+  const commit = upstreamCommit();
+  const expected = fileMap(UP, files);
+  if (!changed.length && from === up && ws.config.core?.commit === commit &&
+      JSON.stringify(ws.config.core?.files) === JSON.stringify(expected)) return log('核心已一致，無需更新或備份。');
+
+  // 完整備份在單位外，包含人工修正、忽略檔與舊交付包；不污染簡報或 pack。
+  const backup = path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'agentdeck-update-')), 'backup');
+  fs.cpSync(ws.root, backup, { recursive: true, verbatimSymlinks: true });
+  log(`備份：${backup}`);
+  const writable = new Set([...changed.map(c => `${FW}/${c.file}`), `${FW}/${MARKER}`]);
+  const protectedFiles = () => Object.fromEntries(listFiles(ws.root).filter(f => !writable.has(f))
+    .map(f => [f, sha256(fs.readFileSync(path.join(ws.root, f)))]));
+  const before = protectedFiles();
+  try {
+    for (const c of changed) {
+      if (files.includes(c.file)) copyFile(c.up, c.local);
+      else fs.rmSync(c.local, { force: true });
+    }
+    if (JSON.stringify(fileMap(ws.fw, files)) !== JSON.stringify(expected)) fail('核心雜湊驗證失敗');
+    ws.config.core = { commit, files: expected };
+    ws.config.contract = up;
+    saveConfig(ws);
+    if (JSON.stringify(protectedFiles()) !== JSON.stringify(before)) fail('非核心檔案發生變動');
+  } catch (e) {
+    fail(`更新未完成：${e.message}。備份保留於 ${backup}；請比對後還原，勿將此狀態視為完成。`);
+  }
   const kept = changes.filter(c => c.state === 'local-added').map(c => c.file);
-  ws.config.core = { commit: upstreamCommit(), files: fileMap(ws.fw, files) };
-  ws.config.contract = up;
-  saveConfig(ws);
-  log(`已更新核心副本（${files.length} 個檔案，commit ${ws.config.core.commit ?? '未知'}）`);
+  log(`已更新核心副本（${changed.length} 個檔案，commit ${commit ?? '未知'}）`);
+  log('已驗證核心雜湊與非核心檔案原始 SHA-256；內容、主題、元件與人工修正未變。');
   if (kept.length) log(`保留本地新增：${kept.join('、')}`);
   if (steps.length) {
     log(`\n契約已從 ${from} 升到 ${up}。接著依下列說明修改元件副本、自製元件與簡報，完成後逐份播放驗證：`);

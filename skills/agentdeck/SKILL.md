@@ -7,6 +7,8 @@ description: Make web slide decks (簡報、投影片、deck、presentation、sl
 
 AgentDeck 由 LLM 寫分鏡、人在播放時微調。規則的唯一來源是工作區內的 `AGENTDECK.md`；這份 skill 只負責找到或建立工作區（ADR 0016）。
 
+若要求把既有簡報升到最新版、更新框架或補入新版功能，改讀同套安裝的 [agentdeck-upgrade](../agentdeck-upgrade/SKILL.md)，依其流程保留客製內容並驗證更新。一般內容改稿繼續以下流程。
+
 AgentDeck CLI（製作端用，播放不需要）：
 
 - 預設：`npx -y github:Echoslayer/AgentDeck <指令>`
