@@ -7,8 +7,67 @@
       "homepage": "https://threejs.org/",
       "note": "r160 是最後一個附 UMD 版的版本；ES module 在 file:// 下無法載入。載入時的棄用警告屬預期。",
       "files": [
-        { "path": "three.min.js", "url": "https://unpkg.com/three@0.160.0/build/three.min.js", "sha256": "170C6789F43217C96B3170F4B42FAFE135DE7F7CD48497A4218F9757EE1D49FA" },
-        { "path": "LICENSE", "url": "https://unpkg.com/three@0.160.0/LICENSE", "sha256": "852E0E8699169BF9F6FDC6BDA3E682D078DCBC738B5D33E74DF594721BFF271D" }
+        {
+          "path": "three.min.js",
+          "url": "https://unpkg.com/three@0.160.0/build/three.min.js",
+          "sha256": "170C6789F43217C96B3170F4B42FAFE135DE7F7CD48497A4218F9757EE1D49FA"
+        },
+        {
+          "path": "LICENSE",
+          "url": "https://unpkg.com/three@0.160.0/LICENSE",
+          "sha256": "852E0E8699169BF9F6FDC6BDA3E682D078DCBC738B5D33E74DF594721BFF271D"
+        }
+      ]
+    },
+    "html-to-image": {
+      "version": "1.11.13",
+      "license": "MIT",
+      "homepage": "https://github.com/bubkoo/html-to-image",
+      "files": [
+        {
+          "path": "html-to-image.js",
+          "url": "https://unpkg.com/html-to-image@1.11.13/dist/html-to-image.js",
+          "sha256": "A90B42909D80964269EF6D5F3D1E4A5A7E2A4C263A5D2A76A9E7151901343262"
+        },
+        {
+          "path": "LICENSE",
+          "url": "https://unpkg.com/html-to-image@1.11.13/LICENSE",
+          "sha256": "9FE73723F7A9E91057F73AAFC9B6A3C3B2174DB2B3DDC0A3A6A8DDF2BAD68E37"
+        }
+      ]
+    },
+    "jspdf": {
+      "version": "4.2.1",
+      "license": "MIT",
+      "homepage": "https://github.com/parallax/jsPDF",
+      "files": [
+        {
+          "path": "jspdf.umd.min.js",
+          "url": "https://unpkg.com/jspdf@4.2.1/dist/jspdf.umd.min.js",
+          "sha256": "E6551FCDC32F09D6853B2C5126D18D01D9447E0DA618A41A11EBEEE0F6C20D54"
+        },
+        {
+          "path": "LICENSE",
+          "url": "https://unpkg.com/jspdf@4.2.1/LICENSE",
+          "sha256": "DC388EC35FF463288CDDE3588A36FD4ED12A45DEFF053243B37309ACC9EF583B"
+        }
+      ]
+    },
+    "pptxgenjs": {
+      "version": "4.0.1",
+      "license": "MIT",
+      "homepage": "https://github.com/gitbrent/PptxGenJS",
+      "files": [
+        {
+          "path": "pptxgen.bundle.js",
+          "url": "https://unpkg.com/pptxgenjs@4.0.1/dist/pptxgen.bundle.js",
+          "sha256": "4FB9EAC5CFEFB213E2D8743C2B7151025F31BFB3F834C73C12062916DAA0F3F8"
+        },
+        {
+          "path": "LICENSE",
+          "url": "https://unpkg.com/pptxgenjs@4.0.1/LICENSE",
+          "sha256": "7A2BFE96150786ED1908B8E63F98EBAB88875C1E79E28FAFF6649E0F11F77E52"
+        }
       ]
     }
   }

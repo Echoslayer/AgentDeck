@@ -7,6 +7,8 @@ export const COMPONENTS = path.join(UP, 'assets', 'deck', 'components');
 export const EXAMPLES = path.join(UP, 'examples');
 export const GUIDES = path.join(UP, 'docs', 'guides');
 export const MIGRATIONS = path.join(UP, 'docs', 'migrations');
+// 閱讀器的匯出模組按需載入；pack 必須帶入這些非 HTML 直接引用的套件。
+export const READER_VENDOR = ['html-to-image', 'jspdf', 'pptxgenjs'];
 const CATALOG = path.join(COMPONENTS, 'CATALOG.md');
 
 // 核心副本：update core 整份覆蓋。路徑相對於上游根目錄，也就是下游工作區根目錄。
