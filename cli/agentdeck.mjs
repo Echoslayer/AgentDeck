@@ -479,7 +479,7 @@ function newTopic(args, opts, ws) {
     p => p === path.join(src, 'index.html') ? path.join(dst, 'index.html') : inside(src, p) ? path.join(data, path.relative(src, p)) : p);
   for (const f of listFiles(src).filter(f => f !== 'index.html')) copyFile(path.join(src, f), path.join(data, f));
   writeText(path.join(dst, 'index.html'), html);
-  log(`已建立 ${rel(process.cwd(), path.join(dst, 'index.html'))}；先填 ${rel(process.cwd(), path.join(data, 'plan.md'))} 交人確認，再寫 story.js。`);
+  log(`已建立 ${rel(process.cwd(), path.join(dst, 'index.html'))}；先填 ${rel(process.cwd(), path.join(data, 'plan.md'))} 再寫 story.js；人要求先看企劃時才停下等確認。`);
 }
 
 // ---- join ----
