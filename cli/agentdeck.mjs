@@ -12,7 +12,7 @@ import {
   requireDownstream, saveConfig, cliHint,
 } from './lib/util.mjs';
 import {
-  coreFiles, themeFiles, componentNames, componentManifest, requireComponent, buildIndex, resolveDoc,
+  coreFiles, isCore, themeFiles, componentNames, componentManifest, requireComponent, buildIndex, resolveDoc,
   linkedDocs, catalogSection, migrationPath, upstreamVendor,
 } from './lib/registry.mjs';
 import { zip } from './lib/zip.mjs';
@@ -83,6 +83,16 @@ function entryDirs(root) {
     }
   }
   return entries.sort();
+}
+
+const TOPIC = /^[a-z0-9][a-z0-9-]*$/;
+// pack／export 的簡報入口：未指定為工作區根；可給絕對或相對工作區的路徑，須在工作區內且有 index.html。
+function resolveDeck(ws, arg) {
+  let d = arg ? path.resolve(arg) : ws.root;
+  if (!exists(d)) d = path.resolve(ws.root, arg);
+  if (d !== ws.root && !inside(ws.root, d)) fail(`簡報必須在工作區內：${d}`);
+  if (!exists(path.join(d, 'index.html'))) fail(`找不到 ${path.join(d, 'index.html')}`);
+  return d;
 }
 
 const LEGACY = `框架檔在工作區根目錄（契約 1 以前的佈局）；依 docs 1-to-2 以 init 建立新單位（框架集中於 ${FW}/）後搬移內容。`;
@@ -303,13 +313,7 @@ function compare(recorded, localBase, upBase, upList, localList) {
 }
 
 function coreReport(ws) {
-  const up = coreFiles();
-  const dirs = ['assets/story-reader', 'templates/blank'];
-  const localList = [
-    ...['LICENSE', 'AGENTDECK.md', 'assets/deck/deck-core.js', 'assets/deck/deck-editor.js', 'assets/deck/deck.css'].filter(f => exists(path.join(ws.fw, f))),
-    ...dirs.flatMap(d => listFiles(path.join(ws.fw, d)).map(f => `${d}/${f}`)),
-  ];
-  return compare(ws.config.core?.files ?? {}, ws.fw, UP, up, localList);
+  return compare(ws.config.core?.files ?? {}, ws.fw, UP, coreFiles(), coreFiles(ws.fw));
 }
 
 function componentReport(ws, name) {
@@ -413,8 +417,7 @@ function update(args, opts, ws) {
   // 更新只能寫 registry 所有的核心路徑；拒絕符號連結，避免寫到單位外。
   for (const f of [...files, ...changed.map(c => c.file), MARKER]) {
     if (path.posix.normalize(f) !== f || f.includes('\\')) fail(`非法核心路徑：${f}`);
-    if (f !== MARKER && !files.includes(f) &&
-        !/^(?:assets\/story-reader|templates\/blank)\//.test(f)) fail(`非核心路徑：${f}`);
+    if (f !== MARKER && !isCore(f)) fail(`非核心路徑：${f}`);
     const target = path.resolve(ws.fw, f);
     if (!inside(ws.fw, target)) fail(`非法核心路徑：${f}`);
     for (let p = target; inside(ws.root, p); p = path.dirname(p)) {
@@ -463,9 +466,9 @@ function newTopic(args, opts, ws) {
   requireDownstream(ws, 'new');
   checkContract(ws);
   const topic = args[0];
-  if (!topic || !/^[a-z0-9][a-z0-9-]*$/.test(topic)) fail('用法：new <主題>（英文小寫、數字與連字號）');
+  if (!topic || !TOPIC.test(topic)) fail('用法：new <主題>（英文小寫、數字與連字號）');
   const src = path.join(ws.fw, 'templates', 'blank');
-  if (opts.related !== undefined && (!/^[a-z0-9][a-z0-9-]*$/.test(opts.related) || reservedDirs.has(opts.related))) fail('--related 分類需為英文小寫、數字與連字號，且不可使用框架資料夾名稱。');
+  if (opts.related !== undefined && (!TOPIC.test(opts.related) || reservedDirs.has(opts.related))) fail('--related 分類需為英文小寫、數字與連字號，且不可使用框架資料夾名稱。');
   const dst = opts.related ? path.join(ws.root, opts.related, topic) : ws.root;
   const data = path.join(ws.root, 'resources', topic);
   if (!exists(src)) fail(`找不到 ${src}；以 update core 補回核心副本`);
@@ -482,8 +485,10 @@ function newTopic(args, opts, ws) {
 // ---- join ----
 // 平行製作的分頁檔（resources/<主題>/pages/）依入口的引用順序併回 story.js／story.css（ADR 0023）。純串接，不解析 JS。
 function join(args, opts, ws) {
+  requireDownstream(ws, 'join');
+  checkContract(ws);
   const topic = args[0];
-  if (!topic || !/^[a-z0-9][a-z0-9-]*$/.test(topic)) fail('用法：join <主題>');
+  if (!topic || !TOPIC.test(topic)) fail('用法：join <主題>');
   const data = path.join(ws.root, 'resources', topic), pagesDir = path.join(data, 'pages');
   if (!exists(pagesDir)) fail(`沒有分頁檔：${rel(process.cwd(), pagesDir)}`);
   const tag = /^[ \t]*<(?:script|link)\b[^>]*?\b(?:src|href)\s*=\s*(["'])(.*?)\1[^>]*>(?:<\/script>)?[ \t]*\r?\n?/gim;
@@ -555,11 +560,8 @@ async function vendorCmd(args, opts, ws) {
 async function pack(args, opts, ws) {
   const root = ws.root;
   if (!ws.upstream) checkContract(ws);
-  let deckDir = args[0] ? path.resolve(args[0]) : root;
-  if (!exists(deckDir)) deckDir = path.resolve(root, args[0]);
-  if (deckDir !== root && !inside(root, deckDir)) fail(`簡報必須在工作區內：${deckDir}`);
+  const deckDir = resolveDeck(ws, args[0]);
   const index = path.join(deckDir, 'index.html');
-  if (!exists(index)) fail(`找不到 ${index}`);
   const deckRel = rel(root, deckDir);
   const name = path.basename(deckDir);
   const primary = deckDir === root;
@@ -619,12 +621,17 @@ async function pack(args, opts, ws) {
   const now = new Date();
   const p2 = n => String(n).padStart(2, '0');
   const top = `${name}-${now.getFullYear()}${p2(now.getMonth() + 1)}${p2(now.getDate())}-${p2(now.getHours())}${p2(now.getMinutes())}`;
+  // 框架整份帶入，但元件只帶入口引用到的；製作說明（*.md）除非被直接引用，否則不交付。
+  const COMP = `${P}assets/deck/components/`;
+  const referenced = new Set(refs.map(({full}) => rel(root, full)));
+  const usedComponents = new Set([...referenced].filter(r => r.startsWith(COMP)).map(r => r.slice(COMP.length).split('/')[0]));
+  const shipped = f => referenced.has(f) || !f.startsWith(`${P}assets/`) || (!/\.md$/i.test(f) && (!f.startsWith(COMP) || usedComponents.has(f.slice(COMP.length).split('/')[0])));
   const entries = new Map();
   for (const d of dirs) {
     const full = path.join(root, d);
     if (!exists(full)) fail(`找不到引用的檔案：${d}`);
     const files = fs.statSync(full).isDirectory() ? listFiles(full).map(f => `${d}/${f}`) : [d];
-    for (const f of files) {
+    for (const f of files.filter(shipped)) {
       if (f === `${deckRel}/plan.md` || f === `${dataRel}/plan.md` || /^resources\/[^/]+\/plan\.md$/.test(f)) continue;
       entries.set(`${top}/${f}`, fs.readFileSync(path.join(root, f)));
     }
@@ -644,11 +651,7 @@ async function exportCmd(args, opts, ws) {
   // --check 不需要工作區；在簡報單位內（或指定入口）執行時另外試跑各頁 record。
   const deckOf = () => {
     if (!ws || (ws.upstream && !args[0])) return null;
-    let d = args[0] ? path.resolve(args[0]) : ws.root;
-    if (!exists(d)) d = path.resolve(ws.root, args[0]);
-    if (d !== ws.root && !inside(ws.root, d)) fail(`簡報必須在工作區內：${d}`);
-    if (!exists(path.join(d, 'index.html'))) fail(`找不到 ${path.join(d, 'index.html')}`);
-    return d;
+    return resolveDeck(ws, args[0]);
   };
   if (opts.check) {
     const env = await exportEnv(opts);

@@ -1,6 +1,6 @@
 # 0008. 編輯層與閱讀器、元件解耦
 
-- 狀態：已接受
+- 狀態：已接受（`window.storyReader` 由 [0021](0021-pptx-export.md) 新增 `go(i)`、由 [0026](0026-reader-personal-preferences.md) 新增 `preferences` 與 `navigationDelta`）
 - 日期：2026-09-30
 - 修訂：[0003](0003-hide-as-live-fallback.md)（畫布判定改用 `data-canvas`）
 
