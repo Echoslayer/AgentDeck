@@ -69,3 +69,59 @@
 4. 要 PPT 時先跑 `agentdeck export --check`，確認選擇器都找得到；輸出後在 PowerPoint 放映模式按一次，確認標註依序出現。
 
 完成時分開回報播放檢查與匯出檢查。
+
+## 製作可離線播放的音檔
+
+macOS 可用 CLI 內附工具，將逐句文字交給本機 `say`，以 ffmpeg 串接 MP3 並記錄每句起始秒數。需要 Python 3、macOS 語音與 ffmpeg；不新增 Python 套件，不傳送內容到網路。其他平台可自行製作音檔，再填既有 `audio` 與 `cues`。
+
+在 `resources/<主題>/narration.json` 寫下口語稿與動作，key 必須等於頁面 ID。每個 `sentences` 項目恰好一句純文字，以句末標點結束；HTML 留在畫面或講稿。
+
+```json
+{
+  "intro": {
+    "sentences": ["先看輸入資料。", "接著核對結果。"],
+    "record": [
+      {"at": 1, "box": "[data-key=\"input\"]"},
+      {"at": 2, "clear": true},
+      {"box": "[data-key=\"result\"]"}
+    ]
+  }
+}
+```
+
+```sh
+agentdeck speech build resources/<主題>/narration.json
+agentdeck speech build resources/<主題>/narration.json --page intro --voice Meijia --rate 165
+```
+
+輸出位於 JSON 同資料夾：`audio/<id>.mp3`、`audio/<id>.speech.json`（重建記錄），以及 `narration.generated.js`。在入口的 `story.js` 後、`edits.js` 前引用產生的 JS；附件依入口換算相對路徑。工具不修改 `story.js` 或人工修正。
+
+```html
+<script src="resources/<主題>/story.js"></script>
+<script src="resources/<主題>/narration.generated.js"></script>
+<script src="resources/<主題>/edits.js"></script>
+```
+
+`--page` 只重建指定頁；其他頁沿用既有音檔與配套口語稿、cues、record。若其他頁的 JSON 已改，工具會提醒仍保留上一版，避免新稿配舊音檔。未製作的頁會提醒並略過。選定頁合成失敗時，不替換既有輸出；生成的檔案不要手改。修改旁白或動作後，重新執行該頁製作。
+
+## 語音檢查與重播
+
+```sh
+agentdeck check speech
+agentdeck check speech attachments/<附件> --replay 2
+```
+
+需要已列為選用依賴的 Playwright，以及 Chrome、Edge 或 Playwright Chromium；不需要 PPTX 套件或 ffmpeg。只檢查指定入口，附件各跑一次。
+
+檢查包括本機音檔存在與可解碼、時長、cues 句數／順序／範圍、at 句號與順序、等待及拖曳是否超出句子時段，並在真實 DOM 逐步執行同步動作。預設同頁連續執行兩輪，可用 `--replay 1` 改為一輪。沒有 cues 時明確提醒使用估算。檢查會執行主題 JavaScript 與點擊動作，請只對信任的簡報執行；遠端請求被阻擋。
+
+每頁第一組動作須能重新建立起始情境。例如先 `set` 模式，再開始逐步播放；不要依賴讀者上一次停在哪一步。重跑兩次沒有錯誤，只代表動作仍可執行，不代表兩次結果相同；數值應由主題自己的檢查驗證。
+
+驗收分別回報：
+
+- **資料與動作檢查**：音檔、時間點、目標是否有效。
+- **實播檢查**：音質、讀音、動作語意，至少兩種語速，以及停止／重播／換頁。
+- **交付檢查**：離線包與附件的音檔引用。
+- **PPT 匯出檢查**：另行執行；HTML 同步通過不代表 PPT 也同步。
+
+若瀏覽器拒絕播放，介面會停止播放狀態並提示重試；按播放或 R 再試。停止或換頁後才返回的舊播放錯誤，不應打斷新的一次播放。

@@ -16,6 +16,7 @@ import {
   linkedDocs, catalogSection, migrationPath, upstreamVendor, READER_VENDOR,
 } from './lib/registry.mjs';
 import { zip } from './lib/zip.mjs';
+import { checkSpeech } from './lib/speech.mjs';
 import { exportEnv, exportPptx, checkRecords } from './lib/export.mjs';
 
 const HELP = `AgentDeck CLI（docs/adr/0016）
@@ -38,6 +39,9 @@ const HELP = `AgentDeck CLI（docs/adr/0016）
   join <主題>              把平行製作的 resources/<主題>/pages/ 依入口引用順序併回 story.js、story.css
   vendor [套件…]           依 vendor.json 下載並驗證套件；--check 只檢查，--force 重新下載
   pack [入口資料夾]        預設打包整份簡報；--out 指定輸出資料夾（預設 dist/）
+  check speech [入口資料夾] 檢查音檔、cues 與動作；--replay 1|2（預設 2）
+  speech build <JSON>      用 macOS say 與 ffmpeg 製作音檔；--page <id> 只重建一頁
+      --voice <名稱>       語音名稱（預設 Meijia）；--rate <數字> 語速（預設 165）
   export [入口資料夾]      輸出 pptx：文字可編輯、內容區截圖、record 頁錄成 mp4、講稿進備忘稿
       --check              只檢查匯出環境（playwright、pptxgenjs、瀏覽器、ffmpeg）；在簡報內另試跑各頁 record
       --ffmpeg <路徑>      指定 ffmpeg（預設 FFMPEG_PATH 或 PATH）；沒有時互動頁改放截圖
@@ -48,6 +52,7 @@ const HELP = `AgentDeck CLI（docs/adr/0016）
 共同選項：--dir <工作區>（預設從目前資料夾往上找 ${FW}/${MARKER}）`;
 
 const OPTIONS = {
+  replay: { type: 'string' }, page: { type: 'string' }, voice: { type: 'string' }, rate: { type: 'string' },
   dir: { type: 'string' }, source: { type: 'string' }, ffmpeg: { type: 'string' }, theme: { type: 'string' }, out: { type: 'string' }, related: { type: 'string' },
   'commit-vendor': { type: 'boolean' }, 'agents-hint': { type: 'boolean' }, 'no-agents-hint': { type: 'boolean' },
   force: { type: 'boolean' }, migrate: { type: 'boolean' }, check: { type: 'boolean' },
@@ -686,6 +691,23 @@ async function main() {
   if (cmd === 'init') return init(args, opts);
   const optionalWs = () => { try { return findWorkspace(opts); } catch (e) { if (e instanceof UserError) return null; throw e; } };
   switch (cmd) {
+    case 'check': {
+      if (args[0] !== 'speech' || args.length > 2) fail('用法：check speech [入口資料夾] [--replay 1|2]');
+      const ws = findWorkspace(opts);
+      if (ws.upstream && !args[1]) fail('上游請指定簡報入口資料夾');
+      if (!ws.upstream) checkContract(ws);
+      if (!await checkSpeech(resolveDeck(ws, args[1]), ws.root, opts)) process.exitCode = 1;
+      return;
+    }
+    case 'speech': {
+      if (args[0] !== 'build' || args.length !== 2) fail('用法：speech build <narration.json> [--page <id>] [--voice <名稱>] [--rate <數字>]');
+      const command = [path.join(UP, 'cli', 'build-audio.py'), path.resolve(args[1])];
+      for (const name of ['page', 'voice', 'rate']) if (opts[name]) command.push(`--${name}`, opts[name]);
+      const result = spawnSync('python3', command, { stdio: 'inherit' });
+      if (result.error) fail(`無法啟動 python3：${result.error.message}`);
+      process.exitCode = result.status ?? 1;
+      return;
+    }
     case 'catalog': return catalog(args, optionalWs());
     case 'docs': return docs(args, opts, optionalWs());
     case 'status': return status(args, opts, findWorkspace(opts));

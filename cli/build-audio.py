@@ -1,0 +1,132 @@
+#!/usr/bin/env python3
+"""Local macOS narration builder; files stay beside the supplied manifest."""
+import argparse
+import json
+import math
+import os
+from pathlib import Path
+import re
+import shutil
+import subprocess
+import sys
+import tempfile
+import wave
+
+RATE = 22050
+
+def run(*args):
+    subprocess.run(args, check=True, stdout=subprocess.DEVNULL)
+
+def validate(data):
+    if not isinstance(data, dict) or not data:
+        raise ValueError('JSON 必須是以頁面 id 為 key 的非空物件')
+    for page_id, item in data.items():
+        if not re.fullmatch(r'[A-Za-z0-9_-]+', page_id):
+            raise ValueError(f'無效的頁面 id：{page_id}')
+        if not isinstance(item, dict):
+            raise ValueError(f'{page_id}：頁面必須是物件')
+        sentences = item.get('sentences')
+        if not isinstance(sentences, list) or not sentences:
+            raise ValueError(f'{page_id}：需要非空 sentences 陣列')
+        for sentence in sentences:
+            if not isinstance(sentence, str) or not sentence.strip() or '<' in sentence or '\n' in sentence:
+                raise ValueError(f'{page_id}：每句需為非空純文字，不含 HTML 或換行')
+            parts = [s.strip() for s in re.split(r'(?<=[。！？!?；;])', sentence) if s.strip()]
+            if len(parts) != 1 or sentence[-1] not in '。！？!?；;':
+                raise ValueError(f'{page_id}：每項恰好一句，並以句末標點結束')
+        if not isinstance(item.get('record', []), list):
+            raise ValueError(f'{page_id}：record 必須是陣列')
+        last = 1
+        for step in item.get('record', []):
+            if not isinstance(step, dict):
+                raise ValueError(f'{page_id}：動作必須是物件')
+            if 'at' in step:
+                at = step['at']
+                if type(at) is not int or not last <= at <= len(sentences):
+                    raise ValueError(f'{page_id}：at 超出句數或順序倒退')
+                last = at
+
+def build(args):
+    manifest = args.manifest.resolve()
+    data = json.loads(manifest.read_text())
+    validate(data)
+    if args.page and args.page not in data:
+        raise ValueError(f'沒有頁面：{args.page}')
+    if not math.isfinite(args.rate) or args.rate <= 0:
+        raise ValueError('rate 必須大於零')
+    for tool in ['say', 'ffmpeg']:
+        if not shutil.which(tool):
+            raise ValueError(f'需要 {tool}；此工具使用 macOS 本機語音與 ffmpeg')
+    folder = manifest.parent
+    audio = folder / 'audio'
+    audio.mkdir(exist_ok=True)
+    if audio.is_symlink():
+        raise ValueError('audio 不可為符號連結')
+    selected = [args.page] if args.page else list(data)
+    # Stage every selected page before replacing any existing generated files.
+    with tempfile.TemporaryDirectory(prefix='.speech-', dir=folder) as tmp:
+        tmp = Path(tmp)
+        generated = {}
+        for page_id in selected:
+            item = data[page_id]
+            cues, pcm = [], bytearray()
+            for sentence in item['sentences']:
+                cues.append(round(len(pcm) / (RATE * 2), 4))
+                (tmp / 'sentence.txt').write_text(sentence)
+                run('say', '-v', args.voice, '-r', str(args.rate), '-f', str(tmp / 'sentence.txt'), '-o', str(tmp / 'sentence.aiff'))
+                run('ffmpeg', '-v', 'error', '-y', '-i', str(tmp / 'sentence.aiff'), '-ar', str(RATE), '-ac', '1', '-f', 's16le', str(tmp / 'sentence.pcm'))
+                segment = (tmp / 'sentence.pcm').read_bytes()
+                if len(segment) < RATE:
+                    raise ValueError(f'{page_id}：語音輸出為空或過短')
+                pcm.extend(segment)
+                pcm.extend(b'\0\0' * round(RATE * .25))
+            with wave.open(str(tmp / 'page.wav'), 'wb') as wav:
+                wav.setnchannels(1)
+                wav.setsampwidth(2)
+                wav.setframerate(RATE)
+                wav.writeframes(pcm)
+            run('ffmpeg', '-v', 'error', '-y', '-i', str(tmp / 'page.wav'), '-codec:a', 'libmp3lame', '-b:a', '96k', str(tmp / f'{page_id}.mp3'))
+            generated[page_id] = {'speech': ''.join(item['sentences']), 'cues': cues, 'record': item.get('record', [])}
+            (tmp / f'{page_id}.speech.json').write_text(json.dumps(generated[page_id], ensure_ascii=False, indent=2) + '\n')
+            print(f'{page_id}：{len(pcm) / (RATE * 2):.1f} 秒', flush=True)
+        entries = {}
+        for page_id in data:
+            cache = audio / f'{page_id}.speech.json'
+            if page_id in generated:
+                entries[page_id] = generated[page_id]
+            elif cache.exists() and (audio / f'{page_id}.mp3').exists():
+                entries[page_id] = json.loads(cache.read_text())
+                if entries[page_id]['speech'] != ''.join(data[page_id]['sentences']) or entries[page_id].get('record', []) != data[page_id].get('record', []):
+                    print(f'提醒：{page_id} 尚未重建，保留上一版音檔與配套資料', file=sys.stderr)
+            else:
+                print(f'提醒：{page_id} 尚未產生音檔', file=sys.stderr)
+        payload = json.dumps(entries, ensure_ascii=False, indent=2)
+        script = '''// Generated by agentdeck speech build. Do not edit.
+(() => {
+  const base = document.currentScript.getAttribute('src').replace(/[^/]*$/, '');
+  const entries = PAYLOAD;
+  for (const [id, notes] of Object.entries(entries)) {
+    const page = story.pages.find(p => p.id === id);
+    if (!page) throw new Error(`語音找不到頁面：${id}`);
+    Object.assign(page, notes, { audio: base + `audio/${id}.mp3` });
+  }
+})();
+'''.replace('PAYLOAD', payload)
+        (tmp / 'narration.generated.js').write_text(script)
+        for page_id in selected:
+            for suffix in ['mp3', 'speech.json']:
+                os.replace(tmp / f'{page_id}.{suffix}', audio / f'{page_id}.{suffix}')
+        os.replace(tmp / 'narration.generated.js', folder / 'narration.generated.js')
+    print('已產生 narration.generated.js；在 story.js 之後、edits.js 之前加入 script 引用，再執行 agentdeck check speech。')
+
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('manifest', type=Path)
+    parser.add_argument('--page')
+    parser.add_argument('--voice', default='Meijia')
+    parser.add_argument('--rate', type=float, default=165)
+    try:
+        build(parser.parse_args())
+    except (ValueError, OSError, subprocess.CalledProcessError) as error:
+        print(f'錯誤：{error}', file=sys.stderr)
+        sys.exit(1)

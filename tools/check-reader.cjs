@@ -68,6 +68,7 @@ const { chromium } = require('playwright');
     await page.keyboard.press('x');
     assert.equal(await index(), 1);
     await page.reload();
+    assert.equal(await index(), 1); // hash 定位保留重新整理前的頁面
     await open();
     assert.equal(await page.getByLabel('下一頁', { exact: true }).inputValue(), 'x');
     assert.equal(await page.getByLabel('朗讀速度', { exact: true }).inputValue(), '1.5');
@@ -85,7 +86,7 @@ const { chromium } = require('playwright');
     assert.equal(await presenter.locator('html').evaluate(el => el.style.getPropertyValue('--size')), '34px');
     assert.equal(await presenter.locator('[data-show=notes]').getAttribute('aria-pressed'), 'false');
     await presenter.keyboard.press('x');
-    assert.equal(await index(), 1);
+    assert.equal(await index(), 2);
     await presenter.locator('[data-size="2"]').click();
     await open();
     assert.equal(await page.getByLabel('講稿字級（14–56 px）', { exact: true }).inputValue(), '36');

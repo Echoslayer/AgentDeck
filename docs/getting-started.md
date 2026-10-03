@@ -161,3 +161,7 @@ PPTX 中每頁只有一張內容圖片，可移動、縮放整張圖片；無法
 ## 閱讀器互動檢查
 
 已安裝選用依賴 Playwright 時，可執行 `node tools/check-reader.cjs` 與 `node tools/check-annotations.cjs`。使用本機 Chrome 時加上 `PLAYWRIGHT_CHANNEL=chrome`；畫筆檢查亦可用 `AGENTDECK_TEST_URL=file:///…/index.html` 驗證搬移後的範本簡報。
+
+### 語音製作與檢查
+
+內容確認後，可用 `agentdeck speech build resources/<主題>/narration.json` 製作本機音檔（macOS say + ffmpeg），`--page <id>` 只重建一頁。以 `agentdeck check speech` 驗證音檔、逐句時間與動作；附件指定入口另跑。資料格式、引用與實播驗收見 `agentdeck docs speech-actions`。
