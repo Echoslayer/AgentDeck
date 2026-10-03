@@ -1,0 +1,7 @@
+/* deck.math 樣式；結構由 math.js 產生。 */
+.deck-math{margin:0;text-align:center}
+.deck-math math{font-size:28px;color:var(--ink)}
+.deck-math-inline{display:inline;text-align:start}
+.deck-math-inline math{font-size:1em}
+.deck-math-tex{font-size:16px;color:var(--muted)}
+.deck-math figcaption{margin-top:10px;font-size:14px;color:var(--muted)}

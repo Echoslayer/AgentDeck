@@ -1,0 +1,8 @@
+/* deck.table 樣式；結構由 table.js 產生，說明見 README.md。 */
+.deck-table{width:100%;border-collapse:collapse;font-size:17px;font-variant-numeric:tabular-nums}
+.deck-table th,.deck-table td{padding:10px 14px;text-align:left;border-bottom:1px solid var(--line)}
+.deck-table thead th{font-size:15px;font-weight:600;color:var(--muted);border-bottom:2px solid var(--ink)}
+.deck-table tbody th{font-weight:600}
+.deck-table .deck-num{text-align:right}
+.deck-table tr.deck-hl{background:var(--tint)}
+.deck-table tr.deck-hl>*{color:var(--deck-highlight)}

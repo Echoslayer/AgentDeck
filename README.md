@@ -96,8 +96,8 @@ AgentDeck/
 
 | 分級 | 元件 | 特性 |
 | --- | --- | --- |
-| 基礎 | list、cards、steps、focus、compare、metrics、bars、trend、figure | 靜態 HTML／SVG／CSS，零依賴，任何簡報都能用 |
-| 特殊 | surface、stack3d、globe（three.js）、cube（CSS 3D 動畫） | 動態內容或依賴 `vendor/` 套件；有靜態後備，只用在關鍵頁 |
+| 基礎 | 文字與結構：list、cards、focus、compare、matrix<br>順序與流程：steps、flow、sequence、timeline<br>數量與數值：metrics、table、bars、split、range、trend、figure | 靜態 HTML／SVG／CSS，零依賴，任何簡報都能用 |
+| 特殊 | 講解互動：stepper、predict、slider、evolution<br>內容呈現：code（highlight.js）、math（KaTeX）<br>3D 與動畫：surface、stack3d、globe（three.js）、cube（CSS 3D） | 動態內容或依賴 `vendor/` 套件；有靜態後備，只用在關鍵頁 |
 
 呼叫方式一律為 `deck.<name>(key, …)`，第一個參數是 `data-key`；`deck-core.js` 在每次呼叫時檢查 key 格式、單一根元素與根元素 key。呼叫未引用的元件會直接報錯並提示路徑；引用 js 卻漏了 css 會在主控台報錯。特殊元件的動態內容由核心在頁面出現時啟動、換頁時釋放，主題不用寫 `mount`（[ADR 0013](docs/adr/0013-component-tiers.md)）。新增共用元件需經人同意（[ADR 0009](docs/adr/0009-components-as-extensions.md)）。
 

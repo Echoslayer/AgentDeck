@@ -1,0 +1,12 @@
+/* deck.matrix 樣式；結構由 matrix.js 產生，說明見 README.md。 */
+.deck-matrix{display:grid;grid-template-columns:auto minmax(0,1fr);gap:8px}
+.deck-matrix-grid{grid-column:2;display:grid;grid-template-columns:1fr 1fr;gap:4px;border-left:2px solid var(--ink);border-bottom:2px solid var(--ink);padding:0 0 4px 4px}
+.deck-matrix-grid>div{padding:18px 20px;min-height:100px;background:var(--tint);border-radius:6px}
+.deck-matrix-grid>div.deck-hl{background:var(--deck-highlight);color:var(--paper)}
+.deck-matrix-grid b{display:block;font-size:20px;margin-bottom:4px}
+.deck-matrix-grid>div:not(.deck-hl) b{color:var(--deck-primary)}
+.deck-matrix-grid span{font-size:16px;line-height:1.5}
+.deck-matrix p{margin:0;font-size:15px;color:var(--muted)}
+.deck-matrix-y{grid-column:1;grid-row:1;writing-mode:vertical-rl}
+.deck-matrix-y>i{font-style:normal;text-orientation:upright;margin-bottom:4px}
+.deck-matrix-x{grid-column:2;text-align:right}

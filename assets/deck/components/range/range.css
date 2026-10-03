@@ -1,0 +1,13 @@
+/* deck.range 樣式；結構由 range.js 產生，說明見 README.md。 */
+.deck-range{display:grid;grid-template-columns:minmax(6em,max-content) minmax(0,1fr) max-content;gap:12px 14px;align-items:center;font-size:17px}
+.deck-range-row,.deck-range-axis{grid-column:1/-1;display:grid;grid-template-columns:subgrid;align-items:center}
+.deck-range-row>i{position:relative;height:22px;background:var(--tint);border-radius:3px}
+.deck-range-row s{position:absolute;top:0;bottom:0;background:var(--deck-accent);opacity:.45;border-radius:3px}
+.deck-range-row em{position:absolute;top:-5px;bottom:-5px;width:4px;margin-left:-2px;background:var(--ink);border-radius:2px}
+.deck-range-row>b{font-weight:600;font-variant-numeric:tabular-nums;white-space:nowrap}
+.deck-range small{margin-left:3px;font-size:.7em;font-weight:400;color:var(--muted)}
+.deck-range-row.deck-hl em,.deck-range-row.deck-hl>b{background:var(--deck-highlight)}
+.deck-range-row.deck-hl>b{background:none;color:var(--deck-highlight)}
+.deck-range-axis{font-size:13px;color:var(--muted);font-variant-numeric:tabular-nums}
+.deck-range-axis>span:first-child{grid-column:2;grid-row:1}
+.deck-range-axis>span:last-child{grid-column:2;grid-row:1;justify-self:end}
