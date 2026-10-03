@@ -13,8 +13,8 @@
 body{font-family:"Microsoft JhengHei","微軟正黑體","Noto Sans TC",system-ui,sans-serif}
 
 /* 頁首：漸層標題列（右側 logo 由 theme.css 以 body>header::after 加上） */
-body>header{max-width:none;margin:0;padding:18px 32px;align-items:center;background:var(--deck-gradient);color:#fff;font-size:16px;font-weight:700;min-height:72px}
-body>header #story-label{flex:1}
+body>header{max-width:none;margin:0;padding:10px 24px;gap:12px;flex-wrap:wrap;align-items:center;background:var(--deck-gradient);color:#fff;font-size:16px;font-weight:700;min-height:60px}
+body>header #story-label{flex:1;min-width:140px;font-size:14px}
 body>header a{color:#fff}
 body:not(:has(#pin[aria-pressed=true]))>header{padding-left:64px}
 .index summary{background:var(--deck-primary);color:#fff}
@@ -25,9 +25,9 @@ h1{color:var(--deck-primary)}
 .point{border-left-color:var(--deck-accent)}
 .stage{border-radius:6px}
 
-/* 底部導覽：頁碼圓 */
+/* 底部導覽：頁碼與控制項維持相同高度。 */
 nav{background:#fffffff5}
-#position{display:inline-grid;place-items:center;min-width:52px;height:52px;padding:0 8px;border-radius:50%;background:var(--deck-accent);color:#fff;font-size:15px;font-weight:700}
+#position{display:inline-grid;place-items:center;min-width:48px;height:28px;padding:0 4px;border-radius:6px;color:var(--ink);font-size:15px;font-weight:700}
 progress{margin:8px auto 0;accent-color:var(--deck-accent)}
 #next.preview{border-color:var(--line)}
 
@@ -45,8 +45,11 @@ progress{margin:8px auto 0;accent-color:var(--deck-accent)}
 /* ── 編輯層（deck-editor.js） ──────────────── */
 /* 舞台作為容器：拖曳位移以 cqw 保存，放大、全螢幕、縮圖都維持相對位置。 */
 .stage{container-type:inline-size}
-.deck-edit-bar{order:2;display:flex;gap:8px}
-.deck-edit-bar button{padding:6px 12px;font-size:14px;background:#ffffffe6;color:var(--deck-primary);border-color:#fff}
+.deck-edit-bar{order:1;display:flex;flex-wrap:wrap;gap:8px}
+.reader-settings-toggle{order:2}
+body>header :is(.deck-edit-bar button,.reader-settings-toggle){min-height:36px;padding:7px 12px;font-size:14px;font-weight:500;border-radius:8px;background:#ffffffe6;color:var(--deck-primary);border-color:transparent}
+body>header button.reader-settings-toggle,body>header #edit-hide{background:transparent;color:#fff;border-color:#ffffff60}
+body>header :is(.deck-edit-bar button,.reader-settings-toggle):hover{background:var(--tint);color:var(--deck-primary)}
 .deck-edit-bar button[aria-pressed=true]{background:var(--deck-primary);color:#fff;border-color:var(--deck-primary)}
 .deck-speech-bar{display:contents}
 .deck-edit-bar [data-rate]{min-width:3.4em}
@@ -72,7 +75,7 @@ body.is-editing #page [data-hidden],body.is-editing #page>:has(>[data-field-hidd
 .deck-hide-toggle{position:absolute;translate:-50% -50%;width:26px;height:26px;padding:0;display:grid;place-items:center;font-size:13px;font-weight:400;line-height:1;border-radius:50%;background:#fff;color:var(--deck-primary);border:1px solid var(--deck-primary);z-index:6;text-shadow:none;letter-spacing:0;text-align:center;cursor:pointer;user-select:none;font-style:normal}
 .deck-hide-toggle:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
 .deck-hide-toggle[aria-pressed=true]{background:#c0392b;color:#fff;border-color:#c0392b}
-body.deck-bar-hidden .deck-edit-bar{display:none}
+body.deck-bar-hidden .deck-edit-bar>:not(#edit-hide){display:none}
 /* 缺 data-key 或 key 重複：只在編輯模式標示（docs/adr/0007）。用 box-shadow 以免與可編輯外框衝突。 */
 body.is-editing #page .deck-keywarn{box-shadow:0 0 0 3px #e67e22}
 .deck-hide-toggle.deck-keywarn-toggle{border:2px solid #e67e22}
@@ -111,6 +114,18 @@ body.is-zoomed .deck-side,body.deck-bar-hidden .deck-side{display:none}
 .deck-hint{margin:0;font-size:13px;color:var(--muted)}
 .mini-page .deck-hint{display:none}
 @media(max-width:700px){
-body>header{padding:14px 20px;min-height:56px}
-#position{min-width:40px;height:40px;font-size:13px}
+body>header{padding:10px 16px;min-height:56px;gap:8px}
+body>header #story-label{flex-basis:100%}
+#position{min-width:40px;height:28px;font-size:13px}
+}
+
+/* 16:9 頁型依外殼剩餘高度縮放；一般內容頁保留自然捲動。 */
+body:not(.is-zoomed)>main:has(>.stage>.deck-cover,>.stage>.deck-end){padding:24px 32px calc(var(--reader-nav-height,80px) + 24px)}
+body:not(.is-zoomed)>main>.stage:has(>.deck-cover,>.deck-end){width:min(100%,max(160px,calc((100dvh - var(--reader-header-height,60px) - var(--reader-nav-height,80px) - 48px) * 16 / 9)));margin:0 auto}
+.deck-cover-title{font-size:clamp(20px,6cqw,60px)}
+.deck-cover-meta{font-size:clamp(11px,2.2cqw,22px)}
+.deck-end-title{font-size:clamp(28px,9.6cqw,96px)}
+@media(max-width:700px){
+body:not(.is-zoomed)>main:has(>.stage>.deck-cover,>.stage>.deck-end){padding-inline:16px}
+body:not(.is-zoomed)>main>.stage:has(>.deck-cover,>.deck-end){width:100%}
 }

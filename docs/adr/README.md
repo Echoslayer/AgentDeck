@@ -29,3 +29,4 @@
 | [0023](0023-parallel-pages-and-join.md) | 以分頁檔平行製作，完成後以 join 併回單一 story.js | 已接受 |
 | [0024](0024-speech-synced-actions.md) | 講者動作隨朗讀執行：record 步驟加 at，新增 arrow、box、clear 與 cues | 已接受 |
 | [0025](0025-native-pptx-annotations.md) | 匯出 pptx：只有標註的 record 改為原生圖形與出現動畫 | 已接受 |
+| [0026](0026-reader-personal-preferences.md) | 基本閱讀與個人偏好分層，朗讀與講者功能自行提供設定 | 已接受 |

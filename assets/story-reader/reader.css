@@ -84,21 +84,6 @@ nav{z-index:10}
 .preview{position:relative;transform-origin:center bottom}
 .mini{transform-origin:left bottom}
 #next .mini{transform-origin:right bottom}
-@media(hover:hover) and (pointer:fine) and (min-width:701px){
-nav:not(:hover):not(:has(:focus-visible)) .preview{min-height:58px;padding:8px 12px;gap:0}
-nav:not(:hover):not(:has(:focus-visible)) .mini{width:0;flex-basis:0;height:0;opacity:0;border-width:0}
-nav:not(:hover):not(:has(:focus-visible)) .preview strong{display:none}
-nav:not(:hover):not(:has(:focus-visible)) .preview-copy>small{margin:0}
-
-}
-@media(hover:hover) and (pointer:fine) and (min-width:701px){
-.preview:not(:disabled):hover{transform:translateY(-4px) scale(1.025);z-index:2;box-shadow:0 8px 26px #26282020}
-.preview:not(:disabled) .mini:hover{transform:scale(1.7);z-index:3;box-shadow:0 8px 30px #26282035;border-color:var(--line)}
-
-}
-@media(hover:hover) and (pointer:fine) and (min-width:1000px) and (min-height:500px){
-.preview:not(:disabled) .mini:hover{transform:scale(2.5)}
-}
 @media(prefers-reduced-motion:no-preference){
 .preview,.mini{transition:transform .18s ease,box-shadow .18s ease}
 }
@@ -171,12 +156,6 @@ body:has(.index[open]) main{margin-left:auto;margin-right:auto}
 body>nav{left:var(--sidebar-space);width:calc(100% - var(--sidebar-space))}
 .index:has(#pin[aria-pressed=true]){top:0;bottom:0;max-height:none;height:100dvh}
 .index:has(#pin[aria-pressed=true]) .index-list{max-height:calc(100dvh - 54px)}
-@media(min-width:701px) and (max-width:1200px){
-body:has(#pin[aria-pressed=true]) .nav-inner{grid-template-columns:minmax(0,1fr) 50px 40px minmax(0,1fr);gap:10px;padding:14px}
-body:has(#pin[aria-pressed=true]) nav .mini{display:none}
-body:has(#pin[aria-pressed=true]) nav .preview{min-height:70px}
-
-}
 @media(max-width:700px){
 body:has(#pin[aria-pressed=true]){--sidebar-space:0px;display:flex;flex-direction:column}
 body:has(#pin[aria-pressed=true]) header{order:0;width:100%}
@@ -200,17 +179,48 @@ body.is-zoomed header,body.is-zoomed nav{zoom:1}
 body.is-zoomed main{zoom:1.15}
 @supports not (zoom:1){body.is-zoomed main{transform:scale(1.15);width:86.96%}}
 }
-/* 上一步/下一步貼齊導覽列左右兩端；導覽列已從釘選窗格右緣起算（--sidebar-space），不會被窗格蓋住。 */
-.nav-inner{max-width:none}
-body>nav .nav-inner{padding-inline:0}
-#prev,#next{width:fit-content;max-width:100%}
-#prev{justify-self:start}
-#next{justify-self:end}
-#prev{border-left:0;border-radius:0 7px 7px 0}
-#next{border-right:0;border-radius:7px 0 0 7px}
-#prev:focus-visible,#next:focus-visible{outline-offset:-3px}
+/* 固定高度的導覽；縮圖在按鈕上方浮出，不推擠內容。 */
+body>main{padding-bottom:calc(var(--reader-nav-height,80px) + 24px)}
+body>nav .nav-inner{max-width:620px;padding:10px 16px 18px;gap:12px;grid-template-columns:minmax(0,1fr) 64px 40px minmax(0,1fr)}
+body>nav .preview{min-height:40px;padding:8px 12px;transform:none;justify-content:center;border-radius:8px}
+body>nav .preview strong{display:none}
+body>nav .preview-copy>small{margin:0;font-size:14px}
+body>nav .preview .mini{display:none}
+body>nav #zoom{width:40px;height:40px;border-radius:8px}
+@media(hover:hover) and (pointer:fine) and (min-width:701px){
+body>nav .preview:not(:disabled):is(:hover,:focus-visible) .mini{display:block;position:absolute;bottom:calc(100% + 12px);left:0;width:160px;height:128px;opacity:1;border:1px solid var(--line);transform:none;box-shadow:0 8px 24px #0002}
+body>nav #next .mini{left:auto;right:0}
+}
+@media(max-width:400px){body>nav .nav-inner{gap:6px;padding-inline:8px;grid-template-columns:minmax(0,1fr) 48px 40px minmax(0,1fr)}body>nav .preview{padding-inline:6px}}
 /* 導覽列空白處也能翻頁（reader.js）：左半上一頁、右半下一頁。 */
 body>nav{cursor:pointer}
 body>nav .progress{cursor:default}
 .made-with{position:absolute;right:12px;bottom:2px;font-size:10px;line-height:1;color:var(--muted);text-decoration:none;opacity:.6}
 .made-with:hover,.made-with:focus-visible{color:var(--accent);opacity:1;text-decoration:underline}
+
+/* 原生對話框提供焦點限制與 Escape；僅內容區捲動。 */
+#reader-settings{width:min(560px,calc(100vw - 32px));max-height:calc(100dvh - 32px);padding:0;overflow:hidden;border:1px solid var(--line);border-radius:16px;background:var(--paper);color:var(--ink);box-shadow:0 24px 80px #0003}
+#reader-settings::backdrop{background:#15203380}
+#reader-settings form{display:flex;flex-direction:column;max-height:calc(100dvh - 34px)}
+.reader-settings-heading{padding:24px 24px 16px;border-bottom:1px solid var(--line);flex:none}
+#reader-settings h2{margin:0;font-size:22px}
+#reader-settings p{font-size:14px;line-height:1.6;color:var(--muted);margin:8px 0}
+.reader-settings-content{padding:8px 24px 16px;overflow:auto;overscroll-behavior:contain;min-height:0}
+#reader-settings label{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-block:16px}
+#reader-settings :is(input,select){font:inherit;min-height:40px;padding:8px;color:var(--ink);background:var(--card);border:1px solid var(--line);border-radius:8px}
+#reader-settings input{width:4em}
+#reader-settings :is(input,select):focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+#reader-settings fieldset{min-width:0;margin:20px 0 0;padding:8px 16px;border:1px solid var(--line);border-radius:10px}
+#reader-settings legend{padding-inline:6px;font-weight:600}
+#reader-settings summary{cursor:pointer;padding-block:16px 4px;font-weight:600}
+#reader-settings input[type=checkbox]{width:20px;height:20px;min-height:0;accent-color:var(--accent);flex-shrink:0}
+#reader-settings input[type=number]{width:5em}
+.reader-settings-footer{flex:none;padding:12px 24px 20px;border-top:1px solid var(--line);background:var(--card)}
+#reader-settings [role=status]:empty{display:none}
+#reader-settings [role=status]{color:var(--ink);margin:0 0 12px}
+.reader-settings-actions{display:flex;gap:8px;align-items:center}
+.reader-settings-actions button{min-height:40px;padding:8px 14px}
+.reader-settings-actions [data-reset]{margin-right:auto;background:transparent;border-color:transparent;color:var(--muted)}
+.reader-settings-actions [type=submit]{background:var(--accent);border-color:var(--accent);color:var(--paper)}
+@media(max-width:700px){body>header{flex-wrap:wrap}}
+@media(max-width:400px){.reader-settings-heading,.reader-settings-content,.reader-settings-footer{padding-left:16px;padding-right:16px}.reader-settings-actions button{padding-inline:10px}}
