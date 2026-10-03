@@ -1,6 +1,6 @@
 # 0022. 口語稿與朗讀：選填 speech 與 audio，有音檔播音檔，否則以瀏覽器內建語音念出，可全部播放、調語速、開字幕
 
-- 狀態：已接受（[0024](0024-speech-synced-actions.md) 補充 `cues` 與朗讀時執行講者動作）
+- 狀態：已接受（[0024](0024-speech-synced-actions.md) 補充 `cues` 與朗讀時執行講者動作；[0030](0030-speech-volume-and-caption-timing.md) 補充音量與字幕時間）
 - 日期：2026-10-02
 
 ## 背景

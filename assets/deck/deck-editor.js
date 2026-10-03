@@ -351,6 +351,7 @@
   const canSpeak = p => !!(p.audio || (tts && p.speech));
   const controlsHtml = () => `<button type="button" data-autoplay aria-pressed="${auto}" title="從這頁開始逐頁播放口語稿，念完自動翻頁（P）">${auto ? '■ 停止播放' : '⏵ 全部播放'}</button>`
     + `<button type="button" data-rate title="語速（點擊切換）">${rate}×</button>`
+    + `<label class="deck-volume" title="朗讀音量">🔊<input type="range" data-volume min="0" max="100" step="5" value="${volume}" aria-label="朗讀音量"></label>`
     + `<button type="button" data-cc aria-pressed="${cc}" title="朗讀時在畫面下方顯示字幕（S）">CC</button>`;
   const speechHtml = p => p.speech || p.audio
     ? `<h3>🗣 口語稿${canSpeak(p) ? ` <button type="button" data-speak aria-pressed="${speaking && !auto}" title="${p.audio ? '播放音檔' : '朗讀口語稿'}（R）">${speakLabel(p)}</button>${controlsHtml()}` : ''}</h3>`
@@ -360,17 +361,24 @@
   // ── 口語稿發聲：有 page.audio 就播放音檔；沒有音檔、或音檔載入失敗時，把 page.speech 交給瀏覽器內建的
   //    speechSynthesis。兩者都不需套件。只念口語稿，不念畫面與講者動作，也不執行頁面互動。
   //    單頁朗讀（R）在換頁時停止；全部播放（P）念完自動翻到下一頁，沒有口語稿的頁停留 AUTO_DWELL 毫秒，到最後一頁結束。
-  //    語速存在講者本機，套用到音檔與內建語音。
+  //    語速與音量存在講者本機，套用到音檔與內建語音（內建語音從下一句生效）。
   const tts = window.speechSynthesis;
-  const RATES = [0.75, 1, 1.25, 1.5, 2], RATE_KEY = 'agentdeck-speech-rate', CC_KEY = 'agentdeck-captions', AUTO_DWELL = 2000, AUTO_GAP = 600;
+  const RATES = [0.75, 1, 1.25, 1.5, 2], RATE_KEY = 'agentdeck-speech-rate', VOLUME_KEY = 'agentdeck-speech-volume', CC_KEY = 'agentdeck-captions', AUTO_DWELL = 2000, AUTO_GAP = 600;
+  // 字幕時間（毫秒）：比聲音早 CC_LEAD 出現；最後一句念完多留 CC_LINGER；上一句顯示未滿 CC_MIN 時，下一句不提早，等聲音開始才換。
+  const CC_LEAD = 300, CC_LINGER = 1500, CC_MIN = 1000;
   let speaking = false, auto = false, speakRun = 0, speakPage = -1, player = null, autoTimer;
   let rate = 1;
   try { rate = RATES.includes(Number(localStorage.getItem(RATE_KEY))) ? Number(localStorage.getItem(RATE_KEY)) : 1; } catch { /* 用預設語速 */ }
+  let volume = 100; // 0–100
+  try { const v = localStorage.getItem(VOLUME_KEY); if (v !== null && Number(v) >= 0 && Number(v) <= 100) volume = Number(v); } catch { /* 用預設音量 */ }
   tts?.getVoices(); // 部分瀏覽器第一次呼叫才開始載入語音清單
-  let cc = false, ccBox = null, ccText = '';
+  let cc = false, ccBox = null, ccText = '', ccSince = 0, ccTimer;
   try { cc = localStorage.getItem(CC_KEY) === '1'; } catch { /* 預設不顯示字幕 */ }
   // 字幕：朗讀中在畫面下方顯示目前這句。內建語音逐句同步；音檔有 cues 時照秒數，沒有時依播放進度按句子字數比例估算。
+  //   字幕比聲音早 CC_LEAD 出現（內建語音：先顯示字幕再開口；音檔：提早換句），講者動作仍在聲音開始時執行。
   function caption(text = '') {
+    clearTimeout(ccTimer);
+    if (text !== ccText) ccSince = performance.now();
     ccText = text;
     if (!ccBox) {
       ccBox = document.createElement('div');
@@ -487,10 +495,9 @@
     }
     return groups;
   }
-  // 朗讀進到第 i 句（0 起算）時呼叫：更新字幕，並依序執行 at ≤ i+1 且尚未執行的組（估算跳句時不漏）。
-  function cueSentence(run, p, i, text) {
+  // 聲音進到第 i 句（0 起算）時呼叫：依序執行 at ≤ i+1 且尚未執行的組（估算跳句時不漏）。字幕另由 caption 控制。
+  function cueSentence(run, p, i) {
     if (run !== speakRun) return;
-    caption(text);
     const st = cueState;
     if (!st || st.run !== run) return;
     for (const [at, steps] of st.groups) {
@@ -520,7 +527,7 @@
     if (run !== speakRun) return;
     speaking = false;
     player = null;
-    caption();
+    ccTimer = setTimeout(() => { if (run === speakRun) caption(); }, CC_LINGER); // 念完多留一下再收
     const i = window.storyReader.index;
     if (auto && i < story.pages.length - 1) {
       // 本頁的講者動作做完才翻頁，避免最後一句觸發的操作被切掉。
@@ -533,17 +540,21 @@
   function playAudio(run, p) {
     player = new Audio(p.audio);
     player.playbackRate = rate;
+    player.volume = volume / 100;
     player.onended = () => finished(run);
     // 目前句子：有 cues 照秒數；沒有就依播放進度按字數比例估算。currentTime 是音檔本身的秒數，不受語速影響。
     const parts = sentences(p), lens = parts.map(s => s.length), total = lens.reduce((a, b) => a + b, 0);
     const starts = () => p.cues ?? (player.duration > 0 ? lens.map((_, i) => lens.slice(0, i).reduce((a, b) => a + b, 0) / total * player.duration) : null);
-    let last = -1;
+    let last = -1, lastCc = -1;
     const tick = () => {
       if (run !== speakRun || !player) return;
-      const at = starts(), t = player.currentTime;
-      let i = 0;
+      const at = starts(), t = player.currentTime, lead = CC_LEAD / 1000 * rate; // 換算成音檔秒數
+      let i = 0, ci = 0;
       if (at) while (i + 1 < at.length && at[i + 1] <= t) i++;
-      if ((at || !parts.length) && i !== last) { last = i; cueSentence(run, p, i, parts[i] ?? ''); }
+      if (at) while (ci + 1 < at.length && at[ci + 1] - lead <= t) ci++;
+      if ((at || !parts.length) && i !== last) { last = i; cueSentence(run, p, i); }
+      // 字幕提早換句；上一句顯示未滿 CC_MIN 就等到聲音真的開始（ci === i）
+      if ((at || !parts.length) && ci !== lastCc && (ci === i || performance.now() - ccSince >= CC_MIN)) { lastCc = ci; caption(parts[ci] ?? ''); }
       requestAnimationFrame(tick);
     };
     player.onerror = () => {
@@ -567,10 +578,14 @@
       u.lang = voice?.lang || lang;
       if (voice) u.voice = voice;
       u.rate = rate;
-      u.onstart = () => cueSentence(run, p, i, parts[i]);
+      u.volume = volume / 100;
+      u.onstart = () => cueSentence(run, p, i);
       u.onend = () => say(i + 1);
       u.onerror = e => { if (!['interrupted', 'canceled'].includes(e.error)) finished(run); };
-      tts.speak(u);
+      // 先出字幕再開口；字幕關閉時不等
+      caption(parts[i]);
+      if (cc) setTimeout(() => { if (run === speakRun) tts.speak(u); }, CC_LEAD);
+      else tts.speak(u);
     };
     say(0);
     return true;
@@ -603,6 +618,12 @@
     return persist(RATE_KEY, String(rate));
   }
   const cycleRate = () => setRate(RATES[(RATES.indexOf(rate) + 1) % RATES.length]);
+  function setVolume(value) {
+    volume = Math.max(0, Math.min(100, Math.round(Number(value)) || 0));
+    if (player) player.volume = volume / 100;
+    syncSpeak();
+    return persist(VOLUME_KEY, String(volume));
+  }
   function syncSpeak() {
     const p = currentPage();
     for (const doc of [document, presenter && !presenter.closed && presenter.document]) {
@@ -616,6 +637,7 @@
         b.setAttribute('aria-pressed', String(auto));
       });
       doc.querySelectorAll('[data-rate]').forEach(b => { b.textContent = `${rate}×`; });
+      doc.querySelectorAll('[data-volume]').forEach(r => { if (Number(r.value) !== volume) r.value = volume; });
       doc.querySelectorAll('[data-cc]').forEach(b => b.setAttribute('aria-pressed', String(cc)));
     }
   }
@@ -623,6 +645,7 @@
     root.querySelectorAll('[data-speak]').forEach(b => b.onclick = () => { auto = false; speak(); });
     root.querySelectorAll('[data-autoplay]').forEach(b => b.onclick = playAll);
     root.querySelectorAll('[data-rate]').forEach(b => b.onclick = cycleRate);
+    root.querySelectorAll('[data-volume]').forEach(r => r.oninput = () => setVolume(r.value));
     root.querySelectorAll('[data-cc]').forEach(b => b.onclick = toggleCc);
   }
   function commentsHtml(id) {
@@ -836,9 +859,10 @@ textarea{flex:1;font:inherit;font-size:16px;background:#2c2e26;color:inherit;bor
       title: '朗讀與字幕',
       fields: [
         { label: '朗讀速度', options: RATES, default: 1, get: () => rate, set: setRate },
+        { label: '朗讀音量（0–100）', type: 'number', min: 0, max: 100, default: 100, get: () => volume, set: setVolume },
         { label: '顯示字幕', type: 'checkbox', default: false, get: () => cc, set: setCc },
       ],
-      help: 'R：朗讀 · P：全部播放 · S：字幕。內建語音的新語速從下一句開始套用。',
+      help: 'R：朗讀 · P：全部播放 · S：字幕。內建語音的新語速與音量從下一句開始套用。字幕比聲音早一點出現、念完多留一下。',
     });
     preferences.register({
       title: '講者視窗',
