@@ -1,0 +1,35 @@
+.deck-evolution{container-type:inline-size;width:100%;color:var(--ink);font-size:16px;line-height:1.5}
+.deck-evolution-controls{display:none;flex-wrap:wrap;gap:8px;margin-bottom:16px}
+.deck-evolution-active>.deck-evolution-controls{display:flex}
+.deck-evolution-controls button{padding:8px 12px;font-size:14px}
+.deck-evolution-controls button[aria-pressed=true]{background:var(--deck-accent,var(--accent));color:var(--paper);font-weight:700}
+.deck-evolution.deck-live-on .deck-view>.deck-fallback{visibility:visible}
+.deck-evolution-graph{--evolution-vertical:0;position:relative;display:grid;grid-template-columns:repeat(var(--evolution-columns),minmax(0,1fr));gap:32px;padding:36px 16px 20px;border:1px solid var(--line);border-radius:12px;background:var(--card)}
+.deck-evolution-column{display:flex;flex-direction:column;justify-content:center;gap:24px;min-width:0}
+.deck-evolution-node{position:relative;z-index:1;border:1px solid var(--line);border-radius:8px;background:var(--paper);padding:12px;overflow-wrap:anywhere;min-width:0}
+.deck-evolution-node small{display:block;font-size:11px;color:var(--muted)}
+.deck-evolution-node strong{display:block;font-size:18px;line-height:1.4}
+.deck-evolution-node p{font-size:14px;margin:6px 0 0}
+.deck-evolution-node .deck-evolution-incoming{font-size:12px;color:var(--muted)}
+.deck-evolution-new{outline:3px solid var(--deck-highlight,var(--accent));outline-offset:2px}
+.deck-evolution-future{border-style:dashed;background:transparent}
+.deck-evolution-future>*{visibility:hidden}
+.deck-evolution-lines{display:none;position:absolute;inset:0;width:100%;height:100%;pointer-events:none;overflow:visible}
+.deck-evolution-active .deck-evolution-lines{display:block}
+.deck-evolution-lines path{fill:none;stroke:var(--deck-accent,var(--accent));stroke-width:1.5}
+.deck-evolution-stages{margin:18px 0 0;padding-left:24px}
+.deck-evolution-stages li{padding:4px 0}.deck-evolution-stages p{margin:4px 0}
+.deck-evolution-stages [hidden]{display:none}
+.deck-evolution-status{font-size:13px;color:var(--muted);margin:10px 0 0}
+.deck-evolution-status:empty{display:none}
+@container(max-width:620px){
+ .deck-evolution-graph{--evolution-vertical:1;grid-template-columns:minmax(0,1fr);gap:30px;padding:20px 24px}
+ .deck-evolution-column{gap:14px}
+ .deck-evolution-node{padding:12px}
+}
+
+/* 共用同一個格子，保留最長階段原因的高度；換階段不推移圖面。 */
+.deck-evolution-active .deck-evolution-stages{display:grid;list-style:none;padding:0}
+.deck-evolution-active .deck-evolution-stages>li{grid-area:1 / 1}
+.deck-evolution-active .deck-evolution-stages>li[hidden]{display:block;visibility:hidden;pointer-events:none}
+.deck-evolution-incoming>[hidden]{display:inline;visibility:hidden}
