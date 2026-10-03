@@ -1,0 +1,4 @@
+/* deck.sketch 樣式。 */
+.deck-sketch{display:grid;gap:10px}
+.deck-sketch.is-sketched{font-family:"Comic Sans MS","Chalkboard SE","Kaiti TC",cursive,sans-serif}
+.deck-sketch-note{margin:0;justify-self:end;font-size:15px;color:var(--deck-highlight);transform:rotate(-2deg);border:2px dashed var(--deck-highlight);padding:2px 10px;border-radius:4px}

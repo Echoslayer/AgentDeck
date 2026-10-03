@@ -1,0 +1,17 @@
+/* deck.terminal 樣式。asciinema-player 的主題以色票覆寫（播放器 css 較晚載入，選擇器須帶 .deck-terminal 才蓋得過）。 */
+.deck-terminal{margin:0;display:grid;gap:8px}
+.deck-terminal .deck-view{border-radius:8px;overflow:hidden;background:var(--ink)}
+.deck-terminal pre.deck-fallback{margin:0;padding:14px 18px;color:var(--paper);font:15px/1.5 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;min-height:calc(var(--rows) * 1.5em);box-sizing:content-box;height:auto;overflow:hidden}
+.deck-terminal pre.deck-fallback>span{display:block;white-space:pre}
+.deck-terminal pre.deck-fallback .is-cmd{font-weight:600}
+.deck-terminal pre.deck-fallback i{font-style:normal;color:var(--deck-accent)}
+/* 啟動後播放器取代後備（高度由播放器決定） */
+.deck-terminal.deck-live-on .deck-view>.deck-fallback{display:none}
+.deck-terminal figcaption{font-size:14px;color:var(--muted)}
+.deck-terminal .asciinema-player-theme-deck{
+  --term-color-foreground:var(--paper);--term-color-background:var(--ink);
+  --term-color-0:var(--ink);--term-color-1:var(--deck-highlight);--term-color-2:var(--deck-accent);--term-color-3:var(--deck-highlight);
+  --term-color-4:var(--deck-primary);--term-color-5:var(--deck-highlight);--term-color-6:var(--deck-accent);--term-color-7:var(--paper);
+  --term-color-8:var(--muted);--term-color-9:var(--deck-highlight);--term-color-10:var(--deck-accent);--term-color-11:var(--deck-highlight);
+  --term-color-12:var(--deck-primary);--term-color-13:var(--deck-highlight);--term-color-14:var(--deck-accent);--term-color-15:#fff;
+}

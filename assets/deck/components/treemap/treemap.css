@@ -1,0 +1,11 @@
+/* deck.treemap 樣式。方塊位置以百分比定位，隨寬度縮放。 */
+.deck-treemap{margin:0;display:grid;gap:10px}
+.deck-treemap-area{position:relative;aspect-ratio:16/9;max-height:56vh;width:100%}
+.deck-treemap-tile{position:absolute;box-sizing:border-box;padding:6px 8px;background:var(--c);color:#fff;overflow:hidden;display:flex;flex-direction:column;gap:2px;border-radius:3px}
+.deck-treemap-tile b{font-size:16px;line-height:1.2}
+.deck-treemap-tile small{font-size:13px;opacity:.85}
+.deck-treemap-tile.is-small b{font-size:12px}
+.deck-treemap-tile.is-small small{display:none}
+.deck-treemap-legend{display:flex;flex-wrap:wrap;gap:6px 18px;margin:0;padding:0;list-style:none;font-size:14px;color:var(--muted)}
+.deck-treemap-legend li::before{content:"";display:inline-block;width:10px;height:10px;border-radius:2px;background:var(--c);margin-right:6px}
+.deck-treemap figcaption{font-size:14px;color:var(--muted)}

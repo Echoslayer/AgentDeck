@@ -1,0 +1,3 @@
+/* deck.celebrate 樣式：只是外框，內容的樣式由包住的元件負責。 */
+.deck-celebrate{display:grid;gap:12px;justify-items:start}
+.deck-celebrate>p{margin:0;font-size:22px}

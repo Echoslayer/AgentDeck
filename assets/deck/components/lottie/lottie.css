@@ -1,0 +1,6 @@
+/* deck.lottie 樣式。後備與動態共用同一個容器。 */
+.deck-lottie{margin:0;display:grid;gap:8px;justify-items:center}
+.deck-lottie .deck-view{aspect-ratio:var(--ratio);width:min(100%,360px);max-height:50vh}
+.deck-lottie.deck-live-on .deck-view>.deck-fallback{visibility:visible;cursor:pointer}
+.deck-lottie .deck-fallback svg{display:block;width:100%!important;height:100%!important}
+.deck-lottie figcaption{font-size:14px;color:var(--muted);text-align:center}
