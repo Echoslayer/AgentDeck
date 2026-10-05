@@ -138,6 +138,84 @@ Then ask your coding agent to read agentdeck/AGENTDECK.md and build the deck.`, 
   ],
 };
 
+// Read-aloud script (browser voice) and actions synced to it, by page id. English sentences are split with <br>,
+// because only 。！？!?；; and line breaks end a sentence; at counts sentences from 1.
+const narration = {
+  cover: {
+    speech: 'Welcome to AgentDeck.<br>This website is itself an AgentDeck presentation, read aloud by the built-in voice of your browser.<br>Let us see what it does.',
+    record: [{ at: 1, box: '.deck-cover [data-key=title]' }, { at: 3, clear: true }],
+  },
+  why: {
+    speech: 'Ask an agent for slides today, and you usually get a binary file.<br>The agent edits it through a library, and every small fix goes back to the agent.<br>AgentDeck turns the deck into plain text, which is what agents write best.<br>The agent does the heavy writing, and you keep the last word.',
+    record: [{ at: 1, box: '[data-key=why-1]' }, { at: 3, clear: true }, { box: '[data-key=why-2]' }, { at: 4, clear: true }],
+  },
+  workflow: {
+    speech: 'It takes five steps.<br>Init creates a folder for one deck.<br>The agent plans the pages, then writes the storyboard with components.<br>You play it and fix things live.<br>Pack turns it into a zip you can send.',
+    record: [
+      { at: 2, box: '[data-key=flow-1]' },
+      { at: 3, clear: true }, { box: '[data-key=flow-2]' }, { wait: 1500 }, { box: '[data-key=flow-3]' },
+      { at: 4, clear: true }, { box: '[data-key=flow-4]' },
+      { at: 5, clear: true }, { box: '[data-key=flow-5]' },
+    ],
+  },
+  layers: {
+    speech: 'Each layer has exactly one owner.<br>At the bottom, the theme holds your brand.<br>Above it sit the framework core and the components the deck uses.<br>The agent writes the storyboard.<br>And the top layer, edits.js, is yours alone, so regenerating the story never erases your fixes.',
+    record: [
+      { at: 1, drag: '[data-key=layers] .deck-canvas', by: [240, 0] },
+      { at: 2, box: '[data-key=layers-5]' },
+      { at: 3, clear: true }, { box: '[data-key=layers-4]' }, { box: '[data-key=layers-3]' },
+      { at: 4, clear: true }, { box: '[data-key=layers-2]' },
+      { at: 5, clear: true }, { box: '[data-key=layers-1]' },
+    ],
+  },
+  contract: {
+    speech: 'A whole deck is one plain JavaScript object.<br>Every page has a stable id, like this one.<br>Its content is built from components, called by name with a key.<br>That key is how your live edits find their target later.<br>The reader checks this structure on load, so mistakes fail loudly instead of quietly.',
+    record: [
+      { at: 2, box: '[data-key=story] code > span:nth-child(6)' },
+      { at: 3, clear: true }, { box: '[data-key=story] code > span:nth-child(10)' },
+      { at: 5, clear: true },
+    ],
+  },
+  'live-edit': {
+    speech: 'You can fix the deck while you present.<br>Press Edit in the header, and the text becomes editable.<br>You can retype a title, drag items on the cover, or hide a component that misbehaves.<br>Comments go in the panel on the right.<br>When you save, everything lands in one small file, edits.js, and the storyboard stays untouched.',
+    record: [
+      { at: 2, box: '[data-key=edit-1]' },
+      { at: 3, clear: true }, { box: '[data-key=edit-2]' }, { box: '[data-key=edit-3]' },
+      { at: 4, clear: true }, { box: '[data-key=edit-4]' },
+      { at: 5, clear: true },
+    ],
+  },
+  included: {
+    speech: 'Here is what comes in the box.<br>Thirty-seven components, from simple lists to 3D charts.<br>Six interactive examples you can adapt.<br>And zero build steps: double-click index.html and it plays.',
+    record: [
+      { at: 2, box: '[data-key=count-1]' },
+      { at: 3, clear: true }, { box: '[data-key=count-2]' },
+      { at: 4, clear: true }, { box: '[data-key=count-3]' },
+    ],
+  },
+  delivery: {
+    speech: 'Here is a quick question.<br>You run pack and email the result.<br>What arrives in their inbox?<br>Take a second to guess.<br>The answer is a zip that plays offline.<br>Unzip it, double-click index.html, and it plays with no network and nothing to install.',
+    record: [
+      { at: 2, box: '[data-key=note]' },
+      { at: 3, clear: true }, { box: '.choices' },
+      { at: 5, clear: true }, { click: '[data-answer=zip]' }, { box: '[data-answer=zip]' },
+    ],
+  },
+  start: {
+    speech: 'Ready to try it?<br>In your own project, run init to create a deck folder.<br>Then run new to add the first deck.<br>From there, ask your coding agent to read the rules file and build it.<br>Everything else is on GitHub.',
+    record: [
+      { at: 2, box: '[data-key=cli] code > span:nth-child(1)' },
+      { at: 3, clear: true }, { box: '[data-key=cli] code > span:nth-child(3)' },
+      { at: 4, clear: true }, { box: '[data-key=cli] code > span:nth-child(4)' },
+      { at: 5, clear: true },
+    ],
+  },
+  thanks: {
+    speech: 'Thanks for watching.<br>You will find the code, the docs, and this very deck on GitHub, under Echoslayer slash AgentDeck.',
+  },
+};
+for (const p of story.pages) Object.assign(p, narration[p.id]);
+
 // Keep the current page when switching language: both versions use the same page ids.
 document.addEventListener('story:render', () => {
   document.getElementById('story-back').setAttribute('href', story.back.href + location.hash);

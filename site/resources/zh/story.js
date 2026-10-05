@@ -138,6 +138,83 @@ $ npx -y github:Echoslayer/AgentDeck new my-topic
   ],
 };
 
+// 口語稿（瀏覽器內建語音）與隨朗讀的動作，依頁面 id 對應；at 從第 1 句起算。動作與英文版相同。
+const narration = {
+  cover: {
+    speech: '歡迎來到 AgentDeck。這個網站本身就是一份 AgentDeck 簡報，現在由瀏覽器內建的語音朗讀。我們來看看它能做什麼。',
+    record: [{ at: 1, box: '.deck-cover [data-key=title]' }, { at: 3, clear: true }],
+  },
+  why: {
+    speech: '請 agent 做簡報，通常會拿到一份二進位檔。agent 得透過函式庫修改，改一個字也要再請它動手。AgentDeck 把簡報變成純文字，這正是 agent 最擅長寫的東西。繁重的撰寫交給 agent，最後的決定留給你。',
+    record: [{ at: 1, box: '[data-key=why-1]' }, { at: 3, clear: true }, { box: '[data-key=why-2]' }, { at: 4, clear: true }],
+  },
+  workflow: {
+    speech: '整個流程有五步。init 建立一份簡報的資料夾。agent 先安排頁面，再用元件寫出分鏡。你播放簡報，現場修改。最後用 pack 打包成可以寄出的 zip。',
+    record: [
+      { at: 2, box: '[data-key=flow-1]' },
+      { at: 3, clear: true }, { box: '[data-key=flow-2]' }, { wait: 1500 }, { box: '[data-key=flow-3]' },
+      { at: 4, clear: true }, { box: '[data-key=flow-4]' },
+      { at: 5, clear: true }, { box: '[data-key=flow-5]' },
+    ],
+  },
+  layers: {
+    speech: '每一層只有一個擁有者。最底層是主題，放你的品牌。往上是框架核心，以及這份簡報用到的元件。agent 負責寫分鏡。最上層的 edits.js 只屬於你，所以重新產生分鏡也不會蓋掉你的修正。',
+    record: [
+      { at: 1, drag: '[data-key=layers] .deck-canvas', by: [240, 0] },
+      { at: 2, box: '[data-key=layers-5]' },
+      { at: 3, clear: true }, { box: '[data-key=layers-4]' }, { box: '[data-key=layers-3]' },
+      { at: 4, clear: true }, { box: '[data-key=layers-2]' },
+      { at: 5, clear: true }, { box: '[data-key=layers-1]' },
+    ],
+  },
+  contract: {
+    speech: '一整份簡報就是一個 JavaScript 物件。每一頁都有固定的 id，就像這一行。內容由元件組成，以名稱和 key 呼叫。之後的現場修改，就是靠這個 key 找到目標。閱讀器載入時會檢查這個結構，寫錯會直接報錯，不會默默出錯。',
+    record: [
+      { at: 2, box: '[data-key=story] code > span:nth-child(6)' },
+      { at: 3, clear: true }, { box: '[data-key=story] code > span:nth-child(10)' },
+      { at: 5, clear: true },
+    ],
+  },
+  'live-edit': {
+    speech: '你可以邊講邊改簡報。按頁首的編輯，文字就變成可以修改。你可以重打標題、拖曳封面上的元素，或隱藏出問題的元件。意見寫在右側的註解分頁。另存之後，所有修改都在一個小檔案 edits.js 裡，分鏡完全不動。',
+    record: [
+      { at: 2, box: '[data-key=edit-1]' },
+      { at: 3, clear: true }, { box: '[data-key=edit-2]' }, { box: '[data-key=edit-3]' },
+      { at: 4, clear: true }, { box: '[data-key=edit-4]' },
+      { at: 5, clear: true },
+    ],
+  },
+  included: {
+    speech: '來看看裡面有什麼。三十七個元件，從簡單的條列到 3D 圖表。六個可以改寫的互動範例。還有零個建置步驟：雙擊 index.html 就能播放。',
+    record: [
+      { at: 2, box: '[data-key=count-1]' },
+      { at: 3, clear: true }, { box: '[data-key=count-2]' },
+      { at: 4, clear: true }, { box: '[data-key=count-3]' },
+    ],
+  },
+  delivery: {
+    speech: '來個小問題。你執行 pack，把結果寄出去。對方信箱裡會收到什麼？先花一秒猜猜看。答案是一個可以離線播放的 zip。解壓後雙擊 index.html，不用網路、不用安裝就能播放。',
+    record: [
+      { at: 2, box: '[data-key=note]' },
+      { at: 3, clear: true }, { box: '.choices' },
+      { at: 5, clear: true }, { click: '[data-answer=zip]' }, { box: '[data-answer=zip]' },
+    ],
+  },
+  start: {
+    speech: '想試試看嗎？在你的專案裡，執行 init 建立簡報資料夾。接著執行 new，建立第一份簡報。之後請你的 coding agent 讀規則檔，開始製作。其餘的一切都在 GitHub 上。',
+    record: [
+      { at: 2, box: '[data-key=cli] code > span:nth-child(1)' },
+      { at: 3, clear: true }, { box: '[data-key=cli] code > span:nth-child(3)' },
+      { at: 4, clear: true }, { box: '[data-key=cli] code > span:nth-child(4)' },
+      { at: 5, clear: true },
+    ],
+  },
+  thanks: {
+    speech: '感謝觀看。程式碼、文件和這份簡報，都在 GitHub 的 Echoslayer 斜線 AgentDeck。',
+  },
+};
+for (const p of story.pages) Object.assign(p, narration[p.id]);
+
 // 切換語言時停在同一頁：兩個版本的頁面 id 相同。
 document.addEventListener('story:render', () => {
   document.getElementById('story-back').setAttribute('href', story.back.href + location.hash);

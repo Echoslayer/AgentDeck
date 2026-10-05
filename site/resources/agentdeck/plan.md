@@ -39,6 +39,7 @@
 
 - 特殊元件：stack3d（three.js）展示分層；code（highlight.js）上色。缺套件時為靜態後備。
 - 語言切換用 `story.back` 連到另一語言入口，並在 `story:render` 時附上目前頁面的 hash。
+- 朗讀與動作（第二輪）：`story.js` 末端的 `narration` 依頁面 id 補上 `speech` 與帶 `at` 的 `record`，用瀏覽器內建語音、不做音檔。英文句子以 `<br>` 分句（英文句號不算句末）。改口語稿時重數句子並同步 `at`，兩個語言一起改，再跑 `check speech` 與 `check speech lang/zh`。
 
 ## 5. 交付
 
