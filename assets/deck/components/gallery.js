@@ -37,6 +37,25 @@ const story = {
         + `<h3>${TIER.special}</h3><ul>${overview('special')}</ul></div>`,
       point: '選用時機見 CATALOG.md。',
     },
+    // 換頁轉場不是元件，屬閱讀器（docs/adr/0033）；在此切換 story.transition 試看各效果。
+    {
+      id: 'transitions',
+      section: '閱讀器',
+      title: '換頁轉場',
+      lead: '選一種效果後按 → 翻頁。簡報以 story.transition 設整份、頁面 transition 設單頁。',
+      art: `<div class="deck-gallery-transitions" data-key="transitions">${['slide', 'fade', 'push', 'zoom', 'flip', 'cover', 'wipe', 'rise', 'blur', 'none']
+        .map(t => `<button type="button" data-transition="${t}">${t}</button>`).join('')}</div>`,
+      previewArt: '<div class="deck-gallery-transitions"><span>slide · fade · push · zoom · flip · cover · wipe · rise · blur · none</span></div>',
+      point: '讀者可在「設定 → 個人客製」關閉轉場；系統要求減少動態時也不轉場。',
+      mount(root) {
+        const mark = () => root.querySelectorAll('[data-transition]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.transition === (story.transition ?? 'slide'))));
+        root.querySelector('.deck-gallery-transitions').onclick = e => {
+          const button = e.target.closest('[data-transition]');
+          if (button) { story.transition = button.dataset.transition; mark(); }
+        };
+        mark();
+      },
+    },
     ...byTier('basic'),
     ...byTier('special'),
     deck.end({ title: 'deck.end()' }),

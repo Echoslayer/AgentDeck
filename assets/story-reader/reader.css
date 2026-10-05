@@ -296,3 +296,49 @@ body>nav .progress{cursor:default}
 #reader-text-tools input,#reader-text-tools select,#reader-text-tools button{font:inherit;padding:5px;border:1px solid var(--line);border-radius:5px;background:var(--card);color:var(--ink);height:30px}
 #reader-text-tools button[aria-pressed=true]{background:var(--ink);color:var(--paper)}
 @media print{#reader-text-selection,#reader-text-tools{display:none}}
+/* 換頁轉場（docs/adr/0033）：只動內容區；頁首、翻頁列與索引各自成組疊在內容之上，長頁轉場時不被蓋住。
+   效果由 reader.js 設在 <html data-transition>，方向設在 data-turn；--turn 為 1（下一頁）或 -1（上一頁）。 */
+body>main{view-transition-name:story-page}
+body>header{view-transition-name:story-header}
+body>nav{view-transition-name:story-nav}
+#index{view-transition-name:story-index}
+html[data-turn=prev]{--turn:-1}
+::view-transition-old(story-page){animation:.22s ease-in both story-slide-out}
+::view-transition-new(story-page){animation:.28s ease-out both story-slide-in}
+html[data-transition=fade]::view-transition-old(story-page){animation:.25s ease both story-fade-out}
+html[data-transition=fade]::view-transition-new(story-page){animation:.25s ease both story-fade-in}
+html[data-transition=push]::view-transition-group(story-page),html[data-transition=cover]::view-transition-group(story-page){overflow:hidden}
+html[data-transition=push]::view-transition-old(story-page){animation:.42s cubic-bezier(.4,0,.2,1) both story-push-out}
+html[data-transition=push]::view-transition-new(story-page){animation:.42s cubic-bezier(.4,0,.2,1) both story-push-in}
+html[data-transition=zoom]::view-transition-old(story-page){animation:.22s ease-in both story-zoom-out}
+html[data-transition=zoom]::view-transition-new(story-page){animation:.3s ease-out .08s both story-zoom-in}
+html[data-transition=flip]::view-transition-image-pair(story-page){perspective:1600px}
+html[data-transition=flip]::view-transition-old(story-page){animation:.2s ease-in both story-flip-out;backface-visibility:hidden}
+html[data-transition=flip]::view-transition-new(story-page){animation:.24s ease-out .2s both story-flip-in;backface-visibility:hidden}
+html[data-transition=cover]::view-transition-old(story-page){animation:.45s ease both story-dim}
+html[data-transition=cover]::view-transition-new(story-page){animation:.45s cubic-bezier(.2,.8,.2,1) both story-push-in;background:var(--paper);box-shadow:0 0 40px #0003}
+html[data-transition=wipe]::view-transition-old(story-page){animation:.45s both story-hold}
+html[data-transition=wipe]::view-transition-new(story-page){animation:.45s cubic-bezier(.4,0,.2,1) both story-wipe-next}
+html[data-transition=wipe][data-turn=prev]::view-transition-new(story-page){animation-name:story-wipe-prev}
+html[data-transition=rise]::view-transition-old(story-page){animation:.25s ease-in both story-rise-out}
+html[data-transition=rise]::view-transition-new(story-page){animation:.3s ease-out both story-rise-in}
+html[data-transition=blur]::view-transition-old(story-page){animation:.25s ease-in both story-blur-out}
+html[data-transition=blur]::view-transition-new(story-page){animation:.3s ease-out both story-blur-in}
+@keyframes story-slide-out{to{opacity:0;translate:calc(var(--turn,1) * -40px) 0}}
+@keyframes story-slide-in{from{opacity:0;translate:calc(var(--turn,1) * 40px) 0}}
+@keyframes story-fade-out{to{opacity:0}}
+@keyframes story-fade-in{from{opacity:0}}
+@keyframes story-push-out{to{translate:calc(var(--turn,1) * -100%) 0}}
+@keyframes story-push-in{from{translate:calc(var(--turn,1) * 100%) 0}}
+@keyframes story-zoom-out{to{opacity:0;scale:.92}}
+@keyframes story-zoom-in{from{opacity:0;scale:1.06}}
+@keyframes story-flip-out{to{rotate:y calc(var(--turn,1) * -90deg)}}
+@keyframes story-flip-in{from{rotate:y calc(var(--turn,1) * 90deg)}}
+@keyframes story-dim{to{opacity:.35;scale:.95}}
+@keyframes story-hold{to{opacity:1}}
+@keyframes story-wipe-next{from{clip-path:inset(0 100% 0 0)}to{clip-path:inset(0)}}
+@keyframes story-wipe-prev{from{clip-path:inset(0 0 0 100%)}to{clip-path:inset(0)}}
+@keyframes story-rise-out{to{opacity:0;translate:0 calc(var(--turn,1) * -32px)}}
+@keyframes story-rise-in{from{opacity:0;translate:0 calc(var(--turn,1) * 32px)}}
+@keyframes story-blur-out{to{opacity:0;filter:blur(10px)}}
+@keyframes story-blur-in{from{opacity:0;filter:blur(10px)}}

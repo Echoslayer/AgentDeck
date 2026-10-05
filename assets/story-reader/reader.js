@@ -5,8 +5,15 @@ const uiZh = /^zh/i.test(document.documentElement.lang || 'zh');
 const uiText = (zh, en) => uiZh ? zh : en;
 const pages = story.pages;
 if (!Array.isArray(pages) || !pages.length) throw new Error('story.pages 至少需要一頁');
+// 換頁轉場效果（docs/adr/0033），樣式在 reader.css。
+const TRANSITIONS = ['slide', 'fade', 'push', 'zoom', 'flip', 'cover', 'wipe', 'rise', 'blur', 'none'];
+const checkTransition = (value, where) => {
+  if (value !== undefined && !TRANSITIONS.includes(value)) throw new Error(`${where}: transition 需為 ${TRANSITIONS.join('、')} 之一，收到 ${value}`);
+};
+checkTransition(story.transition, 'story');
 const ids = new Set();
 for (const p of pages) {
+  checkTransition(p.transition, p.id);
   if (!p.id || ids.has(p.id)) throw new Error('每頁需要唯一 id');
   ids.add(p.id);
   for (const field of ['section', 'title', 'lead', 'art', 'point']) {
@@ -44,6 +51,20 @@ if (!uiZh) {
 document.querySelector('body>nav')?.insertAdjacentHTML('beforeend', `<a class="made-with" href="https://github.com/Echoslayer/AgentDeck" target="_blank" rel="noopener" title="${uiText('本簡報以 AgentDeck 製作', 'This presentation was made with AgentDeck')}">${uiText('以 AgentDeck 製作', 'Made with AgentDeck')}</a>`);
 
 const preferences = createPreferences();
+const transitionsKey = 'agentdeck-transitions';
+let transitionsOn = true;
+try { transitionsOn = localStorage.getItem(transitionsKey) !== 'off'; } catch { /* 無法讀取時採用預設值 */ }
+preferences.register({
+  title: uiText('換頁', 'Page turns'),
+  fields: [{
+    label: uiText('換頁轉場', 'Page transitions'), type: 'checkbox', default: true, get: () => transitionsOn,
+    set(value) {
+      transitionsOn = value;
+      try { localStorage.setItem(transitionsKey, value ? 'on' : 'off'); return true; } catch { return false; }
+    },
+  }],
+  help: uiText('系統設定「減少動態效果」時一律不轉場。', 'Transitions are always off when the system asks for reduced motion.'),
+});
 // 分享匯出獨立交付；重型套件由 export.js 在使用時載入。
 const exportScript = document.createElement('script');
 exportScript.src = new URL('export.js', document.currentScript.src).href;
@@ -117,7 +138,21 @@ function feedback() {
   if (el && choice) el.textContent = choice.feedback;
   renderPreviews();
 }
+// 換頁轉場：效果取自進入頁的 transition，否則 story.transition，預設 slide。首次載入、同頁重繪、
+// 瀏覽器不支援 View Transitions、讀者在設定關閉或系統要求減少動態時直接換頁。
+// ponytail: 方向只比頁序，最後一頁按「重新看一次」回到首頁會以上一頁方向滑動。
+let shown = -1;
 function show() {
+  const from = shown, effect = pages[current].transition ?? story.transition ?? 'slide';
+  shown = current;
+  if (from < 0 || from === current || effect === 'none' || !transitionsOn || !document.startViewTransition
+    || matchMedia('(prefers-reduced-motion: reduce)').matches) return render();
+  document.documentElement.dataset.transition = effect;
+  document.documentElement.dataset.turn = current > from ? 'next' : 'prev';
+  // 連續翻頁時前一個轉場被略過，ready 會 reject；畫面已由 render 更新，忽略即可。
+  document.startViewTransition(render).ready.catch(() => {});
+}
+function render() {
   if (cleanup) { cleanup(); cleanup = undefined; }
   const p = pages[current], root = document.getElementById('page');
   root.innerHTML = pageMarkup(p);
@@ -235,7 +270,7 @@ function createPreferences() {
       <p>${uiText('←／→ 固定保留。字母不可重複；E、N、C、R、P、S 為保留鍵。', '← / → always work. Letters must differ; E, N, C, R, P, S are reserved.')}</p>
     </fieldset>
     <details id="reader-personal-settings" hidden><summary>${uiText('個人客製', 'Personal')}</summary>
-      <p>${uiText('調整朗讀、字幕與講者視窗。', 'Adjust read-aloud, captions, and the presenter window.')}</p>
+      <p>${uiText('調整換頁、朗讀、字幕與講者視窗。', 'Adjust page turns, read-aloud, captions, and the presenter window.')}</p>
     </details>
     </div>
     <div class="reader-settings-footer"><p role="status"></p>

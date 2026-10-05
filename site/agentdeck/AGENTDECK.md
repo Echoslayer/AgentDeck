@@ -146,6 +146,7 @@ const story = {
   title: '簡報名稱',                 // 瀏覽器標題
   label: '作者或單位 / 主題名稱',     // 頁首文字；省略時用 title，現場可編輯
   // 相關內容可返回主入口：back: { href: resource('../../index.html'), label: '返回主簡報' },
+  transition: 'slide',              // 可選：換頁轉場，見下方說明；省略為 slide
   pages: [{
     id: 'stable-id',                // 必填，整份唯一；重排時不要改，題目與互動狀態以它索引
     section: '01 / 章節',            // 以下四個欄位必須是字串（可為空字串）
@@ -159,6 +160,7 @@ const story = {
     audio: '可選：口語稿音檔，resource(\'audio/<頁面 id>.mp3\')',
     cues: [0, 3.2, 7.8],            // 可選：音檔中每句口語稿的起始秒數
     explain: '可選：補充解釋，二次迭代才寫',
+    transition: 'zoom',             // 可選：進入這一頁時改用的轉場
   }],
 };
 ```
@@ -170,6 +172,7 @@ const story = {
 - **講稿**：只顯示在右側「講稿」分頁與簡報者視窗，不出現在投影畫面（ADR 0020）。第一輪寫 `instruction`，二次迭代寫需要的 `explain`；`speech`、`audio`、`cues` 是進階欄位，格式見下方「進階欄位」，第一輪不讀也不寫。可用 `<b>`、`<br>`。封面與結尾以 `deck.cover({ …, instruction, speech, audio, cues, record, explain })`、`deck.end({ instruction, speech, audio, cues, record, explain })` 傳入。
   - `instruction`（講者動作）：實作時每頁都寫。用口語寫這頁怎麼開口、指哪裡、操作什麼、強調什麼、怎麼接到下一頁，不重複畫面上的文字；一頁約二到五句。
   - `explain`（補充解釋）：第一輪不寫，整份完成後的講稿二次迭代才寫，只寫需要的頁。內容是畫面簡化或省略了什麼（簡化模型、略過的前提、只是代表案例），以及聽眾可能追問的原因與答法，例如「為什麼模型會把這個數字判錯」。每個說法都要回到素材或實測資料查證；查不到的列進 `plan.md`「待確認」，不寫成定論。二次迭代可以和處理註解一起做。
+- **換頁轉場（可選）**：`story.transition` 設整份的效果，頁面的 `transition` 只改「進入該頁」的效果（ADR 0033）。可用：`slide`（小幅滑動淡出，預設）、`fade`（淡入淡出）、`push`（整頁推移）、`zoom`（縮放）、`flip`（3D 翻牌）、`cover`（新頁覆蓋舊頁）、`wipe`（擦除顯現）、`rise`（上下推移）、`blur`（模糊）、`none`（不轉場）；其他值載入時報錯。依場合選一種用到底：正式報告用 `slide` 或 `fade`，故事、教學可用 `push`、`cover`；`flip`、`blur` 搶眼，少用。頁面層級只用在換章或揭曉等少數轉折，不要每頁不同。讀者可在「設定」關閉轉場，系統要求減少動態時也不轉場，所以內容不可依賴轉場傳達資訊。封面與結尾以 `deck.cover({ …, transition })`、`deck.end({ transition })` 傳入。
 - **題目（可選）**：`question: { prompt, choices: [{ value, label, feedback }], hideFuturePreviews? }`。`value` 為唯一的英數、`_`、`-`；`hideFuturePreviews: true` 在作答前遮住後續縮圖（不阻止翻頁）。答案保留到重新整理。
 - **互動（可選）**：`mount(root, state)` 在當頁渲染後呼叫，`root` 是主閱讀區，`state` 是此頁專用、保留到重新整理的物件；必須同步回傳清理函式或 `undefined`，換頁時先清理再移除舊內容。有 `mount` 的頁面必須提供靜態 `previewArt` 供縮圖與頁首「匯出」使用。切換狀態（換樣本、換方法）時 `.stage` 高度保持不變：以固定高度或預留最大內容的空間，避免現場版面跳動與錄影裁切錯位。
 - **進階欄位（可選）**：`speech`、`audio`、`cues`、`record`，內容確認後另一輪才寫，格式見下方「進階欄位」。

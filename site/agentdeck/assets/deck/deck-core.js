@@ -173,7 +173,7 @@ window.deck = (() => {
   // 頁型：回傳完整頁面物件。reader 的章節、標題、引言、重點由 deck.css 隱藏；title 同步索引與縮圖。
   // 預設章節名稱跟隨 <html lang>（docs/adr/0031）。
   const zh = () => /^zh/i.test(document.documentElement.lang || 'zh');
-  const notes = o => Object.fromEntries(['instruction', 'explain', 'speech', 'audio', 'cues', 'record'].filter(k => o[k] !== undefined).map(k => [k, o[k]]));
+  const notes = o => Object.fromEntries(['instruction', 'explain', 'speech', 'audio', 'cues', 'record', 'transition'].filter(k => o[k] !== undefined).map(k => [k, o[k]]));
 
   function cover({ id = 'cover', section = zh() ? '封面' : 'Cover', title, meta = '', ...rest } = {}) {
     if (typeof title !== 'string') throw new Error('deck.cover: 需要 title');

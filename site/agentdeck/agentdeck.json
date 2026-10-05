@@ -1,16 +1,16 @@
 {
   "contract": 2,
   "core": {
-    "commit": "2bb1d8729c94-dirty",
+    "commit": "1f37a67d16e1-dirty",
     "files": {
       "LICENSE": "144f6e0805ecc5f3",
-      "AGENTDECK.md": "e84cb6477f39c76a",
-      "assets/deck/deck-core.js": "1f26f2334cb6e1b8",
+      "AGENTDECK.md": "18c8cc5c709444f3",
+      "assets/deck/deck-core.js": "b385a508398092d9",
       "assets/deck/deck-editor.js": "8ed0c06f537a2670",
       "assets/deck/deck.css": "e5094a0818fa1b3f",
       "assets/story-reader/export.js": "68930a933117869c",
-      "assets/story-reader/reader.css": "98cd4324f4a32d8e",
-      "assets/story-reader/reader.js": "2433efe566db0ed9",
+      "assets/story-reader/reader.css": "b79a85507d1e9c9a",
+      "assets/story-reader/reader.js": "66cd682a5a5a71ff",
       "templates/blank/edits.js": "2236732a134736dd",
       "templates/blank/index.html": "be0cdd069346947c",
       "templates/blank/plan.md": "58705b87720b6203",
