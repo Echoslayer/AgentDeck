@@ -1,0 +1,76 @@
+{
+  "contract": 2,
+  "core": {
+    "commit": "2bb1d8729c94-dirty",
+    "files": {
+      "LICENSE": "144f6e0805ecc5f3",
+      "AGENTDECK.md": "e84cb6477f39c76a",
+      "assets/deck/deck-core.js": "1f26f2334cb6e1b8",
+      "assets/deck/deck-editor.js": "8ed0c06f537a2670",
+      "assets/deck/deck.css": "e5094a0818fa1b3f",
+      "assets/story-reader/export.js": "68930a933117869c",
+      "assets/story-reader/reader.css": "98cd4324f4a32d8e",
+      "assets/story-reader/reader.js": "2433efe566db0ed9",
+      "templates/blank/edits.js": "2236732a134736dd",
+      "templates/blank/index.html": "be0cdd069346947c",
+      "templates/blank/plan.md": "58705b87720b6203",
+      "templates/blank/story.css": "3506911b52de6f49",
+      "templates/blank/story.js": "b6b7d152cc741384"
+    }
+  },
+  "components": {
+    "compare": {
+      "commit": "2bb1d8729c94-dirty",
+      "files": {
+        "README.md": "f2a4ee7f40192085",
+        "compare.css": "47ee34e58f0c4e3a",
+        "compare.js": "b38c03b755f6885e"
+      }
+    },
+    "steps": {
+      "commit": "2bb1d8729c94-dirty",
+      "files": {
+        "README.md": "4b9b129ef67d659f",
+        "steps.css": "d753a2c3d734225d",
+        "steps.js": "b16255f512329b1b"
+      }
+    },
+    "stack3d": {
+      "commit": "2bb1d8729c94-dirty",
+      "files": {
+        "README.md": "acf0121014189ee7",
+        "stack3d.css": "12c4c90efcb594da",
+        "stack3d.js": "2cd2693f36e3342b"
+      }
+    },
+    "code": {
+      "commit": "2bb1d8729c94-dirty",
+      "files": {
+        "README.md": "6458fe6767cafee7",
+        "code.css": "da414634079bc552",
+        "code.js": "725c668218ff84aa"
+      }
+    },
+    "cards": {
+      "commit": "2bb1d8729c94-dirty",
+      "files": {
+        "README.md": "925d8f992c5d26a3",
+        "cards.css": "0537937e4287d7d9",
+        "cards.js": "ab1c0fdd20406f68"
+      }
+    },
+    "metrics": {
+      "commit": "2bb1d8729c94-dirty",
+      "files": {
+        "README.md": "6ff54508428c2836",
+        "metrics.css": "1126c8b34425d21e",
+        "metrics.js": "1f011d528894d126"
+      }
+    }
+  },
+  "source": "github:Echoslayer/AgentDeck",
+  "cli": "npx -y github:Echoslayer/AgentDeck",
+  "theme": {
+    "commit": "2bb1d8729c94-dirty"
+  }
+}

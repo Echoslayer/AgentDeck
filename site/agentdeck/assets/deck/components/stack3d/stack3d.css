@@ -1,0 +1,17 @@
+/* deck.stack3d 樣式；結構由 stack3d.js 產生。 */
+.deck-stack3d{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1fr);gap:24px;align-items:center}
+.deck-stack3d .deck-view{aspect-ratio:1/.8}
+.deck-stack3d .deck-fallback{max-height:100%}
+.deck-stack3d-slab .f{fill:color-mix(in srgb,var(--deck-accent) calc(var(--i) * 100%),var(--deck-primary))}
+.deck-stack3d-slab .s{fill:color-mix(in srgb,var(--deck-accent) calc(var(--i) * 100%),var(--deck-primary));filter:brightness(.75)}
+.deck-stack3d-slab .s.r{filter:brightness(.6)}
+.deck-stack3d-slab.deck-hl :is(.f,.s){fill:var(--deck-highlight)}
+.deck-stack3d-slab polygon{stroke:#fff;stroke-width:1;stroke-opacity:.6}
+.deck-stack3d-side{display:grid;gap:12px}
+.deck-stack3d ol{margin:0;padding:0;list-style:none;display:grid;gap:10px}
+.deck-stack3d li{display:grid;gap:2px;padding:10px 14px;border-left:4px solid var(--deck-accent);background:var(--pane);border-radius:4px;transition:transform .15s}
+.deck-stack3d li:hover{transform:translateX(4px)}
+.deck-stack3d li.deck-hl{border-left-color:var(--deck-highlight)}
+.deck-stack3d li b{color:var(--deck-primary);font-size:18px}
+.deck-stack3d li span{color:var(--muted);font-size:15px}
+@container (max-width:640px){.deck-stack3d{grid-template-columns:1fr}}

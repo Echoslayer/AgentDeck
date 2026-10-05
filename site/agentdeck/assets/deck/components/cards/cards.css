@@ -1,0 +1,5 @@
+/* deck.cards 樣式；結構由 cards.js 產生，說明見 README.md。 */
+.deck-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:18px}
+.deck-card{padding:20px 22px;background:var(--tint);border-radius:8px}
+.deck-card b{display:block;font-size:20px;color:var(--deck-primary);margin-bottom:6px}
+.deck-card span{font-size:16px;line-height:1.6}

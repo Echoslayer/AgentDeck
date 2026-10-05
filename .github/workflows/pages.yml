@@ -1,0 +1,39 @@
+# GitHub Pages: the project site is the AgentDeck deck in site/ (English main entry, Chinese in lang/zh/; ADR 0032).
+name: Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      # Bring the site's framework copy up to this commit, then pack (downloads the packages the deck uses).
+      - run: node cli/agentdeck.mjs update core --dir site
+      - run: node cli/agentdeck.mjs pack --dir site --out "$RUNNER_TEMP/pack"
+      # The zip holds one top folder (<unit>-<date>/); publish its contents.
+      - run: unzip -q "$RUNNER_TEMP"/pack/*.zip -d "$RUNNER_TEMP/unzip" && mv "$RUNNER_TEMP"/unzip/*/ _site
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+      - id: deployment
+        uses: actions/deploy-pages@v4

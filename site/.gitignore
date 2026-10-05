@@ -1,0 +1,5 @@
+# AgentDeck 工作區（agentdeck init 產生）
+# 套件本體，由 agentdeck vendor 依 vendor.json 下載
+/agentdeck/vendor/
+# 打包輸出，由 agentdeck pack 產生
+/dist/

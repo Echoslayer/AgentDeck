@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>AgentDeck</title><meta name="description" content="Web slides an LLM writes and you fine-tune live.">
+<link rel="stylesheet" href="agentdeck/assets/story-reader/reader.css">
+<link rel="stylesheet" href="agentdeck/assets/deck/deck.css">
+<link rel="stylesheet" href="agentdeck/assets/theme/theme.css">
+<link rel="stylesheet" href="agentdeck/assets/deck/components/compare/compare.css">
+<link rel="stylesheet" href="agentdeck/assets/deck/components/steps/steps.css">
+<link rel="stylesheet" href="agentdeck/assets/deck/components/stack3d/stack3d.css">
+<link rel="stylesheet" href="agentdeck/assets/deck/components/code/code.css">
+<link rel="stylesheet" href="agentdeck/assets/deck/components/cards/cards.css">
+<link rel="stylesheet" href="agentdeck/assets/deck/components/metrics/metrics.css">
+<link rel="stylesheet" href="resources/agentdeck/story.css"></head>
+<body>
+<header><span id="story-label"></span><a id="story-back"></a></header>
+<main id="page" aria-live="polite"></main>
+<details class="index" id="index"><summary>Slides</summary><button class="pin" id="pin" aria-pressed="false">Pin</button><div class="index-list" id="index-list" aria-label="All pages"></div></details>
+<nav aria-label="Slide navigation"><div class="nav-inner"><div class="progress"><span id="position"></span><progress id="progress" max="1"></progress></div><button id="zoom" type="button" aria-pressed="false" title="Enlarge slides">🔍</button><button id="prev">Previous</button><button id="next">Next →</button></div></nav>
+<script src="agentdeck/assets/deck/deck-core.js"></script>
+<script src="agentdeck/assets/theme/theme.js"></script>
+<script src="agentdeck/vendor/three/three.min.js"></script>
+<script src="agentdeck/vendor/highlight/highlight.min.js"></script>
+<script src="agentdeck/assets/deck/components/compare/compare.js"></script>
+<script src="agentdeck/assets/deck/components/steps/steps.js"></script>
+<script src="agentdeck/assets/deck/components/stack3d/stack3d.js"></script>
+<script src="agentdeck/assets/deck/components/code/code.js"></script>
+<script src="agentdeck/assets/deck/components/cards/cards.js"></script>
+<script src="agentdeck/assets/deck/components/metrics/metrics.js"></script>
+<script src="resources/agentdeck/story.js"></script>
+<script src="resources/agentdeck/edits.js"></script>
+<script src="agentdeck/assets/deck/deck-editor.js"></script>
+<script src="agentdeck/assets/story-reader/reader.js"></script></body></html>

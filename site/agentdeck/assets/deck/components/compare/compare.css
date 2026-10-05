@@ -1,0 +1,10 @@
+/* deck.compare 樣式；結構由 compare.js 產生，說明見 README.md。 */
+.deck-compare{display:grid;grid-template-columns:repeat(var(--n,2),minmax(0,1fr));border:1px solid var(--line);border-radius:8px;background:var(--card)}
+.deck-compare>section{padding:18px 22px;min-width:0}
+.deck-compare>section+section{border-left:1px solid var(--line)}
+.deck-compare h3{margin:0 0 10px;font-size:20px;color:var(--deck-primary)}
+.deck-compare>section>div{font-size:17px;line-height:1.6}
+@media(max-width:700px){
+.deck-compare{grid-template-columns:1fr}
+.deck-compare>section+section{border-left:0;border-top:1px solid var(--line)}
+}

@@ -3,6 +3,7 @@
 - 狀態：已接受
 - 日期：2026-10-02
 - 修訂：[0016](0016-registry-copy-and-contract-version.md) 決策 2 的多主題工作區結構
+- 被修訂：決策 6 由 [0032](0032-pages-site-unit.md) 加入上游 `site/`
 
 ## 背景
 

@@ -2,13 +2,15 @@
 
 本檔是**維護 AgentDeck 上游**（框架、元件、範例、CLI）的規則。背景與理由見 `docs/adr/`，使用流程見 `docs/getting-started.md`。
 
-**製作或修改簡報時，先讀 [`AGENTDECK.md`](AGENTDECK.md) 並全部照做**；本檔只補充上游特有的部分。每份正式簡報一律以 `agentdeck init <位置>/<topic>` 建立獨立下游單位。上游的簡報試驗在被忽略的 `playground/<topic>/` 以 `init` 建立；不得以上游根目錄或其他上游資料夾作為簡報單位（[0017](docs/adr/0017-presentation-entry-layout.md)）。
+**製作或修改簡報時，先讀 [`AGENTDECK.md`](AGENTDECK.md) 並全部照做**；本檔只補充上游特有的部分。每份正式簡報一律以 `agentdeck init <位置>/<topic>` 建立獨立下游單位。上游的簡報試驗在被忽略的 `playground/<topic>/` 以 `init` 建立；專案網站是進 git 的 `site/` 單位（英文主入口、`lang/zh/` 中文），由 `.github/workflows/pages.yml` 打包部署到 GitHub Pages；兩個語言要同步改。除此之外，不得以上游根目錄或其他上游資料夾作為簡報單位（[0017](docs/adr/0017-presentation-entry-layout.md)、[0032](docs/adr/0032-pages-site-unit.md)）。
 
 ## 檔案所有權（上游）
 
 | 路徑 | 擁有者 | LLM 可否修改 |
 | --- | --- | --- |
 | `playground/<topic>/` 的獨立簡報單位 | 同 `AGENTDECK.md` | 同 `AGENTDECK.md`；`edits.js` **不可** |
+| `site/`（專案網站的簡報單位） | 同 `AGENTDECK.md` | 同 `AGENTDECK.md`；`edits.js`、`site/agentdeck/` 內的副本**不可**；上游元件改動後以 `add <元件> --force --dir site` 更新副本（[0032](docs/adr/0032-pages-site-unit.md)） |
+| `.github/workflows/` | 框架（上游） | **不可**，除非人明確要求 |
 | `assets/theme/` | 品牌（下游專案） | **不可**，除非人明確要求；品牌規則見 `assets/theme/README.md`（[0010](docs/adr/0010-theme-layer-and-downstream.md)） |
 | `assets/deck/`（含 `components/`）、`assets/story-reader/`、`templates/`、`AGENTDECK.md` | 框架（上游，registry 來源） | **不可**，除非人明確要求（[0004](docs/adr/0004-component-template-strategy.md)、[0006](docs/adr/0006-fork-story-reader.md)、[0016](docs/adr/0016-registry-copy-and-contract-version.md)）。上游元件不因單一主題修改；下游副本可改 |
 | `cli/`、`package.json`、`vendor.json`、`tools/`、`skills/`、`LICENSE` | 框架（上游） | **不可**，除非人明確要求；新增套件只提議，不自行加入（[0011](docs/adr/0011-vendor-manifest-and-packing.md)） |

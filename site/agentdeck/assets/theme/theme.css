@@ -1,0 +1,22 @@
+/* 品牌主題：載入於 deck.css 之後、元件 css 之前（docs/adr/0010）。
+   換品牌時只改 assets/theme/ 這個資料夾：本檔覆寫 token 與版面，theme.js 提供封面／結尾的 logo，img/ 放圖片。
+   不要改 deck.css、deck-core.js，才能無衝突地合併上游更新。主題類別一律用 theme- 前綴。 */
+:root{
+  --deck-primary:#1e3a5f;
+  --deck-accent:#3a9fb5;
+  --deck-highlight:#d98c3f;
+  --deck-gradient:linear-gradient(90deg,#1e3a5f 0%,#3a9fb5 100%);
+}
+
+/* 頁首右側 logo */
+body>header::after{content:"";order:3;flex:0 0 132px;height:34px;background:url(img/logo-white.svg) right center/contain no-repeat}
+
+/* 封面／結尾底圖與 logo 位置（標題、說明的預設位置在 deck.css，可在此覆寫） */
+.deck-cover{background-image:url(img/cover-bg.svg)}
+.deck-end{background-image:url(img/end-bg.svg)}
+.theme-cover-logo{position:absolute;left:8%;top:10%;width:22%}
+.theme-end-logo{position:absolute;left:50%;bottom:10%;width:18%;translate:-50% 0}
+
+@media(max-width:700px){
+body>header::after{flex-basis:96px;height:26px}
+}

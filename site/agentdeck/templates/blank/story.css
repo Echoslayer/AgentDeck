@@ -1,0 +1,3 @@
+/* 主題專用樣式；新主題改用自己的前綴（例如 aiui-），不覆寫 nav、.index、.mini 等外殼選擇器。
+   顏色一律使用 reader／deck.css／theme.css 的 token（--deck-primary、--deck-accent、--tint…）。 */
+.example-note{font-size:18px;line-height:1.7;color:var(--muted);margin:0}

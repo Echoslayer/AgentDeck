@@ -1,0 +1,26 @@
+/* deck.code 樣式；結構由 code.js 產生。每行一個 span；色彩只用色票 token。 */
+.deck-code{margin:0}
+.deck-code pre{margin:0;padding:16px 0;overflow-x:auto;background:var(--tint);border-radius:8px;font:15px/1.6 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+.deck-code code{display:block;min-width:max-content;font:inherit;background:none;padding:0}
+.deck-code code>span{display:block;padding:0 20px;border-left:4px solid transparent}
+.deck-code figcaption{margin-top:8px;font-size:14px;color:var(--muted)}
+/* 強調行：其他行淡化 */
+.deck-code-focus code>span:not(.is-hl){opacity:.5}
+.deck-code-focus code>span.is-hl{background:var(--card);border-left-color:var(--deck-highlight)}
+/* 差異：行首符號由 css 產生，複製時不帶 */
+.deck-code-diff code>span{padding-left:34px;position:relative}
+.deck-code-diff code>span::before{position:absolute;left:14px;color:var(--muted)}
+.deck-code-diff code>span.is-add{background:color-mix(in srgb,var(--deck-accent) 16%,var(--card));border-left-color:var(--deck-accent)}
+.deck-code-diff code>span.is-add::before{content:"+";color:var(--deck-accent);font-weight:700}
+.deck-code-diff code>span.is-del{background:color-mix(in srgb,var(--deck-highlight) 12%,var(--card));border-left-color:var(--deck-highlight);text-decoration:line-through;text-decoration-color:color-mix(in srgb,var(--deck-highlight) 60%,transparent)}
+.deck-code-diff code>span.is-del::before{content:"−";color:var(--deck-highlight);font-weight:700}
+/* 終端機：指令粗體、輸出淡色 */
+.deck-code-term pre{background:var(--ink);color:var(--paper)}
+.deck-code-term .is-cmd{font-weight:600}
+.deck-code-term .is-out{opacity:.7}
+.deck-code-term .deck-code-prompt{color:var(--deck-accent);user-select:none}
+/* highlight.js 類別 → 色票 */
+.deck-code .hljs-keyword,.deck-code .hljs-built_in,.deck-code .hljs-literal,.deck-code .hljs-type{color:var(--deck-primary);font-weight:600}
+.deck-code .hljs-string,.deck-code .hljs-number{color:var(--deck-accent)}
+.deck-code .hljs-comment{color:var(--muted);font-style:italic}
+.deck-code .hljs-title{color:var(--deck-highlight)}

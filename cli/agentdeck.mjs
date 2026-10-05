@@ -113,7 +113,8 @@ function checkContract(ws) {
 // ---- init ----
 async function init(args, opts) {
   const target = path.resolve(args[0] ?? '.');
-  if (target === UP || (inside(UP, target) && !inside(path.join(UP, 'playground'), target))) fail(`工作區不能放在 AgentDeck 內（研究工作區請放 playground/）：${target}`);
+  // 上游內只允許 playground/ 的研究單位與 site/ 的 GitHub Pages 單位（ADR 0032）。
+  if (target === UP || (inside(UP, target) && !['playground', 'site'].some(d => inside(path.join(UP, d), target) || target === path.join(UP, d)))) fail(`工作區不能放在 AgentDeck 內（研究工作區請放 playground/，Pages 簡報為 site/）：${target}`);
   if (exists(path.join(target, FW, MARKER)) || exists(path.join(target, MARKER))) fail(`已是 AgentDeck 工作區：${target}`);
   if (exists(target) && fs.readdirSync(target).length) fail(`資料夾不是空的：${target}`);
 

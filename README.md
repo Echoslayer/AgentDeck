@@ -1,138 +1,144 @@
 # AgentDeck
 
-由 LLM 撰寫、人在現場微調的網頁簡報框架。簡報是純文字的 HTML／CSS／JS：LLM 寫分鏡 `story.js`，按需引用元件；人在播放時直接修改文字、位置與顯示，存成 `edits.js`。
+**English** | [繁體中文](README.zh-TW.md)
 
-直接雙擊 `templates/blank/index.html` 即可預覽，無需安裝、建置或網路。
+A web slide framework written by an LLM and fine-tuned live by a human. A deck is plain-text HTML/CSS/JS: the LLM writes the storyboard `story.js` and pulls in components as needed; during playback a human edits text, positions, and visibility directly, saved to `edits.js`.
 
-**從這裡開始：[`docs/getting-started.md`](docs/getting-started.md)**（完整流程、CLI，以及在其他專案中使用的方式）。
+Double-click `templates/blank/index.html` to preview — no install, build, or network needed.
 
-**看效果：[`元件與互動範例`](examples/index.html)**。現成元件讀 API 後使用；互動組合範例讀追加說明後在主題內改寫。頁面安排講解順序，一頁可承載完整的互動實驗。
+**Start here: [`docs/getting-started.md`](docs/getting-started.md)** (full workflow, CLI, and how to use it in other projects).
 
-專案目的與設計決策見 [`docs/adr/`](docs/adr/README.md)；製作簡報的規則見 [`AGENTDECK.md`](AGENTDECK.md)（上下游共用）；上游維護規則見 [`AGENTS.md`](AGENTS.md)；寫作方式的建議見 [`docs/guides/`](docs/guides/)。
+**See it in action: [the project site](https://echoslayer.github.io/AgentDeck/)** (itself an AgentDeck deck) and [components and interactive examples](examples/index.html). Ready-made components are used after reading their API; interactive examples are rewritten inside your theme after reading their notes. Pages set the order of explanation, and one page can hold a complete interactive experiment.
 
-## 目錄
+Design decisions are in [`docs/adr/`](docs/adr/README.md); the rules for making decks are in [`AGENTDECK.md`](AGENTDECK.md) (shared upstream and downstream); upstream maintenance rules are in [`AGENTS.md`](AGENTS.md); writing advice is in [`docs/guides/`](docs/guides/).
+
+> Detailed docs (ADRs, guides, `AGENTDECK.md`) are currently in Traditional Chinese.
+
+## Layout
 
 ```text
 AgentDeck/
-├── AGENTDECK.md             製作簡報的規則（init 時複製到下游工作區）
-├── AGENTS.md                上游維護規則
-├── package.json             CLI 套件描述（不發佈到 npm；以 npx github: 執行，見 docs/adr/0016）
-├── cli/                     AgentDeck CLI：init、status、catalog、docs、add、diff、update、new、join、vendor、pack、export（check.mjs 為回歸測試；完整說明 node cli/agentdeck.mjs --help）
+├── AGENTDECK.md             Rules for making decks (copied into downstream workspaces on init)
+├── AGENTS.md                Upstream maintenance rules
+├── package.json             CLI package (not published to npm; run via npx github:, see docs/adr/0016)
+├── cli/                     AgentDeck CLI: init, status, catalog, docs, add, diff, update, new, join, vendor, pack, export (check.mjs is the regression test; full help: node cli/agentdeck.mjs --help)
 ├── assets/
-│   ├── story-reader/        閱讀器（本專案獨立維護，含放大播放，見 docs/adr/0006）
+│   ├── story-reader/        Reader (maintained here, includes zoomed playback, see docs/adr/0006)
 │   │   ├── reader.css
 │   │   └── reader.js
 │   ├── deck/
-│       ├── deck.css         外殼層：預設 token、標題列、頁碼、封面／結尾版面、編輯層樣式
-│       ├── deck-core.js     核心：頁型 cover／end、元件註冊與契約檢查、特殊元件的動態生命週期（見 docs/adr/0009、0013）
-│       ├── deck-editor.js   編輯層：可編輯文字／拖曳、另存 edits.js
-│       ├── components/      按需引用的元件，分基礎／特殊兩級（CATALOG.md 為目錄，index.html 為展示頁）
-│       │   └── <name>/      <name>.js、<name>.css、README.md
-│   └── theme/               品牌主題：換品牌只改這裡（見 docs/adr/0010）
-│       ├── theme.css        覆寫 token、頁首 logo、封面／結尾底圖與版面
-│       ├── theme.js         deck.theme({ cover, end })：封面／結尾的 logo
-│       ├── README.md        品牌規則
-│       └── img/             預設為自繪 SVG（CC0）
-├── templates/blank/         空白骨架（封面、一頁內容、結尾）；只示範契約，不帶寫作風格
+│       ├── deck.css         Shell: default tokens, header, page numbers, cover/end layout, editor styles
+│       ├── deck-core.js     Core: cover/end page types, component registry and contract checks, special-component lifecycle (see docs/adr/0009, 0013)
+│       ├── deck-editor.js   Editor: editable text/dragging, save as edits.js
+│       ├── components/      Opt-in components in basic/special tiers (CATALOG.md is the index, index.html the showcase)
+│       │   └── <name>/      <name>.js, <name>.css, README.md
+│   └── theme/               Brand theme: change only this to rebrand (see docs/adr/0010)
+│       ├── theme.css        Token overrides, header logo, cover/end backgrounds and layout
+│       ├── theme.js         deck.theme({ cover, end }): cover/end logos
+│       ├── README.md        Brand rules
+│       └── img/             Hand-drawn SVGs by default (CC0)
+├── templates/blank/         Blank skeleton (cover, one content page, end); shows the contract only, no writing style
 │   ├── index.html
 │   ├── story.js
-│   ├── edits.js             人工編輯結果（預設為空）
+│   ├── edits.js             Human edits (empty by default)
 │   ├── story.css
-│   └── plan.md              企劃範本（先填再動工；不打包）
+│   └── plan.md              Plan template (fill in before building; not packed)
 ├── docs/
-│   ├── getting-started.md   入口：流程與在其他專案中使用（見 docs/adr/0014）
-│   ├── adr/                 架構決策紀錄
-│   ├── migrations/          契約版本的遷移說明（<n>-to-<m>.md）
-│   └── guides/              寫作指引（建議，非強制），例如 visual-story.md
-├── playground/              本機研究；試驗簡報各自 init 成獨立單位（不進 git）
-├── examples/                互動組合範例（進 git、留在上游，以 cli docs --code 讀取；參考改寫，不是執行期依賴）
-│   ├── index.html           現成元件與互動範例的展示入口
-│   └── <name>/              每個範例一個資料夾；清單見 examples/README.md 或 cli catalog
-├── vendor.json              第三方套件清單（版本、網址、SHA-256；見 docs/adr/0011）
-├── vendor/                  套件本體，由 cli vendor 下載（不進 git）
-├── skills/                  agentdeck 製作簡報、agentdeck-upgrade 更新既有簡報（tools\install-skill.cmd 安裝）
-├── tools/                   install-skill.cmd 安裝 skill（下載套件、打包、建立工作區改用 cli）
-└── dist/                    打包輸出的 zip（不進 git）
+│   ├── getting-started.md   Entry point: workflow and use in other projects (see docs/adr/0014)
+│   ├── adr/                 Architecture decision records
+│   ├── migrations/          Contract-version migration notes (<n>-to-<m>.md)
+│   └── guides/              Writing guides (advice, not mandatory), e.g. visual-story.md
+├── playground/              Local research; trial decks are each init'd as standalone units (not in git)
+├── site/                    Project website: an AgentDeck deck (English; Chinese in lang/zh/), deployed to GitHub Pages by .github/workflows/pages.yml
+├── examples/                Interactive examples (in git, stay upstream, read with cli docs --code; reference for rewriting, not a runtime dependency)
+│   ├── index.html           Showcase of components and interactive examples
+│   └── <name>/              One folder per example; list in examples/README.md or cli catalog
+├── vendor.json              Third-party package manifest (version, URL, SHA-256; see docs/adr/0011)
+├── vendor/                  Package files, downloaded by cli vendor (not in git)
+├── skills/                  agentdeck builds decks, agentdeck-upgrade updates existing ones (install with tools\install-skill.cmd)
+├── tools/                   install-skill.cmd installs the skills (downloading, packing, and workspaces use the cli)
+└── dist/                    Packed zip output (not in git)
 ```
 
-載入順序固定，見 [`AGENTDECK.md`](AGENTDECK.md#分鏡資料契約)「分鏡資料契約」最後一條。
+Load order is fixed; see the last item of "分鏡資料契約" (storyboard data contract) in [`AGENTDECK.md`](AGENTDECK.md#分鏡資料契約).
 
-## 可編輯層與鎖定層
+## Editable and locked layers
 
-內容分成兩類資源：
+Content falls into two kinds of resources:
 
-| 類型 | 來源 | 內容 | 修改方式 |
+| Kind | Source | Content | How to change |
 | --- | --- | --- | --- |
-| 可人工編輯 | `edits.js` | 標記 `data-edit` 的文字、標記 `data-move` 的位置、頁首主題名稱、各頁 `section`／`title`／`lead`／`point`／`detail`、元件的顯示／隱藏、各頁註解 | 播放時按頁首「✎ 編輯」直接改；註解在右側「註解」分頁 |
-| 鎖定（需改寫） | `story.js`、`assets/` | logo、底圖、顯示元件的內容與結構、題目、`mount` 互動 | 改程式碼 |
+| Human-editable | `edits.js` | Text marked `data-edit`, positions marked `data-move`, header topic name, each page's `section`/`title`/`lead`/`point`/`detail`, component show/hide, per-page comments | Press "✎ 編輯" (Edit) in the header during playback; comments are in the right-hand "註解" tab |
+| Locked (rewrite needed) | `story.js`, `assets/` | Logos, backgrounds, component content and structure, questions, `mount` interactions | Change the code |
 
-- 播放、編輯、快捷鍵與另存：[`getting-started.md`「播放與現場編輯」](docs/getting-started.md#播放與現場編輯)。
-- 自製元件的 `data-key`／`data-edit`／`data-move`／`data-hide`／`data-canvas`：[`AGENTDECK.md`「標記規範」](AGENTDECK.md#標記規範自製元件)（[ADR 0005](docs/adr/0005-data-key-attribute-model.md)）。舊式 `data-edit="x"`／`data-move="x"` 的值仍視為 key。
-- 口語稿朗讀、隨朗讀的講者動作與 PPT 匯出是內容確認後的進階內容：[`getting-started.md`「內容確認後的下一輪」](docs/getting-started.md#內容確認後的下一輪)。
+- Playback, editing, shortcuts, and saving: [`getting-started.md` "播放與現場編輯"](docs/getting-started.md#播放與現場編輯).
+- `data-key`/`data-edit`/`data-move`/`data-hide`/`data-canvas` for custom components: [`AGENTDECK.md` "標記規範"](AGENTDECK.md#標記規範自製元件) ([ADR 0005](docs/adr/0005-data-key-attribute-model.md)). Legacy `data-edit="x"`/`data-move="x"` values are still treated as keys.
+- Read-aloud scripts, narration-synced presenter actions, and PPT export are advanced steps after content is approved: [`getting-started.md` "內容確認後的下一輪"](docs/getting-started.md#內容確認後的下一輪).
 
-## 建立新主題
+## Creating a new deck
 
-流程、CLI 與在其他專案使用的方式見 [`docs/getting-started.md`](docs/getting-started.md)。在上游內只能以 `node cli/agentdeck.mjs init playground/<topic>` 建立試驗單位；正式簡報在目標專案以 `npx -y github:Echoslayer/AgentDeck init <位置>/<topic>` 建立（[ADR 0016](docs/adr/0016-registry-copy-and-contract-version.md)、[0017](docs/adr/0017-presentation-entry-layout.md)）。
+Workflow, CLI, and use in other projects are in [`docs/getting-started.md`](docs/getting-started.md). Inside upstream, trial units can only be created with `node cli/agentdeck.mjs init playground/<topic>` (the project site in `site/` is the one committed exception, [ADR 0032](docs/adr/0032-pages-site-unit.md)); real decks are created in the target project with `npx -y github:Echoslayer/AgentDeck init <location>/<topic>` ([ADR 0016](docs/adr/0016-registry-copy-and-contract-version.md), [0017](docs/adr/0017-presentation-entry-layout.md)).
 
-## 分鏡資料契約
+## Storyboard data contract
 
-`story.js` 定義全域 `story`（`title`、`label`、`pages`：`id`、`section`、`title`、`lead`、`art`、`point`、`detail`，可選 `question`、`mount`、`previewArt`），閱讀器載入時會檢查，不符合就直接報錯。完整欄位、規則與載入順序見 [`AGENTDECK.md`](AGENTDECK.md#分鏡資料契約)；它屬於契約版本的涵蓋範圍，核心以 `deck.contract` 公開目前版本（[ADR 0016](docs/adr/0016-registry-copy-and-contract-version.md)）。外掛層（如編輯器）只透過 `window.storyReader` 與 `story:render` 事件取用閱讀器狀態（[ADR 0008](docs/adr/0008-decouple-editor-reader.md)）。
+`story.js` defines a global `story` (`title`, `label`, `pages`: `id`, `section`, `title`, `lead`, `art`, `point`, `detail`, optional `question`, `mount`, `previewArt`); the reader validates it on load and throws if it doesn't match. Full fields, rules, and load order are in [`AGENTDECK.md`](AGENTDECK.md#分鏡資料契約); it is covered by the contract version, which the core exposes as `deck.contract` ([ADR 0016](docs/adr/0016-registry-copy-and-contract-version.md)). Plugin layers (such as the editor) access reader state only through `window.storyReader` and the `story:render` event ([ADR 0008](docs/adr/0008-decouple-editor-reader.md)).
 
-## 版面對照
+## Layout mapping
 
-| 版面 | 網頁做法 |
+| Layout | Web approach |
 | --- | --- |
-| 封面（logo + 標題 + 作者、日期） | 頁面直接寫 `deck.cover({ title, meta })` |
-| 內容頁漸層標題列 + 右上 logo | 頁首 `header` 自動套用，不需寫在 story |
-| 清單 ● / – / 1. / 1) | `deck.list(key, items)`（需引用 list 元件），項目為字串或 `{ text, items }`，最多四層 |
-| 頁碼圓 | 底部導覽自動套用 |
-| Thank You 結尾 | 頁面直接寫 `deck.end()` |
+| Cover (logo + title + author, date) | Write `deck.cover({ title, meta })` on the page |
+| Gradient title bar + top-right logo on content pages | Applied automatically by the `header`; not written in the story |
+| Lists ● / – / 1. / 1) | `deck.list(key, items)` (requires the list component); items are strings or `{ text, items }`, up to four levels |
+| Page-number circle | Applied automatically by the bottom navigation |
+| Thank You ending | Write `deck.end()` on the page |
 
-封面與結尾頁會自動隱藏 reader 的章節、標題、引言、重點；`title` 仍用於索引與縮圖。
+Cover and end pages automatically hide the reader's section, title, lead, and point; `title` is still used for the index and thumbnails.
 
-## 元件（`assets/deck/components/`）
+## Components (`assets/deck/components/`)
 
-元件像擴充套件：範本不預載，用到才引用。清單與選用時機見 [`CATALOG.md`](assets/deck/components/CATALOG.md)，各元件 API 見其 `README.md`。雙擊 [`assets/deck/components/index.html`](assets/deck/components/index.html) 可預覽全部元件，點頁首「✎ 編輯」試用編輯。
+Components work like extensions: the template preloads none, you include them when needed. The list and when to use each are in [`CATALOG.md`](assets/deck/components/CATALOG.md); each component's API is in its `README.md`. Double-click [`assets/deck/components/index.html`](assets/deck/components/index.html) to preview all of them, and press "✎ 編輯" in the header to try editing.
 
-| 分級 | 元件 | 特性 |
+| Tier | Components | Traits |
 | --- | --- | --- |
-| 基礎 | 文字與結構：list、cards、focus、compare、matrix<br>順序與流程：steps、flow、sequence、timeline<br>數量與數值：metrics、table、bars、split、range、trend、figure | 靜態 HTML／SVG／CSS，零依賴，任何簡報都能用 |
-| 特殊 | 講解互動：stepper、predict、slider、evolution、physics（matter-js）、celebrate（canvas-confetti）<br>內容呈現：code（highlight.js）、math（KaTeX）、terminal（asciinema-player）、lottie（lottie-web）<br>關係與佔比：sankey、treemap（d3）、network（cytoscape）<br>手繪與強調：mark（rough-notation）、sketch（rough.js）<br>3D 與動畫：surface、stack3d、globe（three.js）、cube（CSS 3D）、model（zdog）、backdrop（vanta + three.js） | 動態內容或依賴 `vendor/` 套件；有靜態後備，只用在關鍵頁 |
+| Basic | Text and structure: list, cards, focus, compare, matrix<br>Order and flow: steps, flow, sequence, timeline<br>Quantities and values: metrics, table, bars, split, range, trend, figure | Static HTML/SVG/CSS, zero dependencies, usable in any deck |
+| Special | Explanatory interaction: stepper, predict, slider, evolution, physics (matter-js), celebrate (canvas-confetti)<br>Content: code (highlight.js), math (KaTeX), terminal (asciinema-player), lottie (lottie-web)<br>Relations and proportions: sankey, treemap (d3), network (cytoscape)<br>Hand-drawn and emphasis: mark (rough-notation), sketch (rough.js)<br>3D and animation: surface, stack3d, globe (three.js), cube (CSS 3D), model (zdog), backdrop (vanta + three.js) | Dynamic content or depend on `vendor/` packages; have a static fallback, use only on key pages |
 
-呼叫方式一律為 `deck.<name>(key, …)`，第一個參數是 `data-key`；`deck-core.js` 在每次呼叫時檢查 key 格式、單一根元素與根元素 key。呼叫未引用的元件會直接報錯並提示路徑；引用 js 卻漏了 css 會在主控台報錯。特殊元件的動態內容由核心在頁面出現時啟動、換頁時釋放，主題不用寫 `mount`（[ADR 0013](docs/adr/0013-component-tiers.md)）。新增共用元件需經人同意（[ADR 0009](docs/adr/0009-components-as-extensions.md)）。
+Calls are always `deck.<name>(key, …)`, where the first argument is the `data-key`; `deck-core.js` checks the key format, single root element, and root key on every call. Calling a component that isn't included throws with a path hint; including the js but missing the css logs an error to the console. The core starts special components' dynamic content when the page appears and releases it on page change, so themes don't write `mount` ([ADR 0013](docs/adr/0013-component-tiers.md)). Adding a shared component requires human approval ([ADR 0009](docs/adr/0009-components-as-extensions.md)).
 
-## 品牌主題（`assets/theme/`）
-色票 token：`--deck-primary`（標題、強調文字）、`--deck-accent`（箭頭、橫條、頁碼）、`--deck-highlight`（突顯項目）、`--deck-gradient`（頁首與封面／結尾）。reader 的 `--accent` 對應 `--deck-primary`。預設值在 `deck.css`，品牌在 `assets/theme/theme.css` 覆寫；元件只使用這些 token。
+## Brand theme (`assets/theme/`)
 
-封面／結尾的 logo 由 `assets/theme/theme.js` 以 `deck.theme({ cover: img => html, end: img => html })` 提供，每個裝飾需有 `data-key`，現場可逐一隱藏。預設圖片為自繪 SVG（CC0，見 `assets/theme/img/README.md`）。
+Color tokens: `--deck-primary` (titles, emphasized text), `--deck-accent` (arrows, bars, page numbers), `--deck-highlight` (highlighted items), `--deck-gradient` (header and cover/end). The reader's `--accent` maps to `--deck-primary`. Defaults live in `deck.css`; brands override them in `assets/theme/theme.css`; components use only these tokens.
 
-要沿用指定模板時，`init --theme <主題資料夾>` 以該資料夾取代預設主題；PPT 模板依 [`docs/guides/theme-from-pptx.md`](docs/guides/theme-from-pptx.md) 先轉成主題資料夾，預設只取 logo 與背景，轉換只涵蓋主題層，不新增頁型（[ADR 0019](docs/adr/0019-theme-templates.md)）。
+Cover/end logos come from `assets/theme/theme.js` via `deck.theme({ cover: img => html, end: img => html })`. Each decoration needs a `data-key` so it can be hidden individually live. Default images are hand-drawn SVGs (CC0, see `assets/theme/img/README.md`).
 
-## 建立品牌版本（下游專案）
+To reuse a given template, `init --theme <theme folder>` replaces the default theme with that folder. PPT templates are first converted into a theme folder following [`docs/guides/theme-from-pptx.md`](docs/guides/theme-from-pptx.md); by default only the logo and background are taken, and conversion covers only the theme layer without adding page types ([ADR 0019](docs/adr/0019-theme-templates.md)).
 
-AgentDeck 是上游框架；每份簡報以 `npx -y github:Echoslayer/AgentDeck init <位置>/<topic>` 建立自己的下游單位。下游的框架副本都在單位的 `agentdeck/` 內（上游路徑加上 `agentdeck/` 前綴）。`agentdeck/assets/theme/`、`resources/` 歸下游所有，核心與元件是可比對的副本，以 `diff`、`update core` 跟進上游（[ADR 0010](docs/adr/0010-theme-layer-and-downstream.md)、[ADR 0016](docs/adr/0016-registry-copy-and-contract-version.md)、[ADR 0017](docs/adr/0017-presentation-entry-layout.md)）。既有品牌可複製到各單位，不作跨資料夾播放依賴。
+## Branded versions (downstream projects)
 
-## 第三方套件與交付
+AgentDeck is the upstream framework; each deck creates its own downstream unit with `npx -y github:Echoslayer/AgentDeck init <location>/<topic>`. Downstream framework copies all live in the unit's `agentdeck/` (upstream paths prefixed with `agentdeck/`). `agentdeck/assets/theme/` and `resources/` belong to the downstream; the core and components are diffable copies, kept in sync with `diff` and `update core` ([ADR 0010](docs/adr/0010-theme-layer-and-downstream.md), [ADR 0016](docs/adr/0016-registry-copy-and-contract-version.md), [ADR 0017](docs/adr/0017-presentation-entry-layout.md)). An existing brand can be copied into each unit; don't make playback depend on other folders.
 
-第三方套件（例如特殊元件用的 three.js）**不進 git**：`vendor.json` 記錄版本、網址與 SHA-256，本體下載到 `vendor/<name>/`；下游單位為 `agentdeck/vendor.json` 與 `agentdeck/vendor/<name>/`（[ADR 0011](docs/adr/0011-vendor-manifest-and-packing.md)）。
+## Third-party packages and delivery
 
-- **準備環境**：clone 後執行 `node cli/agentdeck.mjs vendor`（下游工作區用 `agentdeck vendor`），依清單下載並驗證雜湊；重跑會略過已就緒的檔案。加 `--check` 只檢查不下載。沒下載時，用到套件的元件顯示靜態後備。
-- **引用**：下游根 `index.html` 以相對路徑引用，例如 `<script src="agentdeck/vendor/three/three.min.js"></script>`；相關入口改用 `../../agentdeck/vendor/`。只收能在 `file://` 下以 `<script>` 載入的檔案（UMD／IIFE、css、字型、圖片），不走 CDN。
-- **新增套件**：經人同意後在 `vendor.json` 加一項；`sha256` 先留空，執行 `agentdeck vendor` 會印出實際雜湊，確認來源後填回。
-- **交付給別人**：在簡報單位內 `agentdeck pack`，帶入根 `index.html`、單位資源、相關入口、`agentdeck/` 內的框架、入口引用的元件與套件（含授權檔），缺少的套件會先下載；排除未引用的元件、製作說明（`*.md`）、製作骨架、企劃、CLI 記錄與既有打包產物。解壓後第一層只有 `index.html`、`resources/`、`agentdeck/`（與相關群組），根頁直接播放，不使用跳轉或 `<base>`。`pack <入口資料夾>` 可選某個相關入口作交付首頁；通常打包完整單位。
-  - 不想讓轉寄出去的 zip 被他人打開：`pack` 本身不加密，改用 AES 加密壓縮另行包裝，例如 `7z a -p -mhe=on deck.7z dist/<檔名>.zip`（`-mhe=on` 連檔名一起加密），密碼走另一個管道給對方。避免 `zip -e`（ZipCrypto 可被破解）。解壓後內容即為明文；要能收回權限須改放需登入的伺服器。
-- **輸出 PPT（可選，進階）**：內容確認後才用 `agentdeck export`，輸出 `dist/<名稱>.pptx`；需要 Chrome／Edge，錄影另需 ffmpeg。細節見 [`getting-started.md`「內容確認後的下一輪」](docs/getting-started.md#內容確認後的下一輪)（[ADR 0021](docs/adr/0021-pptx-export.md)、[0025](docs/adr/0025-native-pptx-annotations.md)）。
+Third-party packages (e.g. three.js for special components) are **not in git**: `vendor.json` records version, URL, and SHA-256, and files download to `vendor/<name>/`; downstream units use `agentdeck/vendor.json` and `agentdeck/vendor/<name>/` ([ADR 0011](docs/adr/0011-vendor-manifest-and-packing.md)).
 
-## 更新閱讀器
+- **Set up**: after cloning, run `node cli/agentdeck.mjs vendor` (`agentdeck vendor` in downstream workspaces) to download and verify hashes; reruns skip ready files. Add `--check` to only check. Without downloads, components that need packages show their static fallback.
+- **Referencing**: the downstream root `index.html` uses relative paths, e.g. `<script src="agentdeck/vendor/three/three.min.js"></script>`; related entries use `../../agentdeck/vendor/`. Only files loadable via `<script>` under `file://` are accepted (UMD/IIFE, css, fonts, images) — no CDN.
+- **Adding a package**: with human approval, add an entry to `vendor.json`; leave `sha256` empty, run `agentdeck vendor` to print the actual hash, verify the source, then fill it in.
+- **Delivering to others**: run `agentdeck pack` inside the unit. It includes the root `index.html`, unit resources, related entries, the framework in `agentdeck/`, and the components and packages the entries reference (with license files), downloading missing packages first; it excludes unreferenced components, authoring notes (`*.md`), authoring skeletons, plans, CLI records, and previous pack outputs. After unzipping, the top level holds only `index.html`, `resources/`, `agentdeck/` (and related groups); the root page plays directly, with no redirects or `<base>`. `pack <entry folder>` can choose a related entry as the delivery home page; usually pack the whole unit.
+  - To keep a forwarded zip from being opened by others: `pack` doesn't encrypt; wrap it with AES-encrypted compression instead, e.g. `7z a -p -mhe=on deck.7z dist/<file>.zip` (`-mhe=on` also encrypts file names), and send the password through another channel. Avoid `zip -e` (ZipCrypto is breakable). Unzipped content is plaintext; to revoke access, host it on a server that requires login.
+- **PPT export (optional, advanced)**: only after content is approved, use `agentdeck export` to write `dist/<name>.pptx`; requires Chrome/Edge, and recording also needs ffmpeg. Details in [`getting-started.md` "內容確認後的下一輪"](docs/getting-started.md#內容確認後的下一輪) ([ADR 0021](docs/adr/0021-pptx-export.md), [0025](docs/adr/0025-native-pptx-annotations.md)).
 
-閱讀器由本專案獨立維護（[ADR 0006](docs/adr/0006-fork-story-reader.md)），不與外部專案同步；需要修改時經人同意後直接改 `assets/story-reader/`；外觀全部在 `deck.css` 與 `assets/theme/`，不受影響。修改時須保留對外介面 `window.storyReader` 與 `story:render` 事件，編輯層只依賴這兩者（[ADR 0008](docs/adr/0008-decouple-editor-reader.md)）。
+## Updating the reader
 
-每頁翻頁列右下角常駐一行小字「以 AgentDeck 製作」，連到本專案 GitHub；放在翻頁列內距中，不佔版面，放大播放時仍可見。由 `reader.js` 注入，既有簡報 `update core` 後即帶上；品牌若要隱藏，在 `theme.css` 加 `.made-with{display:none}`。
+The reader is maintained independently in this project ([ADR 0006](docs/adr/0006-fork-story-reader.md)) and not synced with external projects; with human approval, edit `assets/story-reader/` directly. All styling lives in `deck.css` and `assets/theme/` and is unaffected. Changes must keep the public interface `window.storyReader` and the `story:render` event, which are all the editor depends on ([ADR 0008](docs/adr/0008-decouple-editor-reader.md)).
 
-## 授權
+Each page's navigation bar shows a small "以 AgentDeck 製作" (Made with AgentDeck) line at the bottom right, linking to this project on GitHub; it sits inside the bar's padding, takes no layout space, and remains visible in zoomed playback. It is injected by `reader.js`, so existing decks get it after `update core`; brands can hide it by adding `.made-with{display:none}` to `theme.css`.
 
-框架（CLI、`assets/`、`templates/`、`examples/`、文件）以 [MIT](LICENSE) 授權：可自由使用、修改、fork、商用，唯一條件是副本保留 `LICENSE` 的版權與授權聲明。`init`／`update core` 會把它複製成下游的 `agentdeck/LICENSE`，`pack` 隨框架帶入交付包。
+## License
 
-- **簡報內容不受此授權約束**：下游的 `index.html`、`resources/` 與素材歸作者所有，授權由作者自訂。
-- **修改或 fork 框架**：自己的改動可用任何授權（包含不公開），但原有檔案的 MIT 聲明須保留。
-- **第三方套件**依各自授權（見 `vendor.json` 的 `license`），授權檔隨套件下載與打包。
+The framework (CLI, `assets/`, `templates/`, `examples/`, docs) is licensed under [MIT](LICENSE): free to use, modify, fork, and use commercially, provided copies keep the copyright and license notice in `LICENSE`. `init`/`update core` copy it to downstream `agentdeck/LICENSE`, and `pack` includes it with the framework in deliveries.
+
+- **Deck content is not covered by this license**: downstream `index.html`, `resources/`, and assets belong to their authors, who choose their own license.
+- **Modifying or forking the framework**: your own changes may use any license (including private), but original files must keep their MIT notice.
+- **Third-party packages** follow their own licenses (see `license` in `vendor.json`); license files are downloaded and packed with them.
