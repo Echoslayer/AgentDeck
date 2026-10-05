@@ -49,6 +49,9 @@
   - `--virtual-time-budget` 會快轉計時器，但 `requestAnimationFrame` 與 CSS 動畫不跟著前進；驗證動畫、物理模擬或朗讀動作要用真實時間等待後再截圖（例如以 DevTools Protocol 的 `Page.captureScreenshot`）。
   - 預設擋自動播放，測音檔加 `--autoplay-policy=no-user-gesture-required`。不出聲測朗讀時，在 `deck-editor.js` 之前以計時器替換 `window.speechSynthesis`（`speak` 依序呼叫 `onstart`、`onend`）。
   - 測試頁放在 `playground/<topic>/`，不進 git。
+- **Windows 上的輔助腳本**：
+  - `python`／`python3` 可能是 Microsoft Store 的轉址程式：從 Git Bash 呼叫時不執行腳本、也不報錯，修改會靜默略過。先用 `which python` 確認；處理檔案改用 node（本專案必有）。
+  - 經 Bash heredoc（`cat > x.cjs <<'EOF'`）寫出的腳本，反斜線跳脫可能遺失，例如正規式的 `[\s\S]` 變成 `[sS]`。含反斜線的腳本用檔案寫入工具直接寫，或改用 `indexOf` 等不需跳脫的寫法；改完以 `node --check` 與實際輸出確認。
 
 ## Commit
 

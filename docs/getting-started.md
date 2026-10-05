@@ -154,7 +154,7 @@ PPTX 中每頁只有一張內容圖片，可移動、縮放整張圖片；無法
 
 ### 開啟與檢查
 
-製作者先執行 `<CLI> vendor` 準備套件；`pack` 也會自動下載並帶入。現有簡報先更新核心，無須修改入口的 script 清單。本機可在簡報單位執行 `python3 -m http.server 8000`，再開啟 `http://localhost:8000`。直接雙擊 HTML 仍可閱讀，匯出時會提示切換到 HTTP 預覽。
+製作者先執行 `<CLI> vendor` 準備套件；`pack` 也會自動下載並帶入。現有簡報先更新核心，無須修改入口的 script 清單。本機可在簡報單位執行 `python3 -m http.server 8000`（Windows 的 `python3` 若是 Microsoft Store 轉址程式，執行後不會有反應，改用 `npx -y http-server -p 8000`），再開啟 `http://localhost:8000`。直接雙擊 HTML 仍可閱讀，匯出時會提示切換到 HTTP 預覽。
 
 圖片須同來源或允許跨來源讀取；遺失圖片會停止匯出。內容較長的頁面等比例縮小、不裁切，分享前請確認字級。需要原生文字、備忘稿與互動錄影的製作流程，使用 `<CLI> export`。
 
