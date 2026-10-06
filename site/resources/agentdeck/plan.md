@@ -1,50 +1,47 @@
-# 簡報企劃：agentdeck（GitHub Pages 專案網站，英文主入口）
+# AgentDeck site：以整份簡報展示技術表達能力
 
-> 中文版在 `lang/zh/`（`resources/zh/`），頁面 id 與本份相同，內容逐頁對譯；改一邊時同步另一邊。單位放在上游 `site/` 的理由見 ADR 0032。
+## 目的與資源
 
-## 1. 對象與目的
+使用者要求整體提升技術展示，不再局限第四頁的 3D 裝飾。對象為技術決策者與開發者；約 5–7 分鐘、10 頁，中英文同頁序／id。讓讀者亲自探索原碼、機制、實驗、空間與交付，最後能用自然語言開始自己的簡報。參考 visual-story、engineering-demo；以清晰正面標籤、大幅圖解與有限操作取代功能清單。
 
-| 項目 | 內容 |
-| --- | --- |
-| 聽眾 | 從 GitHub 或連結來到專案網站的開發者；知道 LLM agent，不認識 AgentDeck |
-| 目的 | 看懂 AgentDeck 解決什麼、怎麼運作，並在自己的專案試用 |
-| 一句話主旨 | LLM 寫分鏡、人在現場微調，交付的是一個能離線播放的資料夾 |
-| 時間與頁數 | 自行閱讀約 3 分鐘，10 頁 |
-| 場合 | 會後自行閱讀（網站）；也可現場投影 |
-| 寫作指引 | 無 |
+只用本機 repo、既有框架、已登記的 Three.js／highlight.js 與瀏覽器；不新增套件、外部 API、影像生成或上傳。兩份 edits.js 已讀，為空，保持原樣。框架契約 2 一致，不修改核心／品牌副本。
 
-## 2. 素材
+### 最新方向：用代表性場景展示跨度
 
-| 來源 | 路徑或連結 | 要取用什麼 |
-| --- | --- | --- |
-| 上游 README | `../README.md` | 流程、分層、元件數量、交付方式 |
-| 元件目錄 | `agentdeck catalog` | 元件 37 個（基礎 16、特殊 21）、互動範例 6 個 |
+使用者要求頂尖技術展示，同時有簡單、中等、複雜的頁面；不逐一展示所有功能或元件。簡單頁以一句主張與清楚圖解建立節奏，中等頁展示原碼探索、資料連動與人的修正，複雜頁以真正 WebGL、相機操作、體素選取、切片聯動展現技術上限。註明這是刻意安排的能力展示，實際專案按內容需求選擇複雜度，並非製作要求。
 
-## 3. 分鏡
+分工：主 agent 負責敘事節奏、簡單頁、分析頁、雙語整合與驗收；subagent 獨立實作主題專用 WebGL 視圖與清理。它只持有 spatial-webgl.js／css，不改共享檔與套件清單。選用既有 Three.js，資料仍是同一組 48 個合成值，不以物件數量或假性能數字冒充技術水準。
 
-| # | 放置 | id | 標題 | 要表達的關係 | 留下的缺口 | 內容重點 | 元件 | 備註 |
-| --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| 0 | 主線 | cover | AgentDeck | — | | 一句話主旨、GitHub | `deck.cover` | |
-| 1 | 主線 | why | Slides an AI can actually write | 現行 → 提案 | | 二進位檔 vs 純文字 | compare | |
-| 2 | 主線 | workflow | From idea to delivered deck | 先後順序 | | init → plan → story → 播放修改 → pack | steps | |
-| 3 | 主線 | layers | Each layer has one owner | 上層依賴下層 | | edits / story / 元件 / 核心 / 主題 | stack3d | 本站唯一 three.js 頁 |
-| 4 | 主線 | contract | A deck is one plain object | 程式碼重點行 | | id 與元件呼叫 | code | |
-| 5 | 主線 | live-edit | Fix it while you present | 四個並列操作 | | 改字、移動、隱藏、註解 | cards | 邀請讀者實際按編輯 |
-| 6 | 主線 | included | Batteries included | 關鍵數字 | | 37 元件、6 範例、0 建置 | metrics | |
-| 7 | 主線 | delivery | What does your audience receive? | 先猜再揭曉 | | pack 產出離線 zip | 內建 question | |
-| 8 | 主線 | start | Try it in your own project | 指令 | | init、new、交給 agent | code（prompt） | |
-| n | 主線 | thanks | Thank You | — | | | `deck.end` | |
+## 敘事與頁面
 
-## 4. 特殊需求
+| id | 呈現與觀察 | 操作／來源 | 實作 |
+| --- | --- | --- | --- |
+| cover | 開場即呈現程式、數據與空間的合成視覺 | 視覺導覽，核心封面 | core cover + 主題 SVG |
+| why | 探索 AgentDeck 自己：原碼 → 關係 → 行為 | 三個真實原碼摘錄；版本標示，非即時掃描 | 主題 repo explorer |
+| workflow | 簡單：理解專案 → 選擇表達 → 交付可操作內容 | 靜態、留白、三步圖解；說明刻意安排的複雜度跨度 | 主題極簡圖解 |
+| layers | 改變門檻，資料、圖形與結論同步 | 48 個固定合成體素分數；T=60 留下 9 個、T=80 留下 3 個；即時計算 | 主題實驗面板 |
+| contract | 複雜：同一組數據放回空間，定位高分區域 | 4×4×3 真正 WebGL；拖曳、縮放、選體素、切片、視角；共用 threshold | Three.js＋正面切片；SVG 靜態後備 |
+| live-edit | 來源更新與人工文字保留可以同時發生 | 正面顯示來源／人工修正／最終畫面；模擬覆寫，非寫檔；可編輯固定說明 | 主題覆寫示範 |
+| included | 講稿句子控制操作，完整呈現推理順序 | R 啟動瀏覽器朗讀，record 帶門檻 60→80；可手動點 cue，非任意語音命令 | 主題同步展示，真正 speech/record |
+| delivery | 跨機器交付的是完整簡報單位 | 對照 HTML／靜態匯出；真實 pack 契約，不偽造下載或部署 | 交付模式＋檔案樹 |
+| start | 用自己的專案開始 | 自然語言需求；必要問題一次問；資源界線與客製由 agent 安排 | 需求範例＋製作步驟 |
+| thanks | 回到自己的專案 | GitHub 與示範回顧 | core end |
 
-- 特殊元件：stack3d（three.js）展示分層；code（highlight.js）上色。缺套件時為靜態後備。
-- 語言切換用 `story.back` 連到另一語言入口，並在 `story:render` 時附上目前頁面的 hash。
-- 朗讀與動作（第二輪）：`story.js` 末端的 `narration` 依頁面 id 補上 `speech` 與帶 `at` 的 `record`，用瀏覽器內建語音、不做音檔。英文句子以 `<br>` 分句（英文句號不算句末）。改口語稿時重數句子並同步 `at`，兩個語言一起改，再跑 `check speech` 與 `check speech lang/zh`。
+## 資料、結構與互動
 
-## 5. 交付
+- evidence.js 保存核對過的源碼快照；畫面標檔案、行號與版本，不宣稱即時 repo 分析。
+- showcase.js 保存共用固定合成資料、運算與頁面工廠；兩個 story.js 只選語言，不互讀對方內容。showcase.css 為主題樣式，不修改品牌檔。兩語言耦合經共同實作與資料。
+- 48 個分數為人工選定的無單位強度，非實測／準確率。條件為 score >= T；兩頁使用同一資料與門檻，選取層／點保留至重新整理。沒有推論服務。
+- 現成靜態元件無法完整表達本案多視圖連動；沿用核心封面／結尾、reader、edits、speech、record，不另造框架。
+- spatial-webgl.js／css 是主題專用 Three.js 視圖；使用既有本機套件、需求驅動渲染、相機與體素選取，換頁釋放事件、ResizeObserver、GPU 資源。數字／控制項保持正面，另有同資料 2D 視圖。SVG 供靜態匯出與 WebGL 不可用時後備；不自轉、不依赖動畫傳達資訊。
+- 每頁互動有清理與 previewArt。靜態摘要含代表結果；狀態更新只改結果容器，固定可編輯說明不被替換。
+- speech／record 同步重構，冪等設定優先，不自動下載或開外部頁。語音依賴系統／瀏覽器可用語音，離線保證限打包後本機內容與互動。
+- 延續頁面 id；語言切換取 story:render 的 detail.page.id。
 
-- GitHub Actions 在上游 `.github/workflows/pages.yml` 執行 `pack` 後部署；網站可連網，套件由 `pack` 帶入。
+## 驗收
 
-## 6. 待確認
+核對原碼、T=60／80 與切片計數；檢查全部靜態後備、唯一 key、換頁恢復、人工修改、鍵盤、縮圖、兩語言、1440×1000 與 390px。mock speech 依句觸發，檢查 cue 與重播；真實時間等待轉場。pack 解壓、封鎖 HTTP(S) 再測兩語言與操作。不宣稱真人理解度或省時已證實。
 
-- [ ] 元件與範例數量變動時更新 included 頁
+2026-10-06 驗證完成：來源與解壓後離線包皆通過兩語言各 10 頁、桌面與手機寬度、計數與切片連動、頁面狀態恢復、人工編輯保留、語言切換與 reduced-motion 檢查；無 JavaScript 錯誤或 HTTP(S) 請求。朗讀以 mock speech 的 0.75／1.5 倍速驗證三句動作與重播，未驗收實際語音品質。檢查腳本、結果與截圖留在忽略的 `playground/showcase-20261006/`；執行 `node playground/showcase-20261006/check.cjs` 可重跑。獨立審查發現的語音頁高度、靜態熱圖樣式、旋轉後座標軸問題已修正。
+
+同日技術展示升級驗證：`advanced-results.json` 與 `advanced-pack-results.json` 通過；來源 1440×1000、離線包 1440×900，以及兩者的 390px 手機版均檢查。獨立操作驗證包含真實體素選取與 2D 對應值、間距 0／1、鍵盤旋轉、拖曳縮放、重設回原視角、三次換頁清理，以及強制停用 WebGL 時的切片／門檻後備。離線包約 0.6 MB，包含既有 Three.js 與 highlight.js；尚未部署。簡單頁無操作、中等頁的分布與計數共用資料、複雜頁呈現空間操作，並已在頁面標明刻意的展示跨度。

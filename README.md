@@ -46,6 +46,7 @@ AgentDeck/
 ├── docs/
 │   ├── getting-started.md   Entry point: workflow and use in other projects (see docs/adr/0014)
 │   ├── adr/                 Architecture decision records
+│   ├── studies/             Experiment reports, measurements, and limitations
 │   ├── migrations/          Contract-version migration notes (<n>-to-<m>.md)
 │   └── guides/              Writing guides (advice, not mandatory), e.g. visual-story.md
 ├── playground/              Local research; trial decks are each init'd as standalone units (not in git)
@@ -76,6 +77,10 @@ Content falls into two kinds of resources:
 - Read-aloud scripts, narration-synced presenter actions, and PPT export are advanced steps after content is approved: [`getting-started.md` "內容確認後的下一輪"](docs/getting-started.md#內容確認後的下一輪).
 
 ## Creating a new deck
+
+With the AgentDeck skill installed, tell your coding agent: “Create an AgentDeck from `D:\my-project` for a progress report to my boss. Use the data in `D:\reports`; use local resources only.” Without the skill, ask it to read this repository's `AGENTDECK.md` first.
+
+The agent first reads the supplied material, then groups essential questions about purpose, use, and resources into one round with suggested answers. If the direction is already clear, or you say “you decide,” it proceeds within the agreed resource limits. It chooses suitable components, customizes where needed, and assesses whether parallel work is worthwhile. Reuse saves repeated implementation without forcing the project into a template. Paid services, uploads, and publishing require authorization covering those actions.
 
 Workflow, CLI, and use in other projects are in [`docs/getting-started.md`](docs/getting-started.md). Inside upstream, trial units can only be created with `node cli/agentdeck.mjs init playground/<topic>` (the project site in `site/` is the one committed exception, [ADR 0032](docs/adr/0032-pages-site-unit.md)); real decks are created in the target project with `npx -y github:Echoslayer/AgentDeck init <location>/<topic>` ([ADR 0016](docs/adr/0016-registry-copy-and-contract-version.md), [0017](docs/adr/0017-presentation-entry-layout.md)).
 

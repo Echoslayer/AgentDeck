@@ -45,6 +45,7 @@ AgentDeck/
 │   ├── getting-started.md   入口：流程與在其他專案中使用（見 docs/adr/0014）
 │   ├── adr/                 架構決策紀錄
 │   ├── migrations/          契約版本的遷移說明（<n>-to-<m>.md）
+│   ├── studies/             實驗報告、量測與限制
 │   └── guides/              寫作指引（建議，非強制），例如 visual-story.md
 ├── playground/              本機研究；試驗簡報各自 init 成獨立單位（不進 git）
 ├── site/                    專案網站：以 AgentDeck 製作的簡報（英文；中文在 lang/zh/），由 .github/workflows/pages.yml 部署到 GitHub Pages
@@ -74,6 +75,10 @@ AgentDeck/
 - 口語稿朗讀、隨朗讀的講者動作與 PPT 匯出是內容確認後的進階內容：[`getting-started.md`「內容確認後的下一輪」](docs/getting-started.md#內容確認後的下一輪)。
 
 ## 建立新主題
+
+安裝 AgentDeck skill 後，可以直接對 coding agent 說：「根據 `D:\my-project` 做一份 AgentDeck，我要報進度給老闆；數據在 `D:\reports`，只用本機資源。」沒有安裝 skill 時，先請它讀這個 repo 的 `AGENTDECK.md`。
+
+agent 先讀提供的素材，再把目的、使用方式與資源的必要問題合併成一輪，附上建議答案。方向已明確，或你說「你決定」，就在已授權範圍內繼續。元件選擇、必要客製與是否值得平行分工由 agent 判斷；重用減少重複實作，不把專案塞進固定模板。付費服務、上傳與發布須有涵蓋該行動的授權。
 
 流程、CLI 與在其他專案使用的方式見 [`docs/getting-started.md`](docs/getting-started.md)。在上游內只能以 `node cli/agentdeck.mjs init playground/<topic>` 建立試驗單位（專案網站 `site/` 是唯一進 git 的例外，[ADR 0032](docs/adr/0032-pages-site-unit.md)）；正式簡報在目標專案以 `npx -y github:Echoslayer/AgentDeck init <位置>/<topic>` 建立（[ADR 0016](docs/adr/0016-registry-copy-and-contract-version.md)、[0017](docs/adr/0017-presentation-entry-layout.md)）。
 
