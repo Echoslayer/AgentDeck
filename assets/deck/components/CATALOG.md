@@ -67,6 +67,7 @@
 | 元件 | 表達的關係 | 技術 | 用在 | 不要用在 |
 | --- | --- | --- | --- | --- |
 | [code](code/README.md) | 程式碼、兩版差異、終端機 | highlight.js | 技術簡報、教學、code review、版本演進 | 只是要顯示指令或檔名 → 行內文字 |
+| [codeexplorer](codeexplorer/README.md) | 程式責任、跨檔關係與實作對照 | highlight.js，互動控制 | 追函式、事件與所有權；原碼解說、折疊、放大與跳轉 | 少量靜態片段或 diff → `code`；單純目錄導覽 → repo-explorer 指引 |
 | [math](math/README.md) | 數學公式 | KaTeX（MathML） | 推導、更新規則、目標函式 | 只有一個簡單比例或單位 → 行內文字 |
 | [terminal](terminal/README.md) | 終端機操作過程 | asciinema-player | CLI 教學、部署流程、agent 操作示範（逐字重播，可暫停） | 只要靜態列出指令與輸出 → `code` 的 `prompt` |
 | [lottie](lottie/README.md) | 設計好的向量動畫 | lottie-web | LottieFiles／After Effects 匯出的圖示或流程動畫 | 只是文字出現、移動 → CSS；含點陣圖的動畫 |
@@ -124,6 +125,7 @@
 | 前後對照圖、拖曳比較、改善前後照片 | `slider`（文字對照 → `compare`） |
 | 演進、逐步長出、漸進課程、專案成形 | `evolution` |
 | 程式碼、code、語法上色、範例程式、改了哪幾行、diff、終端機、指令輸出 | `code` |
+| 讀碼、跨檔跳轉、函式關係、原碼解說、收合大括號、放大代碼區 | `codeexplorer` |
 | 公式、數學、推導、方程式、TeX | `math` |
 | 終端機錄影、指令示範、打字效果、asciinema、CLI 操作過程 | `terminal`（靜態指令 → `code`） |
 | 動畫、Lottie、After Effects、動態圖示 | `lottie` |
