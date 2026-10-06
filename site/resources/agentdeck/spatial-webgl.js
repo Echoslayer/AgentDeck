@@ -18,7 +18,7 @@ window.siteSpatial = {
     const T = THREE, scene = new T.Scene();
     const camera = new T.PerspectiveCamera(34, 1, .1, 80);
     let z = state.z ?? 1, turn = state.turn ?? 0, disposed = false, frame = 0;
-    let yaw = .72 + turn * Math.PI / 2, pitch = .52, radius = 12.2, spread = .55;
+    let yaw = .72 + turn * Math.PI / 2, pitch = .52, radius = 12.2, spread = state.gap ?? .55;
     const target = new T.Vector3(0, 0, 0), raycaster = new T.Raycaster();
     renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
     renderer.outputColorSpace = T.SRGBColorSpace;
@@ -59,10 +59,10 @@ window.siteSpatial = {
     const fallback = document.createDocumentFragment();
     while (root.firstChild) fallback.append(root.firstChild);
     root.classList.add('site-gl');
-    root.innerHTML = `<div class="site-gl-status"><span>WEBGL / 48 VOXELS</span><b data-gl-slice></b></div><div class="site-gl-tools"><button type="button" data-gl-view="iso">${t('Isometric', '斜視')}</button><button type="button" data-gl-view="top">${t('Top', '俯視')}</button><label>${t('Layer gap', '層間距')}<input data-gl-gap type="range" min="0" max="1" step=".05" value=".55" aria-label="${t('Layer separation', '切片分離間距')}"></label></div><div class="site-gl-readout" aria-live="polite">${t('Select a voxel to inspect its coordinates and score.', '點選體素，查看座標與數值。')}</div><div class="site-gl-help">${t('DRAG · ORBIT / SCROLL · ZOOM', '拖曳 · 旋轉 / 滾輪 · 縮放')}</div>`;
+    root.innerHTML = `<div class="site-gl-status"><span>WEBGL / 48 VOXELS</span><b data-gl-slice></b></div><div class="site-gl-tools"><button type="button" data-gl-view="iso">${t('Isometric', '斜視')}</button><button type="button" data-gl-view="top">${t('Top', '俯視')}</button></div><div class="site-gl-readout" aria-live="polite">${t('Select a voxel to inspect its coordinates and score.', '點選體素，查看座標與數值。')}</div><div class="site-gl-help">${t('DRAG · ORBIT / SCROLL · ZOOM', '拖曳 · 旋轉 / 滾輪 · 縮放')}</div>`;
     root.prepend(canvas);
     const status = root.querySelector('[data-gl-slice]'), readout = root.querySelector('.site-gl-readout');
-    let picked = null;
+    let picked = voxels.find(mesh => mesh.userData.sample.id === state.sample) || null;
     function paint() {
       if (disposed) return;
       frame = 0;
@@ -86,7 +86,12 @@ window.siteSpatial = {
       cage.scale.y = (2 * (1.05 + spread) + .7) / 3.7;
       floor.position.y = -(1.05 + spread) - .65;
       status.textContent = `Z${z} / T=${threshold}`;
-      if (picked) selection.position.copy(picked.position);
+      selection.visible = !!picked;
+      if (picked) {
+        selection.position.copy(picked.position);
+        const s = picked.userData.sample;
+        readout.textContent = `X${s.x} · Y${s.y} · Z${s.z} / ${t('score', '數值')} ${s.score}`;
+      } else readout.textContent = t('Select a voxel to inspect its coordinates and score.', '點選體素，查看座標與數值。');
       render();
     }
     function resize() {
@@ -142,7 +147,6 @@ window.siteSpatial = {
       if (!view) return;
       yaw = .72 + turn * Math.PI / 2; pitch = view === 'top' ? 1.48 : .52; radius = 12.2; render();
     });
-    listen(root.querySelector('[data-gl-gap]'), 'input', e => { spread = Number(e.target.value); updateData(); });
     function dispose() {
       if (disposed) return;
       disposed = true; cancelAnimationFrame(frame); observer.disconnect(); events.forEach(off => off());
@@ -158,9 +162,10 @@ window.siteSpatial = {
       update(next) {
         if (disposed) return;
         z = next.z ?? z; threshold = next.threshold ?? threshold;
+        spread = next.gap ?? spread;
+        if (next.sample !== undefined) picked = voxels.find(mesh => mesh.userData.sample.id === next.sample) || null;
         if (next.reset) {
           yaw = .72; pitch = .52; radius = 12.2; spread = .55;
-          root.querySelector('[data-gl-gap]').value = '.55';
         }
         if (next.reset || (picked && picked.userData.sample.z !== z)) {
           picked = null; selection.visible = false;
