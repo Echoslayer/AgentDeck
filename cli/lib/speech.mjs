@@ -26,7 +26,8 @@ export async function checkSpeech(dir, root, { replay = '2' } = {}, log = consol
     if (!await coreReady(page)) fail(OLD_CORE);
     const count = await page.evaluate(() => story.pages.length);
     for (let i = 0; i < count; i++) {
-      await page.evaluate(i => storyReader.go(i), i);
+      // 換頁轉場內非同步渲染；等 story:render 再檢查，否則動作會找不到新頁的元素。
+      await page.evaluate(i => new Promise(done => { document.addEventListener('story:render', done, { once: true }); storyReader.go(i); }), i);
       const p = await page.evaluate(() => {
         const p = storyReader.page;
         return { id: p.id, audio: p.audio, cues: p.cues, record: p.record, n: deckSpeech.sentences(p).length };

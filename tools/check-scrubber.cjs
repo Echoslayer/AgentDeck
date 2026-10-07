@@ -13,7 +13,8 @@ const { chromium } = require('playwright');
     const src = f => pathToFileURL(path.resolve(__dirname, '..', f)).href;
     const template = fs.readFileSync(path.resolve(__dirname, '../templates/blank/index.html'), 'utf8')
       .replace(/href="\.\.\/\.\.\/([^"]+)"/g, (_, f) => `href="${src(f)}"`).replace('href="story.css"', '');
-    const page = (id, section, title, extra = {}) => ({ id, section, title, lead: '', art: `<p data-key="t">${title}</p>`, point: '', ...extra });
+    // 頁面內容帶 small／strong：縮圖裡的這些標籤不得被當成說明列
+    const page = (id, section, title, extra = {}) => ({ id, section, title, lead: '', art: `<p data-key="t"><small>註</small><strong>${title}</strong></p>`, point: '', ...extra });
     const pages = [page('c', '封面', '封面'), page('a1', '01', '甲一'), page('a2', '01', '甲二'), page('a3', '01', '甲三'),
       page('q', '02', '題目', { question: { prompt: '?', hideFuturePreviews: true, choices: [{ value: 'y', label: '好', feedback: '好' }] } }),
       page('b1', '03', '乙一'), page('b2', '03', '乙二'), page('b3', '03', '乙三'), page('e', '結尾', '結尾')];

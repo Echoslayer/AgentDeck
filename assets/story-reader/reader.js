@@ -266,6 +266,8 @@ function createScrubber() {
     + '<div class="scrub-tip" aria-hidden="true" hidden><div class="scrub-thumb"></div><div class="scrub-caption"><small></small><strong></strong></div></div>';
   document.querySelector('body>nav').prepend(bar);
   const segs = [...bar.querySelectorAll('.scrub-seg')], head = bar.querySelector('.scrub-head'), tip = bar.querySelector('.scrub-tip');
+  // 先取好：縮圖內的頁面內容也可能有 small／strong。
+  const thumb = tip.querySelector('.scrub-thumb'), meta = tip.querySelector('.scrub-caption small'), name = tip.querySelector('.scrub-caption strong');
 
   // 第 i 格中心（相對於軸的 px）；最近的一格（格子間距不等，不能用寬度平均換算）。
   const center = i => { const r = segs[i].getBoundingClientRect(); return r.left - bar.getBoundingClientRect().left + r.width / 2; };
@@ -290,9 +292,9 @@ function createScrubber() {
     if (i !== shownTip || tip.hidden) {
       shownTip = i;
       const p = pages[i], secret = i > current && futureHidden();
-      tip.querySelector('.scrub-thumb').innerHTML = secret ? '<span class="mini-placeholder">?</span>' : `<div class="mini-page">${previewMarkup(p)}</div>`;
-      tip.querySelector('small').textContent = `${i + 1} / ${N}${p.section && !secret ? ` · ${plain(p.section)}` : ''}`;
-      tip.querySelector('strong').innerHTML = secret ? uiText('繼續閱讀後揭曉', 'Revealed as you read on') : p.title;
+      thumb.innerHTML = secret ? '<span class="mini-placeholder">?</span>' : `<div class="mini-page">${previewMarkup(p)}</div>`;
+      meta.textContent = `${i + 1} / ${N}${p.section && !secret ? ` · ${plain(p.section)}` : ''}`;
+      name.innerHTML = secret ? uiText('繼續閱讀後揭曉', 'Revealed as you read on') : p.title;
       tip.hidden = false;
     }
     // 縮圖置中於該格，夾在軸的範圍內。
