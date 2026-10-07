@@ -139,6 +139,7 @@ subagent 繼承同一資料、工具與預算邊界；宿主內平行工作不�
 
 - 耦合只經過一個共用資料檔，放在主入口的 `resources/<主題>/`，兩個入口都在 `story.js` 之前引用；共用檔以自己的 `document.currentScript.getAttribute('src')` 推算單位根目錄來產生連結。其餘內容各冊自己持有，不讀對方的 `story.js`。
 - 跨入口連結用相對路徑加 `#頁面 id`，會開到指定頁；翻頁時網址跟著更新，瀏覽器的上一頁會回到點擊時的頁，不必另做返回機制。`story.back` 只回主入口。
+- 主簡報要列出附件簡報或附帶檔案（PDF、資料檔）時，用 `story.attachments`，頁首會出現「📎 附件」清單；檔案放在 `resources/<主題>/` 內，不引用單位外的路徑。匯出圖片後連結失效，重要的附件仍要在頁面上以文字說明。
 - 匯出成圖片後連結失效，連結文字要寫出目標冊與編號，例如「→ 問題冊 B4」。
 - 改共用檔的欄位後，兩個入口都要播放驗證。
 
@@ -172,6 +173,8 @@ const story = {
   title: '簡報名稱',                 // 瀏覽器標題
   label: '作者或單位 / 主題名稱',     // 頁首文字；省略時用 title，現場可編輯
   // 相關內容可返回主入口：back: { href: resource('../../index.html'), label: '返回主簡報' },
+  // 可選：頁首「📎 附件」清單，note 省略時顯示副檔名：
+  // attachments: [{ label: '實驗細節', href: resource('../../attachments/detail/index.html'), note: '附件簡報' }, { label: '原始資料', href: resource('data/results.csv') }],
   transition: 'slide',              // 可選：換頁轉場，見下方說明；省略為 slide
   pages: [{
     id: 'stable-id',                // 必填，整份唯一；重排時不要改，題目與互動狀態以它索引
