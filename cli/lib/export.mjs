@@ -52,14 +52,14 @@ function installCursor() {
   const r = document.querySelector('#page .stage').getBoundingClientRect();
   c.style.transform = `translate(${r.x + r.width / 2}px,${r.y + r.height * 0.8}px)`;
 }
-// 目標點：range 取該值的滑桿位置，其餘取元素中心。回傳游標移動所需毫秒數。
+// 簡報的 deck-editor 提供目標點、拖曳節奏、標註幾何與口語稿規則（window.deckActions、window.deckSpeech）；舊核心沒有。
+export const OLD_CORE = '簡報的 deck-editor.js 版本過舊（或未載入），缺少 deckActions／deckSpeech；請先執行 agentdeck update core';
+export const coreReady = pg => pg.evaluate(() => !!(window.deckActions?.geometry && window.deckSpeech));
+// 目標點由 deckActions.point 計算（range 取該值的滑桿位置）。回傳游標移動所需毫秒數。
 function moveCursor([sel, value]) {
   const e = document.querySelector(sel), c = document.getElementById('agentdeck-cursor');
   if (!e) throw new Error(`record 找不到元素：${sel}`);
-  const r = e.getBoundingClientRect();
-  const t = e.type === 'range' && value !== undefined
-    ? { x: r.x + (value - (e.min || 0)) / ((e.max || 100) - (e.min || 0)) * r.width, y: r.y + r.height / 2 }
-    : { x: r.x + r.width / 2, y: r.y + r.height / 2 };
+  const t = window.deckActions.point(e, value);
   const [, x0, y0] = c.style.transform.match(/([-\d.]+)px,\s*([-\d.]+)px/) ?? [0, t.x, t.y];
   const ms = Math.round(Math.min(700, 150 + Math.hypot(t.x - x0, t.y - y0) * 0.8));
   c.style.transitionDuration = `${ms}ms`;
@@ -80,10 +80,7 @@ export async function runStep(pg, s, { cursor = false, dry = false } = {}) {
   if (s.wait !== undefined) return dry ? undefined : pg.waitForTimeout(s.wait);
   // arrow／box／clear 是畫面標註，交給簡報自己的 deck-editor 畫（docs/adr/0024）；at 只用於朗讀同步，錄影時依序執行。
   if (s.arrow || s.box || s.clear) {
-    await pg.evaluate(s => {
-      if (!window.deckActions) throw new Error('核心版本過舊，不支援 arrow／box／clear；請先執行 agentdeck update core');
-      window.deckActions.annotate(s);
-    }, s);
+    await pg.evaluate(s => window.deckActions.annotate(s), s);
     return dry || s.clear ? undefined : pg.waitForTimeout(400); // 等標註淡入完成，最後一步是標註時影片才看得清楚
   }
   const target = s.click ?? s.set ?? s.drag;
@@ -96,26 +93,28 @@ export async function runStep(pg, s, { cursor = false, dry = false } = {}) {
   }
   if (s.click) return pg.click(sel, { timeout: 3000 });
   if (s.set) return pg.$eval(sel, setValue, String(s.value));
-  // drag：從元素中心按住，約 1 秒內移動 by=[dx, dy] 像素後放開（例如旋轉 3D 元件）。
+  // drag：從元素中心按住，照 deckActions.drag 的節奏（約 1 秒）移動 by=[dx, dy] 像素後放開（例如旋轉 3D 元件）。
+  // 用真實滑鼠而非合成事件：Playwright 會等待並檢查目標可操作。
   const b = await pg.locator(sel).first().boundingBox({ timeout: 3000 });
   if (!b) throw new Error(`record 的拖曳目標不可見：${target}`);
-  const x0 = b.x + b.width / 2, y0 = b.y + b.height / 2, N = 25;
+  const { steps: N, ms } = await pg.evaluate(() => window.deckActions.drag);
+  const x0 = b.x + b.width / 2, y0 = b.y + b.height / 2;
   await pg.mouse.move(x0, y0);
   await pg.mouse.down();
   for (let k = 1; k <= N; k++) {
     const x = x0 + s.by[0] * k / N, y = y0 + s.by[1] * k / N;
     await pg.mouse.move(x, y);
     if (cursor) await pg.evaluate(placeCursor, [x, y]);
-    if (!dry) await pg.waitForTimeout(40);
+    if (!dry) await pg.waitForTimeout(ms);
   }
   await pg.mouse.up();
 }
 
 // ── 只有標註的 record（box／arrow／clear，可夾 wait）不錄影：內容區放截圖，標註畫成 PPT 原生圖形，
-//    以最簡單的「出現／消失」動畫按一下依序顯示（docs/adr/0021）。幾何與 deck-editor 的 drawMarks 相同。
+//    以最簡單的「出現／消失」動畫按一下依序顯示（docs/adr/0021）。幾何由 deckActions.geometry 計算，與畫面上的標註相同。
 const MARK = 'E5484D', MARK_NAME = 'agentdeck-mark-';
 const marksOnly = r => r.every(s => s.click === undefined && s.set === undefined && s.drag === undefined) && r.some(s => s.box || s.arrow);
-// 在瀏覽器內量每個標註目標相對於 .stage 的位置（CSS px），以及標籤的實際尺寸。
+// 在瀏覽器內量每個標註目標相對於 .stage 的位置與標籤尺寸，換成標註幾何（CSS px）。
 function measureMarks(steps) {
   const st = document.querySelector('#page .stage').getBoundingClientRect();
   const layer = document.createElement('div');
@@ -136,7 +135,8 @@ function measureMarks(steps) {
         const b = d.getBoundingClientRect();
         label = { w: b.width, h: b.height };
       }
-      return { x: r.left - st.left, y: r.top - st.top, w: r.width, h: r.height, label };
+      const g = window.deckActions.geometry(s, { x: r.left - st.left, y: r.top - st.top, w: r.width, h: r.height }, label?.w, label?.h);
+      return { ...g, label: label && { ...g.label, ...label } };
     });
   } finally { layer.remove(); }
 }
@@ -230,6 +230,7 @@ export async function checkRecords(browser, dir, log = console.log) {
   const errors = [], bad = [];
   const ctx = await browser.newContext({ viewport: VIEW });
   const pg = await openDeck(ctx, pathToFileURL(path.join(dir, 'index.html')).href, errors);
+  if (!await coreReady(pg)) { await ctx.close(); log(`record：${OLD_CORE}`); return false; }
   const total = await pg.evaluate(() => Number(document.getElementById('progress').max));
   let n = 0;
   for (let i = 0; i < total; i++) {
@@ -301,6 +302,7 @@ export async function exportPptx({ dir, out, ffmpeg }, log = console.log) {
   try {
     const ctx = await browser.newContext({ viewport: VIEW, deviceScaleFactor: 2 });
     const pg = await open(ctx);
+    if (!await coreReady(pg)) fail(OLD_CORE);
     const total = await pg.evaluate(() => Number(document.getElementById('progress').max));
     const theme = await pg.evaluate(() => {
       const css = getComputedStyle(document.documentElement), v = n => css.getPropertyValue(n).trim();
@@ -318,36 +320,29 @@ export async function exportPptx({ dir, out, ffmpeg }, log = console.log) {
     const report = [], small = [], anims = [];
     let markN = 0;
     // 標註畫成原生圖形；k 是每 CSS px 對應的英吋，線寬與字級同比例換成 pt。
-    function addMarks(slide, steps, rects, pos, k) {
+    function addMarks(slide, steps, shapes, pos, k) {
       const X = v => pos.x + v * k, Y = v => pos.y + v * k, pt = v => Math.max(0.75, v * k * 72);
-      const label = (text, l, x, y) => {
-        const name = MARK_NAME + ++markN;
-        slide.addText(text, {
-          objectName: name, shape: pptx.ShapeType.roundRect, rectRadius: 6 * k, x: X(x), y: Y(y), w: (l.w + 4) * k, h: l.h * k,
-          fill: { color: MARK }, color: 'FFFFFF', bold: true, fontFace: FONT, fontSize: pt(18), margin: 0, align: 'center', valign: 'middle', wrap: false,
-        });
-        return name;
-      };
       const names = steps.map((s, i) => {
-        const r = rects[i];
-        if (!r) return [];
+        const g = shapes[i];
+        if (!g) return [];
         const out = [MARK_NAME + ++markN];
-        if (s.box) {
-          slide.addShape(pptx.ShapeType.roundRect, { objectName: out[0], x: X(r.x - 6), y: Y(r.y - 6), w: (r.w + 12) * k, h: (r.h + 12) * k, rectRadius: 10 * k, fill: { type: 'none' }, line: { color: MARK, width: pt(4) } });
-          if (r.label) out.push(label(s.text, r.label, r.x - 6, r.y - 10 - r.label.h));
-          return out;
+        if (g.box) {
+          const { x, y, w, h } = g.box;
+          slide.addShape(pptx.ShapeType.roundRect, { objectName: out[0], x: X(x), y: Y(y), w: w * k, h: h * k, rectRadius: 10 * k, fill: { type: 'none' }, line: { color: MARK, width: pt(4) } });
+        } else {
+          const { tx, ty, hx, hy } = g.arrow;
+          slide.addShape(pptx.ShapeType.line, {
+            objectName: out[0], x: X(Math.min(tx, hx)), y: Y(Math.min(ty, hy)), w: Math.abs(hx - tx) * k, h: Math.abs(hy - ty) * k,
+            flipH: hx < tx, flipV: hy < ty, line: { color: MARK, width: pt(5), endArrowType: 'triangle' },
+          });
         }
-        const from = s.from ?? 'left', L = 90, G = 10, cx = r.x + r.w / 2, cy = r.y + r.h / 2;
-        const [hx, hy, dx, dy] = { left: [r.x - G, cy, -1, 0], right: [r.x + r.w + G, cy, 1, 0], top: [cx, r.y - G, 0, -1], bottom: [cx, r.y + r.h + G, 0, 1] }[from];
-        const tx = hx + dx * L, ty = hy + dy * L;
-        slide.addShape(pptx.ShapeType.line, {
-          objectName: out[0], x: X(Math.min(tx, hx)), y: Y(Math.min(ty, hy)), w: Math.abs(hx - tx) * k, h: Math.abs(hy - ty) * k,
-          flipH: hx < tx, flipV: hy < ty, line: { color: MARK, width: pt(5), endArrowType: 'triangle' },
-        });
-        if (r.label) {
-          const { w, h } = r.label;
-          const [lx, ly] = { left: [tx - w, ty - h / 2], right: [tx, ty - h / 2], top: [tx - w / 2, ty - h], bottom: [tx - w / 2, ty] }[from];
-          out.push(label(s.text, r.label, lx, ly));
+        if (g.label) {
+          const l = g.label, name = MARK_NAME + ++markN;
+          slide.addText(s.text, {
+            objectName: name, shape: pptx.ShapeType.roundRect, rectRadius: 6 * k, x: X(l.x), y: Y(l.y), w: (l.w + 4) * k, h: l.h * k,
+            fill: { color: MARK }, color: 'FFFFFF', bold: true, fontFace: FONT, fontSize: pt(18), margin: 0, align: 'center', valign: 'middle', wrap: false,
+          });
+          out.push(name);
         }
         return out;
       });

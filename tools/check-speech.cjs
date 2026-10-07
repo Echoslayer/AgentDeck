@@ -6,13 +6,7 @@ const path = require('node:path');
 const { pathToFileURL } = require('node:url');
 const { chromium } = require('playwright');
 (async () => {
-  const { speechProblems, checkSpeech } = await import('../cli/lib/speech.mjs');
-  const valid = { sentences: ['一。', '二。'], cues: [0, 2], record: [{ at: 1, wait: 100 }, { at: 2, clear: true }] };
-  assert.deepEqual(speechProblems(valid, 4), []);
-  assert(speechProblems({ ...valid, cues: [0, 0] }, 4).length);
-  assert(speechProblems({ ...valid, cues: [0, 5] }, 4).length);
-  assert(speechProblems({ ...valid, record: [{ at: 3, clear: true }] }, 4).length);
-  assert(speechProblems({ ...valid, record: [{ at: 1, wait: 1500 }, { at: 1, wait: 1500 }] }, 4).length);
+  const { checkSpeech } = await import('../cli/lib/speech.mjs');
   const browser = await chromium.launch({ channel: process.env.PLAYWRIGHT_CHANNEL || 'chrome', headless: true });
   const temp = fs.mkdtempSync(path.join(os.tmpdir(), 'agentdeck-speech-'));
   try {
@@ -26,6 +20,19 @@ const { chromium } = require('playwright');
     });
     const url = pathToFileURL(path.resolve(__dirname, '../templates/blank/index.html')).href;
     await page.goto(url);
+    // 口語稿規則（deckSpeech）：errors 載入時丟出；warnings 編輯器只警告，check speech 一律算錯。
+    const problems = (p, d) => page.evaluate(([p, d]) => deckSpeech.problems(p, d), [p, d]);
+    const valid = { speech: '一。二。', cues: [0, 2], record: [{ at: 1, wait: 100 }, { at: 2, clear: true }] };
+    assert.deepEqual(await problems(valid, 4), { errors: [], warnings: [] });
+    assert.deepEqual((await problems({ ...valid, cues: [0, 0] }, 4)).errors, []);
+    assert((await problems({ ...valid, cues: [0, 0] }, 4)).warnings.length);
+    assert((await problems({ ...valid, cues: [2, 0] }, 4)).errors.length);
+    assert((await problems({ ...valid, cues: [0, 5] }, 4)).warnings.length);
+    assert((await problems({ ...valid, cues: [0] }, 4)).warnings.length);
+    assert((await problems({ ...valid, record: [{ at: 3, clear: true }] }, 4)).warnings.length);
+    assert((await problems({ ...valid, record: [{ at: 1, wait: 1500 }, { at: 1, wait: 1500 }] }, 4)).warnings.length);
+    assert((await problems({ ...valid, record: [{ hover: '.x' }] }, 4)).errors.length);
+    assert.deepEqual(await page.evaluate(() => deckSpeech.sentences({ speech: '甲。乙<br>丙！' })), ['甲。', '乙', '丙！']);
     await page.evaluate(() => {
       story.pages[1].speech = '測試第一句。測試第二句。';
       story.pages[1].audio = 'test.mp3'; story.pages[1].cues = [0, 2];
