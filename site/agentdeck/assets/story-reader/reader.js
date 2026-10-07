@@ -118,14 +118,17 @@ function previewMarkup(p) {
     .replace(/<button\b[^>]*>/g, '<span class="choice-copy">').replace(/<\/button>/g, '</span>')
     .replace(/<a\b[^>]*>/g, '<span>').replace(/<\/a>/g, '</span>');
 }
+// 題目頁設定 hideFuturePreviews 且尚未作答時，後面頁面的縮圖與標題以「?」代替。
+const futureHidden = () => pages[current].question?.hideFuturePreviews && !answers.has(pages[current].id);
+// 上一步／下一步只放文字；各頁縮圖由翻頁列頂端的拖動軸提供（createScrubber）。
 function renderPreviews() {
-  const hideFuture = pages[current].question?.hideFuturePreviews && !answers.has(pages[current].id);
+  const hideFuture = futureHidden();
+  scrubber.sync(); // 換頁、作答、edits 修改都經過這裡
   for (const [id, index, label] of [['prev', current - 1, uiText('← 上一步', '← Previous')], ['next', current === pages.length - 1 ? 0 : current + 1, current === pages.length - 1 ? uiText('↺ 重新看一次', '↺ Start over') : uiText('下一步 →', 'Next →')]]) {
     const button = document.getElementById(id), hidden = id === 'next' && hideFuture && index > current;
     const title = index < 0 ? uiText('從這裡開始', 'Start here') : hidden ? uiText('看看接下來發生什麼', 'See what happens next') : pages[index].title;
-    const miniature = index < 0 ? `<span class="mini-placeholder">${uiText('起點', 'Start')}</span>` : hidden ? '<span class="mini-placeholder">?</span>' : `<div class="mini-page">${previewMarkup(pages[index])}</div>`;
     button.className = 'preview';
-    button.innerHTML = `<div class="mini" aria-hidden="true">${miniature}</div><span class="preview-copy"><small>${label}</small><strong>${title}</strong></span>`;
+    button.innerHTML = `<span class="preview-copy"><small>${label}</small><strong>${title}</strong></span>`;
   }
   document.getElementById('index-list').innerHTML = pages.map((p, i) => {
     const hidden = hideFuture && i > current;
@@ -188,7 +191,7 @@ document.getElementById('next').onclick = () => move(1);
 // 導覽列空白處分左右兩半：左半上一頁、右半下一頁；按鈕與連結照常。
 document.querySelector('body>nav').onclick = e => {
   // 用派送時的路徑判斷：按鈕翻頁後會重繪內容，e.target 已脫離 DOM。
-  if (e.composedPath().some(el => el.matches?.('button, a, .progress'))) return;
+  if (e.composedPath().some(el => el.matches?.('button, a, .progress, .scrub'))) return;
   const r = e.currentTarget.getBoundingClientRect();
   document.getElementById(e.clientX < r.left + r.width / 2 ? 'prev' : 'next').click();
 };
@@ -243,7 +246,104 @@ document.addEventListener('keydown', e => {
   const delta = preferences.navigationDelta(e);
   if (delta) { e.preventDefault(); move(delta); }
 });
+const scrubber = createScrubber();
 show();
+
+// 拖動軸（YouTube 式）：翻頁列頂端一條分段軸，每頁一格，章節換段處間隔較寬。
+// 滑過任一格顯示該頁縮圖與標題；按住拖曳時縮圖跟著格子，放開才跳頁（拖曳中不連續換頁與轉場）。
+// 焦點在軸上時方向鍵、Home／End 跳頁。
+function createScrubber() {
+  const N = pages.length, plain = h => h.replace(/<[^>]*>/g, '');
+  const bar = document.createElement('div');
+  bar.className = 'scrub';
+  bar.tabIndex = 0;
+  bar.setAttribute('role', 'slider');
+  bar.setAttribute('aria-label', uiText('頁面進度：拖曳或用方向鍵跳頁', 'Page progress: drag or use arrow keys to jump'));
+  bar.setAttribute('aria-valuemin', '1');
+  bar.setAttribute('aria-valuemax', String(N));
+  bar.innerHTML = `<div class="scrub-track">${pages.map((p, i) => `<span class="scrub-seg${i && p.section !== pages[i - 1].section ? ' scrub-chapter' : ''}"></span>`).join('')}</div>`
+    + '<div class="scrub-head" aria-hidden="true"></div>'
+    + '<div class="scrub-tip" aria-hidden="true" hidden><div class="scrub-thumb"></div><div class="scrub-caption"><small></small><strong></strong></div></div>';
+  document.querySelector('body>nav').prepend(bar);
+  const segs = [...bar.querySelectorAll('.scrub-seg')], head = bar.querySelector('.scrub-head'), tip = bar.querySelector('.scrub-tip');
+  // 先取好：縮圖內的頁面內容也可能有 small／strong。
+  const thumb = tip.querySelector('.scrub-thumb'), meta = tip.querySelector('.scrub-caption small'), name = tip.querySelector('.scrub-caption strong');
+
+  // 第 i 格中心（相對於軸的 px）；最近的一格（格子間距不等，不能用寬度平均換算）。
+  const center = i => { const r = segs[i].getBoundingClientRect(); return r.left - bar.getBoundingClientRect().left + r.width / 2; };
+  const indexAt = x => {
+    const rel = x - bar.getBoundingClientRect().left;
+    let best = 0;
+    for (let i = 1; i < N; i++) if (Math.abs(center(i) - rel) < Math.abs(center(best) - rel)) best = i;
+    return best;
+  };
+  const jump = i => { if (i !== current) { current = i; show(); window.scrollTo(0, 0); } };
+
+  let dragging = false, target = -1, shownTip = -1;
+  function sync() {
+    segs.forEach((s, i) => { s.classList.toggle('is-past', i < current); s.classList.toggle('is-current', i === current); });
+    if (!dragging) head.style.left = `${center(current)}px`;
+    bar.setAttribute('aria-valuenow', String(current + 1));
+    bar.setAttribute('aria-valuetext', `${current + 1} / ${N}：${plain(pages[current].title)}`);
+    shownTip = -1; // 作答或 edits 改變後，下次重繪縮圖
+  }
+  function showTip(i) {
+    segs.forEach((s, k) => s.classList.toggle('is-hover', k === i));
+    if (i !== shownTip || tip.hidden) {
+      shownTip = i;
+      const p = pages[i], secret = i > current && futureHidden();
+      thumb.innerHTML = secret ? '<span class="mini-placeholder">?</span>' : `<div class="mini-page">${previewMarkup(p)}</div>`;
+      meta.textContent = `${i + 1} / ${N}${p.section && !secret ? ` · ${plain(p.section)}` : ''}`;
+      name.innerHTML = secret ? uiText('繼續閱讀後揭曉', 'Revealed as you read on') : p.title;
+      tip.hidden = false;
+    }
+    // 縮圖置中於該格，夾在軸的範圍內。
+    tip.style.left = `${Math.max(0, Math.min(bar.clientWidth - tip.offsetWidth, center(i) - tip.offsetWidth / 2))}px`;
+  }
+  function hideTip() {
+    tip.hidden = true;
+    segs.forEach(s => s.classList.remove('is-hover'));
+  }
+  function drag(e) {
+    const b = bar.getBoundingClientRect();
+    target = indexAt(e.clientX);
+    head.style.left = `${Math.max(0, Math.min(b.width, e.clientX - b.left))}px`;
+    showTip(target);
+  }
+  bar.addEventListener('pointerdown', e => {
+    if (e.button !== 0) return;
+    e.preventDefault();
+    bar.setPointerCapture(e.pointerId);
+    dragging = true;
+    bar.classList.add('is-dragging');
+    drag(e);
+  });
+  bar.addEventListener('pointermove', e => { if (dragging) drag(e); else if (e.pointerType === 'mouse') showTip(indexAt(e.clientX)); });
+  const release = go => () => {
+    if (!dragging) return;
+    dragging = false;
+    bar.classList.remove('is-dragging');
+    if (go) jump(target);
+    sync();
+    if (!bar.matches(':hover')) hideTip();
+  };
+  bar.addEventListener('pointerup', release(true));
+  bar.addEventListener('pointercancel', release(false));
+  bar.addEventListener('pointerleave', () => { if (!dragging) hideTip(); });
+  // 攔下方向鍵，避免文件層的翻頁鍵再翻一次。
+  bar.addEventListener('keydown', e => {
+    const to = { ArrowLeft: -1, ArrowDown: -1, PageUp: -1, ArrowRight: 1, ArrowUp: 1, PageDown: 1, Home: -N, End: N }[e.key];
+    if (!to) return;
+    e.preventDefault();
+    e.stopPropagation();
+    const i = Math.max(0, Math.min(N - 1, current + to));
+    jump(i);
+    showTip(i);
+  });
+  bar.addEventListener('blur', hideTip);
+  new ResizeObserver(() => sync()).observe(bar);
+  return { sync };
+}
 
 // 設定模組：封裝對話框、草稿、驗證與翻頁鍵；不依賴編輯器的 DOM 或狀態。
 // 留在同一支交付檔內，讓既有簡報更新核心後不必修改 script 清單。

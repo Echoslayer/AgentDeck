@@ -25,8 +25,6 @@
   const ALLOWED = new Set(['B', 'STRONG', 'I', 'EM', 'U', 'S', 'BR', 'UL', 'OL', 'LI', 'DIV', 'P', 'SPAN', 'SUB', 'SUP']);
   const DROPPED = new Set(['SCRIPT', 'STYLE', 'TEMPLATE', 'IFRAME', 'OBJECT', 'EMBED', 'IMG', 'SVG', 'VIDEO', 'AUDIO']);
   const FIELD_MARK = '<span data-field-hidden></span>';
-  const edits = structuredClone(window.storyEdits || {});
-  edits.pages ??= {};
   let dirty = false;
   let editing = false;
   let targets = [];
@@ -82,37 +80,67 @@
     return found.length ? t.innerHTML : html;
   }
 
-  const original = new Map();
-  for (const p of story.pages) for (const f in FIELDS) original.set(`${p.id}|${f}`, p[f]);
-
-  function applyPage(p, key, ov) {
-    if (key in FIELDS) {
-      const base = ov.html ?? original.get(`${p.id}|${key}`);
-      // 欄位由 reader 產生，無法加屬性；以開頭的標記 span 讓 CSS 隱藏整個欄位。
-      if (typeof base === 'string') p[key] = (ov.hidden ? FIELD_MARK : '') + base;
+  // ── edits 模型（edits.js 格式屬於契約，docs/adr/0005）：讀入 window.storyEdits、套用到 story、輸出 edits.js 文字。
+  //    編輯 UI 只經由這個 interface 讀寫；不碰畫面，可直接測試（window.deckEdits）。
+  function createEdits(story, initial) {
+    const data = structuredClone(initial || {});
+    data.pages ??= {};
+    const original = new Map();
+    for (const p of story.pages) for (const f in FIELDS) original.set(`${p.id}|${f}`, p[f]);
+    function apply(p, key, ov) {
+      if (key in FIELDS) {
+        const base = ov.html ?? original.get(`${p.id}|${key}`);
+        // 欄位由 reader 產生，無法加屬性；以開頭的標記 span 讓 CSS 隱藏整個欄位。
+        if (typeof base === 'string') p[key] = (ov.hidden ? FIELD_MARK : '') + base;
+      }
+      p.art = patchHtml(p.art, key, ov, true);
+      // previewArt 結構與 art 不同，位置 key 不適用。
+      if (p.previewArt !== undefined) p.previewArt = patchHtml(p.previewArt, key, ov, false);
     }
-    p.art = patchHtml(p.art, key, ov, true);
-    // previewArt 結構與 art 不同，位置 key 不適用。
-    if (p.previewArt !== undefined) p.previewArt = patchHtml(p.previewArt, key, ov, false);
+    // 在 reader 渲染前套用，縮圖與索引因此也看得到人工修改。
+    if (typeof data.label === 'string') story.label = data.label;
+    for (const p of story.pages) {
+      for (const [key, ov] of Object.entries(data.pages[p.id] || {})) apply(p, key, ov);
+    }
+    return Object.freeze({
+      get: (id, key) => data.pages[id]?.[key] || {},
+      // patch：{ html }（一律 sanitize）、{ x, y }（cqw）或 { hidden }。
+      set(p, key, patch) {
+        if (patch.html !== undefined) patch = { ...patch, html: sanitize(patch.html) };
+        const ov = (data.pages[p.id] ??= {})[key] ??= {};
+        Object.assign(ov, patch);
+        apply(p, key, ov);
+      },
+      setLabel(text) { story.label = data.label = text; },
+      comments: id => data.comments?.[id] || [],
+      addComment(id, text) {
+        text = text.trim();
+        if (!text) return false;
+        const now = new Date();
+        const at = new Date(now - now.getTimezoneOffset() * 6e4).toISOString().slice(0, 19); // 本地時間
+        ((data.comments ??= {})[id] ??= []).push({ text, at });
+        return true;
+      },
+      removeComment(id, i) {
+        const list = data.comments[id];
+        list.splice(i, 1);
+        if (!list.length) delete data.comments[id];
+        if (!Object.keys(data.comments).length) delete data.comments;
+      },
+      text: () => '// 人工編輯層：由頁首「另存」產生，放在 story.js 旁並命名為 edits.js 即可套用。\n'
+        + '// 只包含文字、位置、隱藏狀態與各頁註解；元件內容、互動與口頭說明仍由 story.js 決定。\n'
+        + `window.storyEdits = ${JSON.stringify(data, null, 2)};\n`,
+    });
   }
-
-  // 在 reader 渲染前套用 edits.js，縮圖與索引因此也看得到人工修改。
-  if (typeof edits.label === 'string') story.label = edits.label;
-  for (const p of story.pages) {
-    for (const [key, ov] of Object.entries(edits.pages[p.id] || {})) applyPage(p, key, ov);
-  }
+  const edits = window.deckEdits = createEdits(story, window.storyEdits);
 
   // window.storyReader 由稍後載入的 reader.js 提供，只在事件發生時取用。
   const currentPage = () => window.storyReader.page;
   const refreshPreviews = () => window.storyReader.refresh();
-  const overrideOf = key => edits.pages[currentPage().id]?.[key] || {};
+  const overrideOf = key => edits.get(currentPage().id, key);
 
   function record(key, patch) {
-    const p = currentPage();
-    const pageEdits = edits.pages[p.id] ??= {};
-    const ov = pageEdits[key] ??= {};
-    Object.assign(ov, patch);
-    applyPage(p, key, ov);
+    edits.set(currentPage(), key, patch);
     setDirty(true);
   }
 
@@ -304,46 +332,63 @@
   // 口語稿斷句：句末標點（。！？!?；;）或換行（<br>）後切開；cues 與 at 的「第幾句」都照這個算。
   const sentences = p => p.speech ? plain(p.speech).split(/(?<=[。！？!?；;\n])/).map(s => s.trim()).filter(Boolean) : [];
   const ARROW_FROM = ['left', 'right', 'top', 'bottom'];
-  for (const p of story.pages) {
-    for (const f of ['instruction', 'explain', 'speech', 'audio']) if (p[f] !== undefined && typeof p[f] !== 'string') throw new Error(`${p.id}: ${f} 必須是字串`);
-    // cues：音檔裡每句口語稿的起始秒數（docs/adr/0024），給字幕與講者動作對齊。
-    if (p.cues !== undefined) {
-      if (!Array.isArray(p.cues) || !p.cues.every((t, i) => Number.isFinite(t) && t >= 0 && (i === 0 || t >= p.cues[i - 1])))
-        throw new Error(`${p.id}: cues 必須是由小到大的秒數陣列`);
-      const n = sentences(p).length;
-      if (n && n !== p.cues.length) console.warn(`${p.id}: cues 有 ${p.cues.length} 個時間點，口語稿有 ${n} 句`);
+  // 拖曳節奏：DRAG.steps 步、每步 DRAG.ms 毫秒（約 1 秒）；agentdeck export 錄影照同樣節奏。
+  const DRAG = Object.freeze({ steps: 25, ms: 40 });
+  const stepOk = s => s && (Number.isFinite(s.wait) || typeof s.click === 'string' || (typeof s.set === 'string' && 'value' in s)
+    || (typeof s.drag === 'string' && Array.isArray(s.by) && s.by.length === 2 && s.by.every(Number.isFinite))
+    || typeof s.box === 'string' || (typeof s.arrow === 'string' && (s.from === undefined || ARROW_FROM.includes(s.from)))
+    || s.clear === true)
+    && (s.at === undefined || (Number.isInteger(s.at) && s.at >= 1))
+    && (s.text === undefined || typeof s.text === 'string');
+  // 口語稿、cues（音檔裡每句的起始秒數，docs/adr/0024）與 record（docs/adr/0021）的規則；agentdeck check speech 也呼叫這裡。
+  // errors：資料結構錯誤，載入時就丟出。warnings：同步可能不準，載入時只警告，check speech 一律算錯。
+  // duration 是音檔秒數，只有 check speech 量得到。
+  function speechProblems(p, duration) {
+    const errors = [], warnings = [];
+    for (const f of ['instruction', 'explain', 'speech', 'audio']) if (p[f] !== undefined && typeof p[f] !== 'string') errors.push(`${f} 必須是字串`);
+    if (errors.length) return { errors, warnings };
+    const n = sentences(p).length, cues = p.cues;
+    if (p.audio && !n) warnings.push('有音檔但沒有口語稿，無法核對逐句同步');
+    if (cues !== undefined) {
+      if (!Array.isArray(cues) || !cues.every((t, i) => Number.isFinite(t) && t >= 0 && (!i || t >= cues[i - 1]))) errors.push('cues 必須是由小到大的非負秒數陣列');
+      else {
+        if (cues.some((t, i) => i && t === cues[i - 1])) warnings.push('cues 有重複的時間點，應嚴格遞增');
+        if (cues.length !== n) warnings.push(`cues 有 ${cues.length} 個時間點，口語稿有 ${n} 句`);
+        if (Number.isFinite(duration) && cues.some(t => t >= duration)) warnings.push('cues 超過音檔時長');
+      }
     }
-    // record 給 agentdeck export 錄影（docs/adr/0021）；步驟帶 at 時也在朗讀到該句時執行（docs/adr/0024）。
-    // 格式錯在載入時就報，不等到匯出。
-    if (p.record === undefined) continue;
-    if (!Array.isArray(p.record)) throw new Error(`${p.id}: record 必須是步驟陣列`);
+    if (p.record === undefined) return { errors, warnings };
+    if (!Array.isArray(p.record)) return { errors: [...errors, 'record 必須是步驟陣列'], warnings };
+    let at = 1, elapsed = 0;
     p.record.forEach((s, i) => {
-      const ok = s && (Number.isFinite(s.wait) || typeof s.click === 'string' || (typeof s.set === 'string' && 'value' in s)
-        || (typeof s.drag === 'string' && Array.isArray(s.by) && s.by.length === 2 && s.by.every(Number.isFinite))
-        || typeof s.box === 'string' || (typeof s.arrow === 'string' && (s.from === undefined || ARROW_FROM.includes(s.from)))
-        || s.clear === true)
-        && (s.at === undefined || (Number.isInteger(s.at) && s.at >= 1))
-        && (s.text === undefined || typeof s.text === 'string');
-      if (!ok) throw new Error(`${p.id}: record 第 ${i + 1} 步格式錯誤：${JSON.stringify(s)}（可用 wait、click、set+value、drag+by、arrow(+from)、box、clear，可加 at、text）`);
+      if (!stepOk(s)) return errors.push(`record 第 ${i + 1} 步格式錯誤：${JSON.stringify(s)}（可用 wait、click、set+value、drag+by、arrow(+from)、box、clear，可加 at、text）`);
+      if (s.at !== undefined) {
+        if (s.at < at || s.at > n) warnings.push(`record 第 ${i + 1} 步 at 超出句數或順序倒退`);
+        if (s.at !== at) elapsed = 0;
+        at = s.at;
+      }
+      if (s.wait < 0) warnings.push(`record 第 ${i + 1} 步 wait 必須是非負毫秒數`);
+      elapsed += (Number.isFinite(s.wait) ? s.wait / 1000 : 0) + (s.drag ? DRAG.steps * DRAG.ms / 1000 : 0);
+      const end = Array.isArray(cues) && (cues[at] ?? duration);
+      if (Number.isFinite(cues?.[at - 1]) && Number.isFinite(end) && elapsed >= end - cues[at - 1]) warnings.push(`第 ${at} 句的等待／拖曳時間超過句子時段`);
     });
+    return { errors, warnings: [...new Set(warnings)] };
+  }
+  window.deckSpeech = Object.freeze({ sentences, problems: speechProblems });
+  for (const p of story.pages) {
+    const { errors, warnings } = speechProblems(p);
+    if (errors.length) throw new Error(`${p.id}: ${errors.join('；')}`);
+    for (const w of warnings) console.warn(`${p.id}: ${w}`);
   }
   const esc = s => s.replace(/[&<>"]/g, c => `&#${c.charCodeAt(0)};`);
-  const commentsOf = id => edits.comments?.[id] || [];
+  const commentsOf = id => edits.comments(id);
   let presenter, started;
 
   function addComment(text) {
-    text = text.trim();
-    if (!text) return;
-    const now = new Date();
-    const at = new Date(now - now.getTimezoneOffset() * 6e4).toISOString().slice(0, 19); // 本地時間
-    ((edits.comments ??= {})[currentPage().id] ??= []).push({ text, at });
-    notesChanged();
+    if (edits.addComment(currentPage().id, text)) notesChanged();
   }
   function removeComment(i) {
-    const id = currentPage().id, list = edits.comments[id];
-    list.splice(i, 1);
-    if (!list.length) delete edits.comments[id];
-    if (!Object.keys(edits.comments).length) delete edits.comments;
+    edits.removeComment(currentPage().id, i);
     notesChanged();
   }
   function notesChanged() { setDirty(true); renderNotes(); }
@@ -409,23 +454,31 @@
     if (!el) throw new Error(`${currentPage().id}: 講者動作找不到元素：${sel}`);
     return el;
   };
+  // 標註幾何（CSS px）：r 為目標矩形 { x, y, w, h }，lw／lh 為標籤尺寸。回傳 box 外框，或 arrow 的尾端 t、尖端 h 與方向 d，
+  // 以及標籤左上角。畫面上由 drawMarks 畫成 SVG，agentdeck export 畫成 PPT 原生圖形（docs/adr/0025）。
+  function markGeometry(s, r, lw = 0, lh = 0) {
+    if (s.box) return { box: { x: r.x - 6, y: r.y - 6, w: r.w + 12, h: r.h + 12 }, label: { x: r.x - 6, y: r.y - 10 - lh } };
+    const from = s.from ?? 'left', L = 90, G = 10, cx = r.x + r.w / 2, cy = r.y + r.h / 2;
+    const [hx, hy, dx, dy] = { left: [r.x - G, cy, -1, 0], right: [r.x + r.w + G, cy, 1, 0], top: [cx, r.y - G, 0, -1], bottom: [cx, r.y + r.h + G, 0, 1] }[from];
+    const tx = hx + dx * L, ty = hy + dy * L;
+    const [x, y] = { left: [tx - lw, ty - lh / 2], right: [tx, ty - lh / 2], top: [tx - lw / 2, ty - lh], bottom: [tx - lw / 2, ty] }[from];
+    return { arrow: { tx, ty, hx, hy, dx, dy }, label: { x, y } };
+  }
   function drawMarks() {
     if (!marks.length) return;
     const svg = layer.querySelector('svg');
     svg.innerHTML = '';
     for (const m of marks) {
       const r = m.el.getBoundingClientRect();
-      if (m.box) {
-        Object.assign(m.box.style, { left: `${r.left - 6}px`, top: `${r.top - 6}px`, width: `${r.width + 12}px`, height: `${r.height + 12}px` });
-        if (m.label) Object.assign(m.label.style, { left: `${r.left - 6}px`, top: `${r.top - 10}px`, transform: 'translateY(-100%)' });
+      const g = markGeometry(m.step, { x: r.left, y: r.top, w: r.width, h: r.height }, m.label?.offsetWidth, m.label?.offsetHeight);
+      if (m.label) Object.assign(m.label.style, { left: `${g.label.x}px`, top: `${g.label.y}px` });
+      if (g.box) {
+        Object.assign(m.box.style, { left: `${g.box.x}px`, top: `${g.box.y}px`, width: `${g.box.w}px`, height: `${g.box.h}px` });
         continue;
       }
-      const cx = r.left + r.width / 2, cy = r.top + r.height / 2, L = 90, G = 10;
-      const [hx, hy, dx, dy] = { left: [r.left - G, cy, -1, 0], right: [r.right + G, cy, 1, 0], top: [cx, r.top - G, 0, -1], bottom: [cx, r.bottom + G, 0, 1] }[m.from];
-      const tx = hx + dx * L, ty = hy + dy * L;
+      const { tx, ty, hx, hy, dx, dy } = g.arrow;
       svg.insertAdjacentHTML('beforeend', `<line x1="${tx}" y1="${ty}" x2="${hx + dx * 12}" y2="${hy + dy * 12}"/>`
         + `<polygon points="${hx},${hy} ${hx + dx * 18 - dy * 10},${hy + dy * 18 + dx * 10} ${hx + dx * 18 + dy * 10},${hy + dy * 18 - dx * 10}"/>`);
-      if (m.label) Object.assign(m.label.style, { left: `${tx}px`, top: `${ty}px`, transform: { left: 'translate(-100%,-50%)', right: 'translate(0,-50%)', top: 'translate(-50%,-100%)', bottom: 'translate(-50%,0)' }[m.from] });
     }
   }
   function annotate(s) {
@@ -438,7 +491,7 @@
       document.body.append(layer);
       addEventListener('resize', drawMarks);
     }
-    const m = { el, from: s.from ?? 'left' };
+    const m = { el, step: s };
     if (s.box) layer.append(m.box = Object.assign(document.createElement('div'), { className: 'deck-mark-box' }));
     if (s.text) layer.append(m.label = Object.assign(document.createElement('div'), { className: 'deck-mark-label', textContent: s.text }));
     marks.push(m);
@@ -455,14 +508,17 @@
     document.body.append(d);
     d.animate([{ transform: 'translate(-50%,-50%) scale(.3)', opacity: 1 }, { transform: 'translate(-50%,-50%) scale(1.4)', opacity: 0 }], { duration: 450 }).onfinish = () => d.remove();
   }
+  // 步驟的目標點：range 取該值的滑桿位置，其餘取元素中心（agentdeck export 的游標也用這個）。
+  function point(el, value) {
+    const r = el.getBoundingClientRect(), y = r.top + r.height / 2;
+    if (el.type === 'range' && value !== undefined) return { x: r.left + (value - (el.min || 0)) / ((el.max || 100) - (el.min || 0)) * r.width, y };
+    return { x: r.left + r.width / 2, y };
+  }
   const pause = ms => new Promise(r => setTimeout(r, ms / rate));
   async function act(s, run) {
     if (s.wait !== undefined) return pause(s.wait);
     if (s.arrow || s.box || s.clear) return annotate(s);
-    const el = pageEl(s.click ?? s.set ?? s.drag), r = el.getBoundingClientRect();
-    let x = r.left + r.width / 2;
-    const y = r.top + r.height / 2;
-    if (s.set && el.type === 'range') x = r.left + (s.value - (el.min || 0)) / ((el.max || 100) - (el.min || 0)) * r.width;
+    const el = pageEl(s.click ?? s.set ?? s.drag), { x, y } = point(el, s.set ? s.value : undefined);
     ripple(x, y);
     if (s.click) return el.click();
     if (s.set) {
@@ -476,9 +532,9 @@
     proto.setPointerCapture = proto.releasePointerCapture = function () {};
     try {
       fire('pointerdown', x, y);
-      for (let k = 1; k <= 25 && run === speakRun; k++) {
-        await pause(40);
-        fire('pointermove', x + s.by[0] * k / 25, y + s.by[1] * k / 25);
+      for (let k = 1; k <= DRAG.steps && run === speakRun; k++) {
+        await pause(DRAG.ms);
+        fire('pointermove', x + s.by[0] * k / DRAG.steps, y + s.by[1] * k / DRAG.steps);
       }
       fire('pointerup', x + s.by[0], y + s.by[1]);
     } finally {
@@ -515,8 +571,8 @@
     }
   }
   let cueState = null;
-  // 給 agentdeck export 錄影時執行 arrow／box／clear 步驟（cli/lib/export.mjs）。
-  window.deckActions = Object.freeze({ annotate, clear: clearMarks });
+  // 給 agentdeck export 錄影與 check speech 用（cli/lib/export.mjs）：標註、目標點、拖曳節奏與標註幾何。
+  window.deckActions = Object.freeze({ annotate, clear: clearMarks, point, drag: DRAG, geometry: markGeometry });
   function pickVoice() {
     const lang = (document.documentElement.lang || 'zh-TW').toLowerCase();
     const want = { 'zh-hant': ['zh-tw', 'zh-hk'], 'zh-hans': ['zh-cn'], zh: ['zh-tw', 'zh-cn'] }[lang] || [lang];
@@ -847,10 +903,7 @@ textarea{flex:1;font:inherit;font-size:16px;background:#2c2e26;color:inherit;bor
   }
 
   async function save() {
-    const text = '// 人工編輯層：由頁首「另存」產生，放在 story.js 旁並命名為 edits.js 即可套用。\n'
-      + '// 只包含文字、位置、隱藏狀態與各頁註解；元件內容、互動與口頭說明仍由 story.js 決定。\n'
-      + `window.storyEdits = ${JSON.stringify(edits, null, 2)};\n`;
-    const blob = new Blob([text], { type: 'text/javascript' });
+    const blob = new Blob([edits.text()], { type: 'text/javascript' });
     if (window.showSaveFilePicker) {
       try {
         const handle = await window.showSaveFilePicker({ suggestedName: 'edits.js', types: [{ description: 'JavaScript', accept: { 'text/javascript': ['.js'] } }] });
@@ -940,7 +993,7 @@ textarea{flex:1;font:inherit;font-size:16px;background:#2c2e26;color:inherit;bor
     new MutationObserver(() => { if (editing) ensureUi(); }).observe(root, { childList: true, subtree: true });
     root.addEventListener('input', e => {
       const key = keyOf.get(e.target);
-      if (key) record(key, { html: sanitize(e.target.innerHTML) });
+      if (key) record(key, { html: e.target.innerHTML });
       ensureUi();
     });
     window.addEventListener('resize', () => { if (editing) ensureUi(); });
@@ -948,8 +1001,7 @@ textarea{flex:1;font:inherit;font-size:16px;background:#2c2e26;color:inherit;bor
 
     const label = document.getElementById('story-label');
     label.addEventListener('input', () => {
-      edits.label = label.textContent.trim();
-      story.label = edits.label;
+      edits.setLabel(label.textContent.trim());
       setDirty(true);
     });
     label.addEventListener('keydown', e => { if (e.key === 'Enter') e.preventDefault(); });
