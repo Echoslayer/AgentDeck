@@ -37,6 +37,31 @@ const back = document.getElementById('story-back');
 back.hidden = !story.back;
 if (story.back) { back.textContent = story.back.label; back.setAttribute('href', story.back.href); }
 document.getElementById('progress').max = pages.length;
+// 附件：story.attachments = [{ label, href, note? }]，頁首「📎 附件」展開清單，點選開啟。
+// 相關入口（attachments/<name>/）、PDF、資料檔都可；href 相對於入口 HTML，以 story.js 的 resource() 換算。
+const attachments = story.attachments ?? [];
+if (!Array.isArray(attachments) || !attachments.every(a => a && typeof a.label === 'string' && typeof a.href === 'string' && (a.note === undefined || typeof a.note === 'string'))) {
+  throw new Error('story.attachments 需為 [{ label, href, note? }] 陣列');
+}
+if (attachments.length) {
+  const box = document.createElement('details');
+  box.className = 'reader-attach';
+  box.innerHTML = `<summary>📎 ${uiText('附件', 'Attachments')} <b>${attachments.length}</b></summary><ul></ul>`;
+  const list = box.querySelector('ul');
+  for (const a of attachments) {
+    const link = Object.assign(document.createElement('a'), { href: a.href });
+    // 沒有 note 時以副檔名提示類型（PDF、CSV…）；label、note 與其他文字欄位一樣是作者的 HTML。
+    const kind = a.note ?? (new URL(a.href, location.href).pathname.match(/\.([a-z0-9]{1,5})$/i)?.[1].toUpperCase() ?? '');
+    link.innerHTML = `<strong>${a.label}</strong>${kind ? `<small>${kind}</small>` : ''}`;
+    const item = document.createElement('li');
+    item.append(link);
+    list.append(item);
+  }
+  document.querySelector('body>header').append(box);
+  // 點外面或 Esc 收起。
+  document.addEventListener('click', e => { if (box.open && !box.contains(e.target)) box.open = false; });
+  box.addEventListener('keydown', e => { if (e.key === 'Escape' && box.open) { box.open = false; box.querySelector('summary').focus(); } });
+}
 // 入口 HTML 的靜態介面文字以中文寫成，英文介面在此替換。
 if (!uiZh) {
   const set = (sel, attr, text) => { const el = document.querySelector(sel); if (el) attr ? el.setAttribute(attr, text) : el.textContent = text; };

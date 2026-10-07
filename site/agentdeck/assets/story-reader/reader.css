@@ -368,3 +368,18 @@ html[data-transition=blur]::view-transition-new(story-page){animation:.3s ease-o
 .scrub-thumb{height:118px}
 .scrub-thumb .mini-page{transform:scale(.2)}
 }
+/* 附件（story.attachments）：頁首按鈕，展開為下拉清單。 */
+.reader-attach{order:2;position:relative;align-self:center}
+.reader-attach>summary{list-style:none;cursor:pointer;min-height:36px;display:flex;align-items:center;gap:6px;padding:7px 12px;font-size:14px;border:1px solid var(--line);border-radius:8px;background:var(--card);color:var(--ink)}
+.reader-attach>summary::-webkit-details-marker{display:none}
+.reader-attach>summary:focus-visible{outline:3px solid var(--accent);outline-offset:3px}
+.reader-attach>summary b{font-size:12px;min-width:1.6em;padding:0 5px;border-radius:9px;background:var(--accent);color:var(--paper);text-align:center}
+.reader-attach>ul{position:absolute;right:0;top:calc(100% + 6px);z-index:30;width:max-content;min-width:240px;max-width:min(380px,calc(100vw - 24px));max-height:60dvh;overflow:auto;margin:0;padding:6px;list-style:none;background:var(--card);border:1px solid var(--line);border-radius:10px;box-shadow:0 10px 28px #26282030}
+.reader-attach a{display:flex;align-items:baseline;justify-content:space-between;gap:14px;padding:9px 10px;border-radius:6px;color:var(--ink);text-decoration:none}
+.reader-attach a:hover,.reader-attach a:focus-visible{background:var(--tint)}
+.reader-attach a strong{font-weight:500;line-height:1.4}
+.reader-attach a small{flex:none;font-size:11px;color:var(--muted);letter-spacing:.04em}
+@media(max-width:700px){.reader-attach>ul{right:auto;left:0}}
+@media print{.reader-attach{display:none}}
+/* 頁首有自己的疊層（view-transition-name）；展開時整個頁首提到索引與講稿窗格之上，清單才點得到。 */
+body>header:has(.reader-attach[open]){position:relative;z-index:25}
