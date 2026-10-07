@@ -10,7 +10,7 @@ import { fail } from './util.mjs';
 import { zip, unzip } from './zip.mjs';
 
 const VIEW = { width: 1600, height: 1100 };
-const HIDE = '.deck-side,.deck-edit-bar,.reader-attach,body>nav,#index,.made-with{display:none!important}';
+const HIDE = '.deck-side,.deck-edit-bar,.reader-attach,body>nav,.made-with{display:none!important}';
 const W = 13.333, H = 7.5, M = 0.5, FONT = 'Microsoft JhengHei';
 
 async function load(name) {

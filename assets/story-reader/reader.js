@@ -31,6 +31,8 @@ for (const p of pages) {
     }
   }
 }
+// 舊版入口 HTML 的左側投影片窗格（<details id="index">）已由縮圖總覽取代；入口不必改，載入時移除。
+document.getElementById('index')?.remove();
 document.title = story.title;
 document.getElementById('story-label').textContent = story.label || story.title;
 const back = document.getElementById('story-back');
@@ -39,16 +41,16 @@ if (story.back) { back.textContent = story.back.label; back.setAttribute('href',
 document.getElementById('progress').max = pages.length;
 // 附件：story.attachments = [{ label, href, note? }]，頁首「📎 附件」展開清單，點選開啟。
 // 相關入口（attachments/<name>/）、PDF、資料檔都可；href 相對於入口 HTML，以 story.js 的 resource() 換算。
-const attachments = story.attachments ?? [];
-if (!Array.isArray(attachments) || !attachments.every(a => a && typeof a.label === 'string' && typeof a.href === 'string' && (a.note === undefined || typeof a.note === 'string'))) {
+const readerAttachments = story.attachments ?? [];
+if (!Array.isArray(readerAttachments) || !readerAttachments.every(a => a && typeof a.label === 'string' && typeof a.href === 'string' && (a.note === undefined || typeof a.note === 'string'))) {
   throw new Error('story.attachments 需為 [{ label, href, note? }] 陣列');
 }
-if (attachments.length) {
+if (readerAttachments.length) {
   const box = document.createElement('details');
   box.className = 'reader-attach';
-  box.innerHTML = `<summary>📎 ${uiText('附件', 'Attachments')} <b>${attachments.length}</b></summary><ul></ul>`;
+  box.innerHTML = `<summary>📎 ${uiText('附件', 'Attachments')} <b>${readerAttachments.length}</b></summary><ul></ul>`;
   const list = box.querySelector('ul');
-  for (const a of attachments) {
+  for (const a of readerAttachments) {
     const link = Object.assign(document.createElement('a'), { href: a.href });
     // 沒有 note 時以副檔名提示類型（PDF、CSV…）；label、note 與其他文字欄位一樣是作者的 HTML。
     const kind = a.note ?? (new URL(a.href, location.href).pathname.match(/\.([a-z0-9]{1,5})$/i)?.[1].toUpperCase() ?? '');
@@ -65,9 +67,6 @@ if (attachments.length) {
 // 入口 HTML 的靜態介面文字以中文寫成，英文介面在此替換。
 if (!uiZh) {
   const set = (sel, attr, text) => { const el = document.querySelector(sel); if (el) attr ? el.setAttribute(attr, text) : el.textContent = text; };
-  set('#index>summary', null, 'Slides');
-  set('#pin', null, 'Pin');
-  set('#index-list', 'aria-label', 'All pages');
   set('body>nav', 'aria-label', 'Slide navigation');
   set('#zoom', 'title', 'Enlarge slides');
 }
@@ -148,17 +147,14 @@ const futureHidden = () => pages[current].question?.hideFuturePreviews && !answe
 // 上一步／下一步只放文字；各頁縮圖由翻頁列頂端的拖動軸提供（createScrubber）。
 function renderPreviews() {
   const hideFuture = futureHidden();
-  scrubber.sync(); // 換頁、作答、edits 修改都經過這裡
+  readerScrubber.sync(); // 換頁、作答、edits 修改都經過這裡
   for (const [id, index, label] of [['prev', current - 1, uiText('← 上一步', '← Previous')], ['next', current === pages.length - 1 ? 0 : current + 1, current === pages.length - 1 ? uiText('↺ 重新看一次', '↺ Start over') : uiText('下一步 →', 'Next →')]]) {
     const button = document.getElementById(id), hidden = id === 'next' && hideFuture && index > current;
     const title = index < 0 ? uiText('從這裡開始', 'Start here') : hidden ? uiText('看看接下來發生什麼', 'See what happens next') : pages[index].title;
     button.className = 'preview';
     button.innerHTML = `<span class="preview-copy"><small>${label}</small><strong>${title}</strong></span>`;
   }
-  document.getElementById('index-list').innerHTML = pages.map((p, i) => {
-    const hidden = hideFuture && i > current;
-    return `<button class="index-item" data-page="${i}" ${i === current ? 'aria-current="step"' : ''}><div class="mini" aria-hidden="true">${hidden ? '<span class="mini-placeholder">?</span>' : `<div class="mini-page">${previewMarkup(p)}</div>`}</div><span><small>${i + 1}</small><strong>${hidden ? uiText('繼續閱讀後揭曉', 'Revealed as you read on') : p.title}</strong></span></button>`;
-  }).join('');
+  readerOverview.refresh();
 }
 function feedback() {
   const p = pages[current], el = document.getElementById('feedback');
@@ -240,38 +236,12 @@ zoomButton.onclick = async () => {
 };
 document.addEventListener('fullscreenchange', () => { if (!document.fullscreenElement) setZoomed(false); });
 
-// 索引窗格：hover 暫開、點標籤釘選，佔位由 CSS 處理。
-const indexPanel = document.getElementById('index');
-let pinned = false;
-function setPinned(value) {
-  pinned = value;
-  const pin = document.getElementById('pin');
-  pin.setAttribute('aria-pressed', String(pinned));
-  pin.textContent = pinned ? uiText('解除釘選', 'Unpin') : uiText('釘選', 'Pin');
-  indexPanel.open = true;
-}
-document.getElementById('pin').onclick = () => setPinned(!pinned);
-indexPanel.onclick = e => { if (e.target.closest('summary')) { e.preventDefault(); setPinned(true); } };
-indexPanel.ontoggle = () => { if (pinned && !indexPanel.open) indexPanel.open = true; };
-indexPanel.onpointerenter = e => { if (e.pointerType === 'mouse') indexPanel.open = true; };
-indexPanel.onpointerleave = e => { if (!pinned && e.pointerType === 'mouse' && !indexPanel.matches(':has(:focus-visible)')) indexPanel.open = false; };
-indexPanel.onkeydown = e => { if (e.key === 'Escape' && !pinned) { indexPanel.open = false; indexPanel.querySelector('summary').focus(); } };
-document.getElementById('index-list').onclick = e => {
-  const button = e.target.closest('[data-page]');
-  if (!button) return;
-  const index = Number(button.dataset.page);
-  if (!Number.isInteger(index) || index < 0 || index >= pages.length) return;
-  current = index;
-  if (!pinned) indexPanel.open = false;
-  show();
-  document.getElementById('next').focus();
-  window.scrollTo(0, 0);
-};
 document.addEventListener('keydown', e => {
   const delta = preferences.navigationDelta(e);
   if (delta) { e.preventDefault(); move(delta); }
 });
-const scrubber = createScrubber();
+const readerScrubber = createScrubber();
+const readerOverview = createOverview();
 show();
 
 // 拖動軸（YouTube 式）：翻頁列頂端一條分段軸，每頁一格，章節換段處間隔較寬。
@@ -370,13 +340,78 @@ function createScrubber() {
   return { sync };
 }
 
+// 縮圖總覽：翻頁列的總覽鈕或 G 開啟全畫面縮圖格，點一下跳頁；Esc、✕ 或點遮罩關閉。
+// 一個連續的格子，每章第一張上方標章節名稱。清單 #index-list 常駐，編輯層在項目上補註解數（deck-editor.js）。
+function createOverview() {
+  const plain = h => h.replace(/<[^>]*>/g, '');
+  const button = Object.assign(document.createElement('button'), { type: 'button', className: 'reader-overview-toggle' });
+  button.title = uiText('投影片總覽（G）', 'Slide overview (G)');
+  button.setAttribute('aria-label', uiText('投影片總覽', 'Slide overview'));
+  button.setAttribute('aria-haspopup', 'dialog');
+  button.innerHTML = '<svg viewBox="0 0 20 20" width="20" height="20" aria-hidden="true"><rect x="2.5" y="2.5" width="15" height="9.5" rx="2" fill="none" stroke="currentColor" stroke-width="1.6"/>'
+    + '<rect x="2.5" y="14" width="4" height="3.5" rx="1" fill="currentColor"/><rect x="8" y="14" width="4" height="3.5" rx="1" fill="currentColor"/><rect x="13.5" y="14" width="4" height="3.5" rx="1" fill="currentColor"/></svg>';
+  document.querySelector('.reader-playback-tools').append(button);
+
+  const dialog = document.createElement('dialog');
+  dialog.id = 'reader-overview';
+  dialog.setAttribute('aria-labelledby', 'reader-overview-title');
+  dialog.innerHTML = `<header><h2 id="reader-overview-title">${uiText('投影片總覽', 'Slide overview')}<small>${pages.length} ${uiText('頁', 'slides')}</small></h2>`
+    + `<button type="button" data-close aria-label="${uiText('關閉', 'Close')}">✕</button></header>`
+    + `<div class="reader-overview-body"><ol id="index-list" aria-label="${uiText('所有頁面', 'All pages')}"></ol></div>`;
+  document.body.append(dialog);
+  const list = dialog.querySelector('ol');
+
+  // 每次開啟（與開著時作答、edits 修改）重畫，縮圖反映目前狀態；答題前後面的頁面以「?」代替。
+  function render() {
+    const hideFuture = futureHidden();
+    list.innerHTML = pages.map((p, i) => {
+      const hidden = hideFuture && i > current, chapter = (!i || p.section !== pages[i - 1].section) && !hidden ? p.section : '';
+      const title = hidden ? uiText('繼續閱讀後揭曉', 'Revealed as you read on') : p.title;
+      return `<li><span class="reader-overview-chapter">${chapter}</span>`
+        + `<button type="button" class="reader-overview-item" data-page="${i}" ${i === current ? 'aria-current="page"' : ''} aria-label="${i + 1}：${plain(title)}">`
+        + `<span class="reader-overview-thumb" aria-hidden="true">${hidden ? '<span class="mini-placeholder">?</span>' : `<span class="mini-page">${previewMarkup(p)}</span>`}</span>`
+        + `<span class="reader-overview-meta"><b>${i + 1}</b>${title}</span></button></li>`;
+    }).join('');
+  }
+  function open() {
+    render();
+    dialog.showModal();
+    const cur = list.querySelector('[aria-current]');
+    cur.scrollIntoView({ block: 'center' });
+    cur.focus();
+  }
+  dialog.addEventListener('click', e => {
+    const item = e.target.closest('[data-page]');
+    if (item) {
+      dialog.close();
+      current = Number(item.dataset.page);
+      show();
+      window.scrollTo(0, 0);
+      return;
+    }
+    if (e.target === dialog || e.target.closest('[data-close]')) dialog.close();
+  });
+  // 總覽內的按鍵不往文件層傳，避免背後的閱讀器跟著翻頁。
+  dialog.addEventListener('keydown', e => e.stopPropagation());
+  dialog.addEventListener('close', () => button.focus());
+  button.addEventListener('click', open);
+  document.addEventListener('keydown', e => {
+    const typing = e.target.isContentEditable || ['INPUT', 'SELECT', 'TEXTAREA'].includes(e.target.tagName);
+    if (e.key.toLowerCase() === 'g' && !typing && !e.isComposing && !e.ctrlKey && !e.metaKey && !e.altKey && !document.querySelector('dialog[open]')) {
+      e.preventDefault();
+      open();
+    }
+  });
+  return { refresh: () => { if (dialog.open) render(); } };
+}
+
 // 設定模組：封裝對話框、草稿、驗證與翻頁鍵；不依賴編輯器的 DOM 或狀態。
 // 留在同一支交付檔內，讓既有簡報更新核心後不必修改 script 清單。
 function createPreferences() {
   const storageKey = 'agentdeck-navigation-keys';
   const keys = { prev: 'a', next: 'd' };
   const validKeys = value => value && /^[a-z]$/.test(value.prev) && /^[a-z]$/.test(value.next)
-    && value.prev !== value.next && !/[encrps]/.test(value.prev + value.next);
+    && value.prev !== value.next && !/[encrpsg]/.test(value.prev + value.next);
   try {
     const saved = JSON.parse(localStorage.getItem(storageKey));
     if (validKeys(saved)) Object.assign(keys, saved);
@@ -392,7 +427,7 @@ function createPreferences() {
     <fieldset><legend>${uiText('基本操作', 'Basics')}</legend><p>${uiText('翻頁快捷鍵', 'Page-turn shortcuts')}</p>
       <label>${uiText('上一頁', 'Previous')} <input name="prev" maxlength="1" pattern="[a-zA-Z]" required></label>
       <label>${uiText('下一頁', 'Next')} <input name="next" maxlength="1" pattern="[a-zA-Z]" required></label>
-      <p>${uiText('←／→ 固定保留。字母不可重複；E、N、C、R、P、S 為保留鍵。', '← / → always work. Letters must differ; E, N, C, R, P, S are reserved.')}</p>
+      <p>${uiText('←／→ 固定保留。字母不可重複；E、N、C、R、P、S、G 為保留鍵。', '← / → always work. Letters must differ; E, N, C, R, P, S, G are reserved.')}</p>
     </fieldset>
     <details id="reader-personal-settings" hidden><summary>${uiText('個人客製', 'Personal')}</summary>
       <p>${uiText('調整換頁、朗讀、字幕與講者視窗。', 'Adjust page turns, read-aloud, captions, and the presenter window.')}</p>
@@ -757,7 +792,6 @@ function createAnnotations() {
   document.addEventListener('fullscreenchange', () => { hideLaser(); schedule(); });
   // zoom 與側欄可只改變視覺座標，不一定觸發內容尺寸 observer。
   new MutationObserver(schedule).observe(document.body, { attributes: true, attributeFilter: ['class', 'style'] });
-  new MutationObserver(schedule).observe(document.getElementById('index'), { attributes: true, subtree: true, attributeFilter: ['open', 'aria-pressed'] });
   function point(e) {
     const r = ink.getBoundingClientRect();
     return `${Math.max(0, Math.min(root.offsetWidth, (e.clientX - r.left) * root.offsetWidth / r.width)).toFixed(2)},${Math.max(0, Math.min(root.offsetHeight, (e.clientY - r.top) * root.offsetHeight / r.height)).toFixed(2)}`;

@@ -16,8 +16,6 @@ body{font-family:"Microsoft JhengHei","微軟正黑體","Noto Sans TC",system-ui
 body>header{max-width:none;margin:0;padding:10px 24px;gap:12px;flex-wrap:wrap;align-items:center;background:var(--deck-gradient);color:#fff;font-size:16px;font-weight:700;min-height:60px}
 body>header #story-label{flex:1;min-width:140px;font-size:14px}
 body>header a{color:#fff}
-body:not(:has(#pin[aria-pressed=true]))>header{padding-left:64px}
-.index summary{background:var(--deck-primary);color:#fff}
 
 /* 內容頁 */
 h1{color:var(--deck-primary)}
@@ -105,7 +103,7 @@ body.is-zoomed .deck-side,body.deck-bar-hidden .deck-side{display:none}
 .deck-comment-add{display:flex;gap:8px;margin-top:10px}
 .deck-comment-add textarea{flex:1;min-width:0;font:inherit;font-size:15px;border:1px solid var(--line);border-radius:6px;padding:6px 8px;background:var(--card);color:var(--ink);resize:vertical}
 .deck-comment-add button{padding:6px 14px}
-.index-item{position:relative}
+.reader-overview-item{position:relative}
 .deck-comment-badge{position:absolute;right:8px;top:6px;font-size:12px;background:var(--deck-accent);color:#fff;border-radius:99px;padding:0 7px}
 
 /* 特殊元件的動態內容（deck.define 的 live，docs/adr/0013）：畫布疊在靜態後備上，啟動成功才隱藏後備。 */
