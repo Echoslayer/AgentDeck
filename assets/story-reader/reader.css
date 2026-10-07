@@ -83,7 +83,6 @@ main{padding-bottom:165px}
 nav{z-index:10}
 .preview{position:relative;transform-origin:center bottom}
 .mini{transform-origin:left bottom}
-#next .mini{transform-origin:right bottom}
 @media(prefers-reduced-motion:no-preference){
 .preview,.mini{transition:transform .18s ease,box-shadow .18s ease}
 }
@@ -179,18 +178,13 @@ body.is-zoomed header,body.is-zoomed nav{zoom:1}
 body.is-zoomed main{zoom:1.15}
 @supports not (zoom:1){body.is-zoomed main{transform:scale(1.15);width:86.96%}}
 }
-/* 固定高度的導覽；縮圖在按鈕上方浮出，不推擠內容。 */
+/* 固定高度的導覽；各頁縮圖由拖動軸在上方浮出，不推擠內容。 */
 body>main{padding-bottom:calc(var(--reader-nav-height,80px) + 24px)}
 body>nav .nav-inner{max-width:660px;padding:10px 16px 18px;gap:12px;grid-template-columns:minmax(0,1fr) 64px 88px minmax(0,1fr)}
 body>nav .preview{min-height:40px;padding:8px 12px;transform:none;justify-content:center;border-radius:8px}
 body>nav .preview strong{display:none}
 body>nav .preview-copy>small{margin:0;font-size:14px}
-body>nav .preview .mini{display:none}
 body>nav #zoom{width:40px;height:40px;border-radius:8px}
-@media(hover:hover) and (pointer:fine) and (min-width:701px){
-body>nav .preview:not(:disabled):is(:hover,:focus-visible) .mini{display:block;position:absolute;bottom:calc(100% + 12px);left:0;width:160px;height:128px;opacity:1;border:1px solid var(--line);transform:none;box-shadow:0 8px 24px #0002}
-body>nav #next .mini{left:auto;right:0}
-}
 @media(max-width:400px){body>nav .nav-inner{gap:6px;padding-inline:8px;grid-template-columns:minmax(0,1fr) 48px 88px minmax(0,1fr)}body>nav .preview{padding-inline:6px}}
 /* 導覽列空白處也能翻頁（reader.js）：左半上一頁、右半下一頁。 */
 body>nav{cursor:pointer}
@@ -342,3 +336,35 @@ html[data-transition=blur]::view-transition-new(story-page){animation:.3s ease-o
 @keyframes story-rise-in{from{opacity:0;translate:0 calc(var(--turn,1) * 32px)}}
 @keyframes story-blur-out{to{opacity:0;filter:blur(10px)}}
 @keyframes story-blur-in{from{opacity:0;filter:blur(10px)}}
+/* 拖動軸（reader.js createScrubber）：每頁一格，章節間隔較寬；滑過放大並浮出該頁縮圖。 */
+.scrub{position:relative;width:calc(100% - 64px);max-width:1096px;margin:0 auto;height:22px;cursor:pointer;touch-action:none;outline:none;--scrub-h:4px}
+.scrub:hover,.scrub.is-dragging,.scrub:focus-visible{--scrub-h:8px}
+.scrub:focus-visible .scrub-track{outline:3px solid var(--accent);outline-offset:4px;border-radius:3px}
+.scrub-track{position:absolute;inset:0;display:flex;align-items:center;gap:3px}
+.scrub-seg{flex:1;height:var(--scrub-h);background:var(--line);border-radius:2px}
+.scrub-seg.scrub-chapter{margin-left:6px}
+.scrub-seg.is-past{background:color-mix(in srgb,var(--accent) 55%,var(--line))}
+.scrub-seg.is-current{background:var(--accent)}
+.scrub-seg.is-hover{background:color-mix(in srgb,var(--ink) 40%,var(--line))}
+.scrub-seg.is-hover.is-past{background:color-mix(in srgb,var(--accent) 80%,var(--line))}
+.scrub-head{position:absolute;top:50%;width:14px;height:14px;margin:-7px 0 0 -7px;border-radius:50%;background:var(--accent);box-shadow:0 0 0 2px var(--card);transform:scale(0);pointer-events:none}
+.scrub:hover .scrub-head,.scrub:focus-visible .scrub-head,.scrub.is-dragging .scrub-head{transform:scale(1)}
+@media(prefers-reduced-motion:no-preference){
+.scrub-seg{transition:height .12s,background .12s}
+.scrub-head{transition:transform .12s,left .2s}
+.scrub.is-dragging .scrub-head{transition:transform .12s}
+}
+.scrub-tip{position:absolute;bottom:calc(100% + 8px);left:0;width:256px;background:var(--card);border:1px solid var(--line);border-radius:8px;box-shadow:0 8px 24px #2628202e;overflow:hidden;pointer-events:none;z-index:2;cursor:default}
+.scrub-tip[hidden]{display:none}
+.scrub-thumb{position:relative;height:150px;overflow:hidden;background:var(--paper);border-bottom:1px solid var(--line)}
+.scrub-thumb .mini-page{transform:scale(.256)}
+.scrub-thumb .mini-placeholder{font-size:32px;color:var(--accent)}
+.scrub-caption{padding:8px 10px}
+.scrub-caption small{display:block;font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums}
+.scrub-caption strong{display:block;font-size:14px;line-height:1.4;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+@media(max-width:700px){
+.scrub{width:calc(100% - 24px);height:28px}
+.scrub-tip{width:200px}
+.scrub-thumb{height:118px}
+.scrub-thumb .mini-page{transform:scale(.2)}
+}

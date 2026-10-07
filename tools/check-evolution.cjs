@@ -50,10 +50,10 @@ const {chromium}=require('playwright');
   p.mount=(root,state)=>{const listener=e=>{state.step=e.detail.step;root.dataset.observedStep=e.detail.step;};root.addEventListener('deck:evolution',listener);return()=>root.removeEventListener('deck:evolution',listener);};
   storyReader.go(1);
  });
- assert.equal(await page.locator('#page').getAttribute('data-observed-step'),'0');
+ await page.waitForSelector('#page[data-observed-step="0"]',{timeout:3000}); // go() 在換頁轉場內非同步渲染
  await page.locator('#page button[data-step="2"]').click();
  await page.evaluate(()=>{storyReader.go(0);storyReader.go(1);});
- assert.equal(await page.locator('#page').getAttribute('data-observed-step'),'2');
+ await page.waitForSelector('#page[data-observed-step="2"] .deck-evolution',{timeout:3000});
  const snapshot=await page.evaluate(()=>storyReader.snapshot().pages[1].html);
  assert(!snapshot.includes('deck-evolution-future'));assert(snapshot.includes('保存結果'));
  assert.deepEqual(errors,[]);console.log('PASS: evolution 邊界、回放、分支連線、長文字、窄版、編輯保留、清理、返回與靜態後備');
