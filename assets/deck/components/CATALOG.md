@@ -32,8 +32,8 @@
 | --- | --- | --- | --- |
 | [steps](steps/README.md) | 單向流程 | 先後順序、單一路徑 | 有分支、判斷、回圈 → `flow` |
 | [flow](flow/README.md) | 分支流程 | 有判斷、分支、匯流或回圈的流程；小型樹狀（組織圖） | 單一路徑 → `steps`；超過約 12 個節點 → 拆頁或 `network` |
-| [sequence](sequence/README.md) | 多方時序 | 請求／回覆、重試、逾時、訊息遺失（2–4 方） | 單方的步驟 → `steps`／`flow`；需要時間比例 → 自製 |
-| [timeline](timeline/README.md) | 時程 | 有日期的里程碑、目前進度 | 只有先後沒有日期 → `steps`；需要時間比例（甘特）→ 自製 |
+| [sequence](sequence/README.md) | 多方時序 | 請求／回覆、重試、逾時、訊息遺失（2–4 方） | 單方的步驟 → `steps`／`flow`；需要時間比例 → `spans` |
+| [timeline](timeline/README.md) | 時程 | 有日期的里程碑、目前進度 | 只有先後沒有日期 → `steps`；需要時間比例（甘特）→ `spans` |
 
 ### 數量與數值
 
@@ -56,6 +56,7 @@
 | 元件 | 表達的關係 | 技術 | 用在 | 不要用在 |
 | --- | --- | --- | --- | --- |
 | [stepper](stepper/README.md) | 狀態逐步變化 | 零依賴，控制列 | 演算法每一輪、事件一步步發生、同一張圖換條件 | 只有前後兩個狀態 → `compare`／`slider`；要即時計算 → examples |
+| [spans](spans/README.md) | 依時間比例的區間（甘特） | 零依賴，控制列 | 多個執行者或階段的開始、結束、重疊與等待；播放游標看此刻在做什麼 | 只有先後沒有時間比例 → `steps`／`sequence`；有日期的里程碑 → `timeline` |
 | [predict](predict/README.md) | 先猜再揭曉 | 零依賴，按鈕 | 教學提問、課程的「先預測再操作」 | 不需要觀眾先想 → `focus`／`list` |
 | [slider](slider/README.md) | 同一畫面的前後差異 | 零依賴，拖曳 | 改善前後、良品與瑕疵的影像對照 | 不同取景或不是圖片 → `compare` |
 | [evolution](evolution/README.md) | 能力逐階演進 | HTML／SVG，零依賴 | 專案如何因需求逐步長出功能 | 日期時程 → `timeline`；循環網路 → `network` |
@@ -113,6 +114,7 @@
 | 流程圖、判斷、分支、決策樹、回圈、組織圖 | `flow`（單一路徑 → `steps`） |
 | 時序圖、請求回覆、重試、逾時、封包遺失、兩台機器 | `sequence` |
 | 時程、里程碑、路線圖、進度 | `timeline`（無日期 → `steps`） |
+| 甘特圖、時間比例、泳道、平行、重疊、等待、各階段耗時、排程 | `spans`（只有先後 → `steps`） |
 | KPI、成果數字、大數字 | `metrics` |
 | 表格、規格表、明細、精確數字 | `table` |
 | 長條圖、排名、各項比較、分布 | `bars` |
@@ -142,8 +144,6 @@
 | 立體示意、等角圖、硬體構造、伺服器機櫃 | `model`（分層 → `stack3d`） |
 | 動態背景、封面背景、章節頁、粒子背景 | `backdrop` |
 | 3D、酷一點、動態、開場效果 | 依內容選 `surface`／`stack3d`／`globe`／`cube`／`model`；封面或章節頁 → `backdrop`；內容不合適就說明並改用基礎元件 |
-
-**還沒有元件的關係**，一律自製：甘特（依時間比例）。
 
 ## 引用方式
 

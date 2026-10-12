@@ -1,0 +1,31 @@
+/* deck.spans 樣式；結構由 spans.js 產生。色彩只用主題色票（類別色由 --c 傳入）。 */
+.deck-spans{display:grid;gap:10px;min-width:0;text-align:left;--deck-spans-t:0;--deck-spans-label:96px}
+.deck-spans-legend{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:14px;color:var(--muted)}
+.deck-spans-legend>span{display:inline-flex;align-items:center;gap:6px}
+.deck-spans-legend i{width:12px;height:12px;border-radius:3px;background:var(--c)}
+.deck-spans-group{display:grid;gap:4px;padding:8px 0;border-top:1px solid var(--line)}
+.deck-spans-head{display:flex;align-items:baseline;gap:10px}
+.deck-spans-head b{color:var(--deck-primary);font-size:16px}
+.deck-spans-head small{color:var(--muted);font-size:13px}
+.deck-spans-now{margin:0;min-height:1.4em;font-size:14px;color:var(--ink)}
+.deck-spans-lane{display:grid;grid-template-columns:var(--deck-spans-label) minmax(0,1fr);align-items:center;gap:8px}
+.deck-spans-lane-label{font-size:13px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.deck-spans-track{position:relative;height:26px;background:var(--tint);border-radius:4px}
+.deck-spans-bar{position:absolute;top:3px;bottom:3px;min-width:2px;border-radius:3px;background:var(--c);font-style:normal;overflow:hidden;opacity:.9}
+.deck-spans-bar>span{display:block;padding:0 5px;font-size:12px;line-height:20px;color:var(--card);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.deck-spans-bar.is-active{opacity:1;outline:2px solid var(--ink);outline-offset:1px;z-index:1}
+.deck-spans-cursor{display:none;position:absolute;top:-3px;bottom:-3px;left:calc(var(--deck-spans-t) * 100%);width:2px;background:var(--ink);z-index:2}
+.deck-spans-axis{position:relative;height:18px;margin-left:calc(var(--deck-spans-label) + 8px);font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums}
+.deck-spans-axis span{position:absolute;transform:translateX(-50%);white-space:nowrap}
+.deck-spans-axis span:first-child{transform:none}.deck-spans-axis span:last-child{transform:translateX(-100%)}
+.deck-spans-ctrl{display:none;flex-wrap:wrap;align-items:center;gap:8px}
+.deck-spans-ctrl input{flex:1 1 160px;min-width:0;accent-color:var(--deck-accent)}
+.deck-spans-ctrl button{height:32px;padding:0 12px;border:1px solid var(--line);border-radius:6px;background:var(--card);color:var(--ink);font:inherit;font-size:14px;white-space:nowrap;cursor:pointer}
+.deck-spans-ctrl output{min-width:9em;text-align:right;font-size:13px;color:var(--muted);font-variant-numeric:tabular-nums}
+/* 靜態（縮圖、匯出、未啟動）只畫完整時間軸；啟動後才有游標、此刻狀態與控制列 */
+.deck-spans:not(.deck-live-on) .deck-spans-now,.deck-spans:not(.deck-live-on)>.deck-hint{display:none}
+.deck-spans.deck-live-on .deck-spans-cursor{display:block}
+.deck-spans.deck-live-on .deck-spans-ctrl{display:flex}
+body.is-editing #page .deck-spans-ctrl,body.is-editing #page .deck-spans-cursor{display:none}
+@media(max-width:600px){.deck-spans{--deck-spans-label:64px}.deck-spans-bar>span{display:none}}
+.deck-spans>*{min-width:0}
