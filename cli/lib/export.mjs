@@ -267,6 +267,8 @@ export async function exportPptx({ dir, out, ffmpeg }, log = console.log) {
       id: p.id, full: !!document.querySelector('#page :is(.deck-cover,.deck-end)'),
       chapter: vis('.chapter'), title: vis('h1'), lead: vis('.lead'), point: vis('.point'),
       instruction: text(p.instruction), speech: text(p.speech), explain: text(p.explain), record: p.record ?? null,
+      glossary: [...new Set([...document.querySelectorAll('#page dfn')].map(e => e.dataset.term || e.textContent.trim()))]
+        .filter(k => story.glossary?.[k]).map(k => `${k}：${text(story.glossary[k])}`).join('\n'),
       audio: p.audio ? new URL(p.audio, location.href).href : null,
     };
   });
@@ -353,7 +355,7 @@ export async function exportPptx({ dir, out, ffmpeg }, log = console.log) {
       await goTo(pg, i);
       const p = await readPage(pg);
       const slide = pptx.addSlide();
-      const notes = [p.instruction && `【講者動作】\n${p.instruction}`, p.speech && `【口語稿】\n${p.speech}`, p.explain && `【補充解釋】\n${p.explain}`];
+      const notes = [p.instruction && `【講者動作】\n${p.instruction}`, p.speech && `【口語稿】\n${p.speech}`, p.explain && `【補充解釋】\n${p.explain}`, p.glossary && `【術語】\n${p.glossary}`];
       if (p.full) {
         const img = await shot(pg, '#page :is(.deck-cover,.deck-end)');
         slide.addImage({ data: img.data, x: 0, y: 0, w: W, h: H });
