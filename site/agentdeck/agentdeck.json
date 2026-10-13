@@ -1,10 +1,10 @@
 {
   "contract": 2,
   "core": {
-    "commit": "23b6f501a05d",
+    "commit": "db372a69af90",
     "files": {
       "LICENSE": "144f6e0805ecc5f3",
-      "AGENTDECK.md": "0d87ca99fd4f7c46",
+      "AGENTDECK.md": "79ed79c2275971c6",
       "assets/deck/deck-core.js": "b385a508398092d9",
       "assets/deck/deck-editor.js": "a3dc3dc26008c995",
       "assets/deck/deck.css": "4f1f76c6c9ec278d",
