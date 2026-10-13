@@ -272,7 +272,9 @@ function createGlossary() {
     // ponytail: 手動定位；CSS anchor positioning 普及後可改用 position-anchor
     const r = el.getBoundingClientRect(), w = card.offsetWidth, h = card.offsetHeight;
     card.style.left = `${Math.min(Math.max(8, r.left + r.width / 2 - w / 2), innerWidth - w - 8)}px`;
-    card.style.top = `${r.bottom + 8 + h > innerHeight ? r.top - h - 8 : r.bottom + 8}px`;
+    // 下方放不下（含固定在底部的翻頁列）時改放上方
+    const bottom = Math.min(innerHeight, document.querySelector('body>nav')?.getBoundingClientRect().top ?? innerHeight);
+    card.style.top = `${r.bottom + 8 + h > bottom ? r.top - h - 8 : r.bottom + 8}px`;
   }
   function close() { if (isOpen()) card.hidePopover(); }
   card.addEventListener('toggle', e => { if (e.newState === 'closed') openTerm = null; });

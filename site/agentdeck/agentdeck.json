@@ -1,7 +1,7 @@
 {
   "contract": 2,
   "core": {
-    "commit": "db372a69af90",
+    "commit": "33877625817f-dirty",
     "files": {
       "LICENSE": "144f6e0805ecc5f3",
       "AGENTDECK.md": "79ed79c2275971c6",
@@ -10,7 +10,7 @@
       "assets/deck/deck.css": "4f1f76c6c9ec278d",
       "assets/story-reader/export.js": "68930a933117869c",
       "assets/story-reader/reader.css": "30c90a33a7398fcf",
-      "assets/story-reader/reader.js": "437164b1f0e6eff7",
+      "assets/story-reader/reader.js": "336c3a771e21988b",
       "templates/blank/edits.js": "2236732a134736dd",
       "templates/blank/index.html": "424d0829bcb063ec",
       "templates/blank/plan.md": "0f66d214a413cad7",
