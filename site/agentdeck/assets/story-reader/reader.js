@@ -39,6 +39,11 @@ const back = document.getElementById('story-back');
 back.hidden = !story.back;
 if (story.back) { back.textContent = story.back.label; back.setAttribute('href', story.back.href); }
 document.getElementById('progress').max = pages.length;
+// 術語註：story.glossary = { 詞: '一句定義' }，頁面文字以 <dfn>詞</dfn> 標記（docs/adr/0037）。
+const readerGlossaryTerms = story.glossary ?? {};
+if (typeof readerGlossaryTerms !== 'object' || Array.isArray(readerGlossaryTerms) || !Object.values(readerGlossaryTerms).every(v => typeof v === 'string')) {
+  throw new Error('story.glossary 需為 { 詞: 定義字串 } 物件');
+}
 // 附件：story.attachments = [{ label, href, note? }]，頁首「📎 附件」展開清單，點選開啟。
 // 相關入口（attachments/<name>/）、PDF、資料檔都可；href 相對於入口 HTML，以 story.js 的 resource() 換算。
 const readerAttachments = story.attachments ?? [];
@@ -188,6 +193,7 @@ function render() {
     feedback();
   });
   feedback();
+  readerGlossary.decorate(root);
   if (p.mount) {
     if (!states.has(p.id)) states.set(p.id, {});
     cleanup = p.mount(root, states.get(p.id));
@@ -241,8 +247,62 @@ document.addEventListener('keydown', e => {
   if (delta) { e.preventDefault(); move(delta); }
 });
 const readerScrubber = createScrubber();
+const readerGlossary = createGlossary();
 const readerOverview = createOverview();
 show();
+
+// 術語註：點擊／Enter 開卡片，滑鼠裝置另支援 hover；原生 popover 處理點外面與 Esc 關閉。
+// 編輯模式不攔截（讓人改字）；點術語不翻頁。只作用於 #page，縮圖不受影響。
+function createGlossary() {
+  const card = document.createElement('div');
+  card.id = 'reader-glossary';
+  card.popover = 'auto';
+  card.setAttribute('role', 'tooltip');
+  document.body.append(card);
+  const keyOf = el => el.dataset.term || el.textContent.trim();
+  const isOpen = () => card.matches(':popover-open');
+  let openTerm = null;
+  function open(el) {
+    const def = readerGlossaryTerms[keyOf(el)];
+    if (!def) return;
+    openTerm = el;
+    card.innerHTML = `<b></b><p>${def}</p>`;
+    card.firstChild.textContent = keyOf(el);
+    card.showPopover();
+    // ponytail: 手動定位；CSS anchor positioning 普及後可改用 position-anchor
+    const r = el.getBoundingClientRect(), w = card.offsetWidth, h = card.offsetHeight;
+    card.style.left = `${Math.min(Math.max(8, r.left + r.width / 2 - w / 2), innerWidth - w - 8)}px`;
+    card.style.top = `${r.bottom + 8 + h > innerHeight ? r.top - h - 8 : r.bottom + 8}px`;
+  }
+  function close() { if (isOpen()) card.hidePopover(); }
+  card.addEventListener('toggle', e => { if (e.newState === 'closed') openTerm = null; });
+  const termOf = e => !document.body.classList.contains('is-editing') && e.target.closest?.('#page dfn');
+  document.addEventListener('click', e => {
+    const el = termOf(e);
+    if (!el) return;
+    e.stopPropagation();
+    if (openTerm === el && isOpen()) close(); else open(el);
+  }, true);
+  document.addEventListener('keydown', e => {
+    const el = (e.key === 'Enter' || e.key === ' ') && termOf(e);
+    if (el) { e.preventDefault(); e.stopPropagation(); open(el); }
+  }, true);
+  if (matchMedia('(hover: hover)').matches) {
+    document.addEventListener('pointerover', e => { const el = termOf(e); if (el) open(el); });
+    document.addEventListener('pointerout', e => { if (termOf(e) && !card.matches(':hover')) close(); });
+  }
+  return {
+    decorate(root) {
+      close();
+      root.querySelectorAll('dfn').forEach(el => {
+        if (!readerGlossaryTerms[keyOf(el)]) { console.error(`${pages[current].id}：術語註缺定義：story.glossary['${keyOf(el)}']`); return; }
+        el.tabIndex = 0;
+        el.setAttribute('role', 'button');
+        el.setAttribute('aria-describedby', 'reader-glossary');
+      });
+    },
+  };
+}
 
 // 拖動軸（YouTube 式）：翻頁列頂端一條分段軸，每頁一格，章節換段處間隔較寬。
 // 滑過任一格顯示該頁縮圖與標題；按住拖曳時縮圖跟著格子，放開才跳頁（拖曳中不連續換頁與轉場）。
