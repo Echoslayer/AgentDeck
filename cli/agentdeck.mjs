@@ -9,12 +9,14 @@ import { parseArgs } from 'node:util';
 import {
   UP, MARKER, FW, DEFAULT_SOURCE, UserError, fail, toPosix, exists, readText, readJson, writeJson, writeText,
   inside, hashFile, sha256, listFiles, copyFile, git, contractOf, upstreamCommit, findWorkspace,
-  requireDownstream, saveConfig, cliHint,
+  requireDownstream, saveConfig, cliHint, checkContract, LEGACY, rebaseHtml,
 } from './lib/util.mjs';
 import {
-  coreFiles, isCore, themeFiles, componentNames, componentManifest, requireComponent, buildIndex, resolveDoc,
+  coreFiles, isCore, themeFiles, componentNames, componentManifest, buildIndex, resolveDoc,
   linkedDocs, catalogSection, migrationPath, upstreamVendor, READER_VENDOR,
 } from './lib/registry.mjs';
+import { addComponents, useComponents } from './lib/components.mjs';
+import { downloadVendor } from './lib/vendor.mjs';
 import { zip } from './lib/zip.mjs';
 import { checkSpeech } from './lib/speech.mjs';
 import { exportEnv, exportPptx, checkRecords } from './lib/export.mjs';
@@ -32,6 +34,7 @@ const HELP = `AgentDeck CLI（docs/adr/0016）
   catalog [關鍵字…]        元件、範例、寫作指引的一行索引
   docs <名稱> [--code]     輸出元件／範例／指引／遷移說明的文件；--code 連同範例程式
   add <元件…> [--force]    複製元件到工作區並登記用到的套件
+  use <元件…>             取得元件、下載套件並接入標準根 index.html；重複執行不重複引用
   diff [core|<元件>…]      副本相對於取得時與上游最新版的差異；--patch 顯示內容差異
   update core              備份後覆蓋核心；--check 唯讀預檢，--migrate 跨契約，--force 覆蓋本地修改
   new <主題>               建立根 index.html 與 resources/<主題>/ 內容
@@ -60,23 +63,11 @@ const OPTIONS = {
 };
 
 const log = (...a) => console.log(...a);
+const vendorCmd = (args, opts, ws) => downloadVendor(args, opts, ws, log);
 const rel = (from, p) => toPosix(path.relative(from, p)) || '.';
 const fileMap = (base, files) => Object.fromEntries(files.map(f => [f, hashFile(path.join(base, f))]));
 const localRef = r => r && !/^(?:[a-z][a-z0-9+.-]*:|\/\/|#|\?)/i.test(r);
 const htmlRefs = html => [...html.replace(/<!--[\s\S]*?-->/g, '').matchAll(/\b(?:src|href)\s*=\s*(["'])(.*?)\1/g)].map(m => m[2]).filter(localRef);
-
-// 僅重定位 HTML 屬性；story.js 的動態網址須相對於其 script src（契約 2）。
-function rebaseHtml(html, from, to, mapFile = p => p) {
-  if (/<base\b/i.test(html.replace(/<!--[\s\S]*?-->/g, ''))) fail('入口不可使用 <base>；請使用相對 src/href 與 story 的 resource()。');
-  return html.replace(/\b(src|href)(\s*=\s*)(["'])(.*?)\3/g, (match, attr, eq, quote, ref) => {
-    if (!localRef(ref)) return match;
-    if (/^[\/\\]|\\/.test(ref)) fail(`引用必須使用相對路徑與 /：${ref}`);
-    const [, file, suffix] = ref.match(/^([^?#]*)([\s\S]*)$/);
-    const target = mapFile(path.resolve(from, decodeURIComponent(file)));
-    const url = rel(to, target).split('/').map(p => encodeURIComponent(p).replace(/'/g, '%27')).join('/') + suffix;
-    return `${attr}${eq}${quote}${url}${quote}`;
-  });
-}
 
 const reservedDirs = new Set([FW, 'assets', 'components', 'resources', 'templates', 'vendor', 'dist', 'cli', 'docs', 'examples', 'playground', 'skills', 'tools']);
 function entryDirs(root) {
@@ -98,16 +89,6 @@ function resolveDeck(ws, arg) {
   if (d !== ws.root && !inside(ws.root, d)) fail(`簡報必須在工作區內：${d}`);
   if (!exists(path.join(d, 'index.html'))) fail(`找不到 ${path.join(d, 'index.html')}`);
   return d;
-}
-
-const LEGACY = `框架檔在工作區根目錄（契約 1 以前的佈局）；依 docs 1-to-2 以 init 建立新單位（框架集中於 ${FW}/）後搬移內容。`;
-
-function checkContract(ws) {
-  const up = contractOf(UP);
-  if (ws.config.contract !== up) {
-    fail(`契約版本不同：工作區 ${ws.config.contract}、上游 ${up}。先執行 status 了解差異，再以 update core --migrate 升級（上游較舊時請改用對應版本的來源）。`);
-  }
-  if (ws.legacy) fail(LEGACY);
 }
 
 // ---- init ----
@@ -243,52 +224,6 @@ function docs(args, opts, ws) {
     log(`\n===== 程式檔（範例只讀，不要引用；在主題 story.js／story.css 改寫） =====`);
     for (const f of code) log(`  ${toPosix(path.join(doc.dir, f))}`);
     if (opts.code) for (const f of code) print(path.join(doc.dir, f), `${name}/${f}`);
-  }
-}
-
-// ---- add ----
-function add(args, opts, ws) {
-  requireDownstream(ws, 'add');
-  if (!args.length) fail('用法：add <元件…>');
-  checkContract(ws);
-  const manifests = args.map(requireComponent);
-  const commit = upstreamCommit();
-  const vendorPath = path.join(ws.fw, 'vendor.json');
-  const vendor = exists(vendorPath) ? readJson(vendorPath) : { packages: {} };
-  vendor.packages ??= {};
-  const upVendor = upstreamVendor().packages;
-  const lines = { css: [], js: [], vendor: new Set() };
-
-  for (const m of manifests) {
-    const dst = path.join(ws.fw, 'assets', 'deck', 'components', m.name);
-    if (exists(dst) && !opts.force) fail(`已有元件副本 ${m.name}；與上游比對用 diff ${m.name}，要以上游整份取代加 --force`);
-    if (exists(dst)) fs.rmSync(dst, { recursive: true, force: true });
-    for (const f of m.files) copyFile(path.join(m.dir, f), path.join(dst, f));
-    ws.config.components[m.name] = { commit, files: fileMap(dst, m.files) };
-    for (const v of m.vendor) {
-      if (!upVendor[v]) fail(`上游 vendor.json 沒有 ${v}（元件 ${m.name} 需要）`);
-      vendor.packages[v] ??= upVendor[v];
-      lines.vendor.add(v);
-    }
-    lines.css.push(`<link rel="stylesheet" href="${FW}/assets/deck/components/${m.name}/${m.name}.css">`);
-    lines.js.push(`<script src="${FW}/assets/deck/components/${m.name}/${m.name}.js"></script>`);
-    log(`已取得 ${m.name}（${m.files.length} 個檔案）`);
-  }
-  writeJson(vendorPath, vendor);
-  saveConfig(ws);
-  log('\n在根 index.html 引用（相關入口 <分類>/<主題>/index.html 前面加 ../../；css 放 theme.css 之後、story.css 之前；js 放 theme.js 之後、story.js 之前）：');
-  for (const l of lines.css) log(`  ${l}`);
-  for (const v of lines.vendor) for (const f of upVendor[v].files.filter(f => f.path.endsWith('.js'))) log(`  <script src="${FW}/vendor/${v}/${f.path}"></script>   <!-- 套件，每份簡報一次，元件 js 之前 -->`);
-  for (const l of lines.js) log(`  ${l}`);
-  if (lines.vendor.size) log(`\n已登記套件 ${[...lines.vendor].join('、')}；執行 vendor 下載（pack 也會自動下載）。`);
-  const compDir = path.join(UP, 'assets', 'deck', 'components');
-  const known = new Set(fs.readdirSync(compDir).filter(n => exists(path.join(compDir, n, `${n}.js`))));
-  for (const m of manifests) {
-    const readme = path.join(m.dir, 'README.md');
-    if (!exists(readme)) continue;
-    const mentioned = [...new Set([...readText(readme).matchAll(/deck\.([a-z0-9]+)\b/g)].map(x => x[1]))]
-      .filter(n => n !== m.name && known.has(n) && !ws.config.components[n]);
-    if (mentioned.length) log(`\n${m.name} 的 README 提到搭配 ${mentioned.join('、')}（尚未取得）；需要時 add ${mentioned.join(' ')}。`);
   }
 }
 
@@ -526,46 +461,6 @@ function join(args, opts, ws) {
 }
 
 // ---- vendor ----
-async function vendorCmd(args, opts, ws) {
-  const manifest = readJson(path.join(ws.fw, 'vendor.json'));
-  // 舊工作區更新核心後也能取得匯出依賴，不改寫其 vendor.json。
-  if (exists(path.join(ws.fw, 'assets/story-reader/export.js'))) {
-    manifest.packages = { ...Object.fromEntries(READER_VENDOR.map(name => [name, upstreamVendor().packages[name]])), ...manifest.packages };
-  }
-  const all = Object.keys(manifest.packages ?? {});
-  const names = args.length ? args : all;
-  let failed = 0;
-  for (const name of names) {
-    const p = manifest.packages?.[name];
-    if (!p) { log(`[${name}] vendor.json 沒有這個套件`); failed++; continue; }
-    const dir = path.join(ws.fw, 'vendor', name);
-    for (const f of p.files) {
-      const dest = path.resolve(dir, f.path);
-      if (!inside(dir, dest)) fail(`[${name}] path 不可跳出套件資料夾：${f.path}`);
-      const label = `[${name}@${p.version}] ${f.path}`;
-      const want = String(f.sha256 ?? '').toUpperCase();
-      if (!opts.force && exists(dest) && want && sha256(fs.readFileSync(dest)) === want) { log(`${label} 已就緒`); continue; }
-      if (opts.check) { log(`${label} 缺少或雜湊不符`); failed++; continue; }
-      try {
-        log(`${label} 下載 ${f.url}`);
-        const res = await fetch(f.url);
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const buf = Buffer.from(await res.arrayBuffer());
-        const got = sha256(buf);
-        if (!want) log(`${label} 未設定 sha256，實際為 ${got}；確認來源後請填回 vendor.json`);
-        else if (got !== want) throw new Error(`雜湊不符：預期 ${want}，實際 ${got}`);
-        fs.mkdirSync(path.dirname(dest), { recursive: true });
-        fs.writeFileSync(dest, buf);
-      } catch (e) {
-        log(`${label} 失敗：${e.message}`);
-        failed++;
-      }
-    }
-  }
-  if (failed) fail(`有 ${failed} 個檔案未就緒`);
-  log('套件全部就緒');
-}
-
 // ---- pack ----
 async function pack(args, opts, ws) {
   const root = ws.root;
@@ -712,7 +607,15 @@ async function main() {
     case 'catalog': return catalog(args, optionalWs());
     case 'docs': return docs(args, opts, optionalWs());
     case 'status': return status(args, opts, findWorkspace(opts));
-    case 'add': return add(args, opts, findWorkspace(opts));
+    case 'add': return addComponents(args, opts, findWorkspace(opts), log);
+    case 'use': {
+      if (opts.force) fail('use 不覆蓋本地修改；先用 diff 檢視，需取代副本時另用 add --force。');
+      if (Object.keys(opts).some(k => k !== 'dir')) fail('use 只接受 --dir；不支援其他選項，未執行接入。');
+      const result = await useComponents({ dir: opts.dir, names: args });
+      log(`已接入 ${result.components.join('、')} → ${result.entry}${result.entryChanged ? '' : '（引用已一致）'}`);
+      if (result.packages.length) log(`套件已驗證：${result.packages.join('、')}`);
+      return;
+    }
     case 'diff': return diff(args, opts, findWorkspace(opts));
     case 'update': return update(args, opts, findWorkspace(opts));
     case 'new': return newTopic(args, opts, findWorkspace(opts));

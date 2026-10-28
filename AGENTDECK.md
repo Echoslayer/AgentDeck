@@ -52,7 +52,7 @@
 | `agentdeck/components/<name>/` | 下游：工作區自製的共用元件 | 可（僅下游） |
 | `agentdeck/assets/deck/` 的核心檔、`agentdeck/assets/story-reader/`、`agentdeck/templates/`、本檔、`agentdeck/LICENSE` | 框架核心副本 | **不可**；由 `update core` 整份覆蓋，要改行為回饋上游（ADR 0016）。`LICENSE` 是框架的 MIT 授權聲明，`pack` 會隨框架帶入，不得刪除 |
 | `agentdeck/assets/theme/` | 品牌 | **不可**，除非人明確要求；品牌規則見 `agentdeck/assets/theme/README.md`（ADR 0010） |
-| `agentdeck/vendor.json` | 套件清單 | 只經 `agentdeck add` 登記；其他套件只提議，經人同意才加入（ADR 0011） |
+| `agentdeck/vendor.json` | 套件清單 | 只經 `agentdeck add`／`use` 登記；其他套件只提議，經人同意才加入（ADR 0011、0038） |
 | `agentdeck/agentdeck.json` | CLI 記錄 | 不手改；由 `init`、`add`、`update core` 維護 |
 | `agentdeck/vendor/`、`dist/` | 下載與打包產物 | 不手改；預設不 commit（`.gitignore`） |
 
@@ -65,6 +65,7 @@
    - **建立或改版主題時**：讀 `agentdeck catalog` 完整索引（兩級都看），逐頁依「表達的關係」挑選；基礎元件能完整表達所需關係時優先用基礎。若理解依賴改變參數、追蹤中間狀態或比較即時結果，要選能支援該操作的元件，或在主題內自製。
    - **人提出特定需求時**（「放地圖」「做成 3D」「畫趨勢」）：`agentdeck catalog <關鍵字>`，包含特殊元件；找到就 `agentdeck docs <name>`，向人說明它能做到什麼、限制是什麼，再決定是否採用。
    - **有合適元件**：讀 `agentdeck docs <name>`，確認資料與使用條件符合後，下游以 `agentdeck add <name>` 取得副本（上游內已有）；依輸出在主題 `index.html` 加 css 與 js 兩行引用（用到套件時另加套件一行），呼叫 `deck.<name>(key, …)`；守住 README「必須保留」的約束。標記由元件自動加上。
+   - **標準根入口可自動接入**：`new` 產生且未手改的根 `index.html`，可改用 `agentdeck use <name…>` 一次取得元件、下載並驗證套件及安排引用；重複執行不重複引用，只接入指定與先前由 `use` 接入的元件。入口若改過標題、語言、script 或其他 HTML，或元件副本有本地修改，會保留原檔並拒絕；此時沿用 `add` 與手動引用，不為通過 `use` 還原客製內容。相關入口與平行分頁也用手動流程。下載失敗時入口不改，可能保留已取得的元件／套件，修正後可重試（ADR 0038）。
    - **元件副本不完全合用**（僅下游）：可直接修改 `agentdeck/assets/deck/components/<name>/`，維持 `deck.define` 契約、`.deck-<name>` 前綴與「必須保留」；改了公開行為時同步改該元件的 README。改動只影響本工作區。
    - **用特殊元件**：另守 `docs` 輸出的「特殊元件規則」（引用 `agentdeck/vendor/` 套件、每頁最多一個 three.js 元件、現場不依賴觀眾親自拖曳；互動可由講者操作）。套件以 `agentdeck vendor` 下載；`pack` 也會自動下載。
    - **需要組合互動**：從索引的「互動組合範例」選定後，`agentdeck docs <範例> --code` 讀說明與程式，在主題 `story.js`／`story.css` 改寫並持有需要的資料。範例是實作參考，不是元件 API；不要以 script、stylesheet、圖片或其他方式引用範例或 `playground/`。

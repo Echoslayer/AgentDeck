@@ -137,3 +137,28 @@ export function cliHint(source) {
   if (/^(github:|https?:|git\+)/.test(source)) return `npx -y ${source}`;
   return `node "${toPosix(path.resolve(source, 'cli', 'agentdeck.mjs'))}"`;
 }
+
+export const LEGACY = `框架檔在工作區根目錄（契約 1 以前的佈局）；依 docs 1-to-2 以 init 建立新單位（框架集中於 ${FW}/）後搬移內容。`;
+
+export function checkContract(ws) {
+  const up = contractOf(UP);
+  if (ws.config.contract !== up) {
+    fail(`契約版本不同：工作區 ${ws.config.contract}、上游 ${up}。先執行 status 了解差異，再以 update core --migrate 升級（上游較舊時請改用對應版本的來源）。`);
+  }
+  if (ws.legacy) fail(LEGACY);
+}
+
+// 僅重定位 HTML 屬性；story.js 的動態網址須相對於其 script src（契約 2）。
+export function rebaseHtml(html, from, to, mapFile = p => p) {
+  const localRef = r => r && !/^(?:[a-z][a-z0-9+.-]*:|\/\/|#|\?)/i.test(r);
+  const rel = (from, p) => toPosix(path.relative(from, p)) || '.';
+  if (/<base\b/i.test(html.replace(/<!--[\s\S]*?-->/g, ''))) fail('入口不可使用 <base>；請使用相對 src/href 與 story 的 resource()。');
+  return html.replace(/\b(src|href)(\s*=\s*)(["'])(.*?)\3/g, (match, attr, eq, quote, ref) => {
+    if (!localRef(ref)) return match;
+    if (/^[\/\\]|\\/.test(ref)) fail(`引用必須使用相對路徑與 /：${ref}`);
+    const [, file, suffix] = ref.match(/^([^?#]*)([\s\S]*)$/);
+    const target = mapFile(path.resolve(from, decodeURIComponent(file)));
+    const url = rel(to, target).split('/').map(p => encodeURIComponent(p).replace(/'/g, '%27')).join('/') + suffix;
+    return `${attr}${eq}${quote}${url}${quote}`;
+  });
+}

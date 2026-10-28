@@ -61,6 +61,7 @@ demo/
 | `catalog [關鍵字]` | 元件、互動範例、寫作指引的一行索引 |
 | `docs <名稱> [--code]` | 只讀選中項目的 README 與追加說明；範例加 `--code` 連同程式 |
 | `add <元件…>` | 複製元件到 `agentdeck/assets/deck/components/<name>/`，登記到 `agentdeck/agentdeck.json`，並印出要加到 `index.html` 的引用行 |
+| `use <元件…>` | 取得元件、下載並驗證依賴，接好標準根入口的 CSS／JS；重複執行不重複引用，拒絕本地修改（見下方限制） |
 | `new <topic>` | 在單位內建立唯一根 `index.html` 與 `resources/<topic>/`；已存在主入口時拒絕 |
 | `new <name> --related <group>` | 明確同主體的候選／附件入口 `<group>/<name>/index.html`，內容在 `resources/<name>/` |
 | `join <topic>` | 平行製作後，把 `resources/<topic>/pages/` 依入口引用順序併回 `story.js`、`story.css`（[ADR 0023](adr/0023-parallel-pages-and-join.md)） |
@@ -71,6 +72,12 @@ demo/
 | `update core --check` | 唯讀預檢來源、契約、實際差異與本地衝突；可更新回傳 0，受阻回傳非 0 |
 | `update core` | 自動備份完整單位後，只覆蓋有差異的核心；本地修改需 `--force`，跨契約需 `--migrate` |
 
+`<CLI> use code cards --dir <簡報單位>` 適用於 `new` 產生、尚未手改的根 `index.html`，以及僅由 `use` 增加引用的同一入口。它保留已接入項目，只接入指定元件，不會把工作區所有已下載元件一起引用；套件在元件 JS 前、元件在 story 前。內容照常寫在 `resources/<topic>/story.js`／`story.css`。
+
+第一版不解析任意 HTML：即使只改入口的標題、語言或另加 script，也會保守拒絕；相關入口、平行分頁與手寫引用繼續使用 `add` 後手動接入。`use` 不接受 `--force`，不更新既有副本；有本地修改先讀 `diff` 再決定如何處理。接入前檢查契約、元件雜湊與路徑，下載成功後才替換入口。失敗可能保留已取得的元件或套件，錯誤會說明；修正後可重試。`edits.js`、分鏡、品牌與核心不會由 `use` 改寫。
+
+程式呼叫與 CLI 共用 `cli/lib/components.mjs` 的 `await useComponents({ dir, names })`。成功回傳 `{ entry, components, installed, packages, entryChanged }`；預期失敗拋出 `UserError`，不寫 stdout、不啟動 CLI 子行程。這是本機可信任工作區的操作，未提供遠端權限管理或並行寫入鎖。詳見 [ADR 0038](adr/0038-component-use-operation.md)。
+
 ## 更新與版本
 
 - 安裝 skills 後，可直接對 agent 說「把這份簡報升到最新 AgentDeck，保留客製內容」，或「只補上新版字幕功能」。[agentdeck-upgrade](../skills/agentdeck-upgrade/SKILL.md) 會確認目標來源、備份、更新核心、整合客製元件、調整必要接入並驗證打包結果；最新版不代表替每頁新增所有可選內容。`tools\install-skill.cmd` 會一併安裝製作與更新 skills，已安裝者重新執行即可。
@@ -79,13 +86,13 @@ demo/
 - `update core` 只更新核心與 CLI 記錄；契約一致不代表簡報內容已完成遷移。完整更新須驗證既有互動、人工修正及搬移後的離線播放；未完成的驗證應明確回報。
 - 副本取得後歸工作區所有，不會自動更新。想跟進上游時先 `diff`，再決定 `update core`、`add <元件> --force`，或手動挑選修改。
 - 核心公開 `deck.contract`（契約版本）。上游改動分鏡資料契約、`deck.*` API、標記規範或工作區結構時遞增版本，並在 [`migrations/`](migrations/README.md) 寫遷移說明。
-- 工作區與上游契約版本不同時，`add`、`new`、`pack` 會拒絕；`status` 會列出需讀的遷移說明，讀完以 `update core --migrate` 升級，再依說明修改元件副本與簡報。契約 2 的入口結構見 [1-to-2](migrations/1-to-2.md)。無法遷移時，改用對應版本的來源（例如 tag `contract-<n>`）。
+- 工作區與上游契約版本不同時，`add`、`use`、`new`、`pack` 會拒絕；`status` 會列出需讀的遷移說明，讀完以 `update core --migrate` 升級，再依說明修改元件副本與簡報。契約 2 的入口結構見 [1-to-2](migrations/1-to-2.md)。無法遷移時，改用對應版本的來源（例如 tag `contract-<n>`）。
 
 ## 共同流程
 
 1. **建立主題**：`<CLI> init <位置>/<topic>` 後，於該單位 `<CLI> new <topic>`。另一獨立主題另行 `init`，不能放在此單位內共用框架；只有同一主體的候選／附件才用 `--related`，群組可用 `candidates`、`attachments` 或其他有效名稱。探索可先建立候選，主入口稍後再定。
 2. **企劃**：填 `resources/<topic>/plan.md`（對象、目的、素材、逐頁分鏡、元件、交付方式），標明每頁放主線或附件；人要求時先確認再動工（ADR 0018）。`plan.md` 不會被打包。
-3. **選呈現方式**：`<CLI> catalog` 看索引（上游可開 [`元件與互動範例`](../examples/index.html)）。現成元件以 `docs <name>` 讀 README 與追加說明，`add <name>` 取得後按 API 引用；互動組合以 `docs <範例> --code` 讀說明與程式後在主題內改寫。主題不得執行期引用 examples 或 playground。
+3. **選呈現方式**：`<CLI> catalog` 看索引（上游可開 [`元件與互動範例`](../examples/index.html)）。現成元件以 `docs <name>` 讀 README 與追加說明，標準根入口可用 `use <name>` 完成接入；自訂或相關入口用 `add <name>` 取得後手動引用。互動組合以 `docs <範例> --code` 讀說明與程式後在主題內改寫。主題不得執行期引用 examples 或 playground。
 4. **製作**：主入口是根 `index.html`；內容、CSS、資料、圖片與人工修改放 `resources/<topic>/`。根入口引用 `agentdeck/assets/`、`resources/<topic>/`；動態素材依 [`AGENTDECK.md`](../AGENTDECK.md#相對路徑) 取得 story script 前綴。所有播放依賴位於同一單位內。
 5. **檢查與現場修正**：雙擊根 `index.html` 播放，頁首「✎ 編輯」改文字、拖曳、隱藏元件，在「註解」留意見（見下方「播放與現場編輯」）。按「另存」輸出 `edits.js` 覆蓋對應 `resources/<name>/edits.js`；下一輪修改時 agent 會讀註解。口語稿、朗讀動作與 PPT 不在第一輪產生，見「內容確認後的下一輪」。
 6. **交付**：`<CLI> pack` 打包完整單位，解壓後最上層 `index.html` 是實際播放頁。逐頁驗證主簡報、相關內容與素材連結；缺少的引用套件會自動下載。將整個資料夾移至別處再驗證，確認沒有依賴其他主題。

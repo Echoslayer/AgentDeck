@@ -10,6 +10,7 @@ import { createHash } from 'node:crypto';
 import { unzip } from './lib/zip.mjs';
 import { markClicks } from './lib/export.mjs';
 import { hashFile, listFiles } from './lib/util.mjs';
+import { checkComponents } from './check-components.mjs';
 
 const UP = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const CLI = path.join(UP, 'cli', 'agentdeck.mjs');
@@ -453,6 +454,8 @@ try {
     ]);
   });
 
+  await checkComponents({ run, tmp });
+  step('use：共用接入、引用順序、重複執行、保護原檔與下載失敗重試', () => {});
   console.log(`\n全部通過（${passed} 項）`);
 } finally {
   fs.rmSync(tmp, { recursive: true, force: true });
