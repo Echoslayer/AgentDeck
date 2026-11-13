@@ -52,19 +52,20 @@
 | `agentdeck/components/<name>/` | 下游：工作區自製的共用元件 | 可（僅下游） |
 | `agentdeck/assets/deck/` 的核心檔、`agentdeck/assets/story-reader/`、`agentdeck/templates/`、本檔、`agentdeck/LICENSE` | 框架核心副本 | **不可**；由 `update core` 整份覆蓋，要改行為回饋上游（ADR 0016）。`LICENSE` 是框架的 MIT 授權聲明，`pack` 會隨框架帶入，不得刪除 |
 | `agentdeck/assets/theme/` | 品牌 | **不可**，除非人明確要求；品牌規則見 `agentdeck/assets/theme/README.md`（ADR 0010） |
-| `agentdeck/vendor.json` | 套件清單 | 只經 `agentdeck add` 登記；其他套件只提議，經人同意才加入（ADR 0011） |
+| `agentdeck/vendor.json` | 套件清單 | 只經 `agentdeck add`／`use` 登記；其他套件只提議，經人同意才加入（ADR 0011、0038） |
 | `agentdeck/agentdeck.json` | CLI 記錄 | 不手改；由 `init`、`add`、`update core` 維護 |
 | `agentdeck/vendor/`、`dist/` | 下載與打包產物 | 不手改；預設不 commit（`.gitignore`） |
 
 ## 建立或改版主題
 
 1. 新主題：先以 `agentdeck init <位置>/<topic>` 建立獨立單位，再於該單位執行 `agentdeck new <topic>`（封面、一頁內容、結尾）。主入口是根 `index.html`；`resources/<topic>/` 保存 `story.js`、`story.css`、`edits.js`、`plan.md` 與素材（ADR 0017）。同一單位只能有一個主入口，已存在時 `new` 拒絕覆蓋；另一獨立主題須另行 `init`。新主題的 `edits.js` 保持 `window.storyEdits = {};`。名稱用英文小寫、數字與連字號。
-2. 先填 `plan.md`（對象、目的、素材、逐頁分鏡與元件，並標明每頁放主線或附件），再寫程式；人要求先看企劃時才停下等確認。主線只留案例、結果與產物；讀懂結果以外的原理放附件，教學附件要接成邏輯鏈。實作後逐頁審查一次邏輯與文字，再交付（ADR 0018）；審查時以聽眾身分讀每頁，遇到不懂的詞依下方「術語註」的判斷決定寫在畫面、放術語註或放附件。素材在其他位置時只讀不改，內容摘錄進 `story.js`，簡報不引用工作區以外的檔案。分鏡：每頁要表達什麼關係；欄位規則見下方「分鏡資料契約」，互動頁需提供 `previewArt` 與清理函式。寫作方式依人指定的指引；未指定時，講解機制、因果類的簡報預設參考 `agentdeck docs visual-story`，其他類型不必套用（ADR 0012）。工程可能性與 PoC 展示可參考 `agentdeck docs engineering-demo`。
+2. 先填 `plan.md`（對象、目的、素材、逐頁分鏡與元件，並標明每頁放主線或附件），再寫程式；人要求先看企劃時才停下等確認。主線只留案例、結果與產物；讀懂結果以外的原理放附件，教學附件要接成邏輯鏈。實作後逐頁審查一次邏輯與文字，再交付（ADR 0018）；審查時以聽眾身分讀每頁，遇到不懂的詞依下方「術語註」的判斷決定寫在畫面、放術語註或放附件。素材在其他位置時只讀不改，內容摘錄進 `story.js`，簡報不引用工作區以外的檔案。分鏡：每頁要表達什麼關係；欄位規則見下方「分鏡資料契約」，互動頁需提供 `previewArt` 與清理函式。寫作方式依人指定的指引；未指定時，講解機制、因果類的簡報預設參考 `agentdeck docs visual-story`，其他類型不必套用（ADR 0012）。工程可能性與 PoC 展示可參考 `agentdeck docs engineering-demo`。聽眾會看到或聽到的文字預設依 `agentdeck docs natural-copy`（ADR 0039）：先寫出聽眾看完要做到什麼，標題寫這頁讓聽眾得到什麼而不只是主題名；寫文案時只看原始素材與舊稿；結構自由，只守事實底線（數字、原話、事件不改）；寫完另做一次只比對事實的查核，不邊寫邊審。
 3. 頁型固定用核心：`deck.cover({ title, meta })`、`deck.end()`。
 4. 內容元件**按需查找**（ADR 0009、0013），元件分基礎與特殊兩級：
    - **建立或改版主題時**：讀 `agentdeck catalog` 完整索引（兩級都看），逐頁依「表達的關係」挑選；基礎元件能完整表達所需關係時優先用基礎。若理解依賴改變參數、追蹤中間狀態或比較即時結果，要選能支援該操作的元件，或在主題內自製。
    - **人提出特定需求時**（「放地圖」「做成 3D」「畫趨勢」）：`agentdeck catalog <關鍵字>`，包含特殊元件；找到就 `agentdeck docs <name>`，向人說明它能做到什麼、限制是什麼，再決定是否採用。
    - **有合適元件**：讀 `agentdeck docs <name>`，確認資料與使用條件符合後，下游以 `agentdeck add <name>` 取得副本（上游內已有）；依輸出在主題 `index.html` 加 css 與 js 兩行引用（用到套件時另加套件一行），呼叫 `deck.<name>(key, …)`；守住 README「必須保留」的約束。標記由元件自動加上。
+   - **標準根入口可自動接入**：`new` 產生且未手改的根 `index.html`，可改用 `agentdeck use <name…>` 一次取得元件、下載並驗證套件及安排引用；重複執行不重複引用，只接入指定與先前由 `use` 接入的元件。入口若改過標題、語言、script 或其他 HTML，或元件副本有本地修改，會保留原檔並拒絕；此時沿用 `add` 與手動引用，不為通過 `use` 還原客製內容。相關入口與平行分頁也用手動流程。下載失敗時入口不改，可能保留已取得的元件／套件，修正後可重試（ADR 0038）。
    - **元件副本不完全合用**（僅下游）：可直接修改 `agentdeck/assets/deck/components/<name>/`，維持 `deck.define` 契約、`.deck-<name>` 前綴與「必須保留」；改了公開行為時同步改該元件的 README。改動只影響本工作區。
    - **用特殊元件**：另守 `docs` 輸出的「特殊元件規則」（引用 `agentdeck/vendor/` 套件、每頁最多一個 three.js 元件、現場不依賴觀眾親自拖曳；互動可由講者操作）。套件以 `agentdeck vendor` 下載；`pack` 也會自動下載。
    - **需要組合互動**：從索引的「互動組合範例」選定後，`agentdeck docs <範例> --code` 讀說明與程式，在主題 `story.js`／`story.css` 改寫並持有需要的資料。範例是實作參考，不是元件 API；不要以 script、stylesheet、圖片或其他方式引用範例或 `playground/`。
@@ -104,7 +105,7 @@ subagent 繼承同一資料、工具與預算邊界；宿主內平行工作不�
 1. **主 agent 先做完共用部分**：`status`、`init`／`new`、`plan.md`、所有 `add`、入口的元件引用、`story.js` 骨架（`resource()`、`title`、封面、結尾）與 `story.css` 的共用 token 和版面 class。這些檔案與 `agentdeck/` 內的一切只由主 agent 寫。
 2. **分頁檔**：要分出去的頁寫成 `resources/<主題>/pages/<id>.js`，內容為 `story.pages.splice(-1, 0, { id: '<id>', … });`（插在結尾頁之前），樣式寫 `pages/<id>.css`，class 用 `<主題>-<id>-` 前綴。主 agent 在入口依頁序加引用：js 放 `story.js` 之後、`edits.js` 之前，css 放 `story.css` 之後。分頁檔用 `story.js` 的 `resource()` 取素材路徑，不自己讀 `document.currentScript`；css 的 `url()` 相對於 `pages/`。主 agent 自己寫的頁可以直接留在 `story.js`。
 3. **交給 subagent 的資料**：`plan.md` 中該頁一列與前後頁標題、本檔「分鏡資料契約」與「標記規範」兩節（二次迭代寫 `speech`、`record` 時另附「進階欄位」）、選定的元件名稱（請它自己跑 `agentdeck docs <名稱>`）、`story.css` 可用的 class。寫入範圍只有自己的分頁檔與 `resources/<主題>/<id>-*` 素材；需要新元件、新套件或改共用檔時回報主 agent，不自己做。
-4. **適合分出去的工作**：互動頁與自製頁；素材多時一個來源一份摘錄（附出處）；獨立的附件與候選版本（各自一個單位，整份交給一個 subagent）；交付前的邏輯審查（交給沒寫過這份的 subagent，只回報問題，由主 agent 修改）；二次迭代的 `explain`、`speech`、`record`（按頁分）。企劃與整合播放留在主 agent。
+4. **適合分出去的工作**：互動頁與自製頁；素材多時一個來源一份摘錄（附出處）；獨立的附件與候選版本（各自一個單位，整份交給一個 subagent）；交付前的邏輯審查（交給沒寫過這份的 subagent，只回報問題，由主 agent 修改）；文案撰寫與其後的事實查核（各交給不同 subagent，交付的資料與查核範圍見 `agentdeck docs natural-copy`）；二次迭代的 `explain`、`speech`、`record`（按頁分）。企劃與整合播放留在主 agent。
 5. **整合**：全部回來後主 agent 播放、看主控台錯誤並修正，再執行 `agentdeck join <主題>`，依入口的引用順序把分頁檔併回 `story.js`、`story.css` 並移除 `pages/`；併回後再播放一次。交付與改版都以單一 `story.js` 為準。
 
 ## 簡報單位與相關內容
