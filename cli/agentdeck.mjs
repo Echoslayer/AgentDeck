@@ -38,7 +38,7 @@ const HELP = `AgentDeck CLI（docs/adr/0016）
   diff [core|<元件>…]      副本相對於取得時與上游最新版的差異；--patch 顯示內容差異
   update core              備份後覆蓋核心；--check 唯讀預檢，--migrate 跨契約，--force 覆蓋本地修改
   new <主題>               建立根 index.html 與 resources/<主題>/ 內容
-      --related <分類>     刻意共用同一主體的候選／附件，入口在 <分類>/<主題>/index.html
+      --related <分類>     同一主體的候選／附件，或簡報樹分支（--related branches），入口在 <分類>/<主題>/index.html
   join <主題>              把平行製作的 resources/<主題>/pages/ 依入口引用順序併回 story.js、story.css
   vendor [套件…]           依 vendor.json 下載並驗證套件；--check 只檢查，--force 重新下載
   pack [入口資料夾]        預設打包整份簡報；--out 指定輸出資料夾（預設 dist/）
@@ -322,7 +322,7 @@ function status(args, opts, ws) {
   const decks = entryDirs(ws.root);
   log(`主簡報：${decks.includes('.') ? 'index.html' : '（尚無）'}`);
   const related = decks.filter(d => d !== '.');
-  if (related.length) log(`同主體候選／附件：${related.join('、')}`);
+  if (related.length) log(`相關入口（候選／附件／分支）：${related.join('、')}`);
   const pkgs = Object.entries(readJson(path.join(ws.fw, 'vendor.json')).packages ?? {});
   if (pkgs.length) log(`套件：${pkgs.map(([n, p]) => `${n}@${p.version}${p.files.every(f => exists(path.join(ws.fw, 'vendor', n, f.path))) ? '' : '（未下載）'}`).join('、')}`);
   log('細節用 diff [core|<元件>] --patch。');
@@ -414,7 +414,7 @@ function newTopic(args, opts, ws) {
   const data = path.join(ws.root, 'resources', topic);
   if (!exists(src)) fail(`找不到 ${src}；以 update core 補回核心副本`);
   if (opts.related && exists(dst)) fail(`已存在：${dst}`);
-  if (exists(path.join(dst, 'index.html'))) fail('已有主簡報 index.html；不同主題請 init 新資料夾，同主體候選／附件才使用 --related <分類>。');
+  if (exists(path.join(dst, 'index.html'))) fail('已有主簡報 index.html；不同主題請 init 新資料夾，同主體候選／附件或簡報樹分支才使用 --related <分類>。');
   if (exists(data)) fail(`已存在：${data}`);
   const html = rebaseHtml(readText(path.join(src, 'index.html')), src, dst,
     p => p === path.join(src, 'index.html') ? path.join(dst, 'index.html') : inside(src, p) ? path.join(data, path.relative(src, p)) : p);

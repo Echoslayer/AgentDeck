@@ -156,7 +156,7 @@
 <script src="agentdeck/assets/deck/components/<name>/<name>.js"></script>           <!-- theme.js 之後、story.js 之前 -->
 ```
 
-相關入口 `<group>/<name>/index.html` 改以 `../../agentdeck/assets/` 引用同一單位內的副本；上游內框架在根目錄，去掉 `agentdeck/`。不同主題各自擁有副本，不跨單位引用。呼叫一律是 `deck.<name>(key, …)`，第一個參數是 `data-key`（每頁唯一）。回傳 HTML 字串，可用 `+` 串接。忘了引用時，呼叫會直接報錯並提示路徑；只引用 js 沒引用 css，主控台會出錯誤訊息。
+相關入口 `<group>/<name>/index.html` 改以 `../../agentdeck/assets/` 引用同一單位內的副本；上游內框架在根目錄，去掉 `agentdeck/`。不同主題各自擁有副本，不跨單位引用；簡報樹的分支（`branches/<name>/`）共用所在單位的副本，`use` 不接分支入口，改用 `add` 加手動引用。呼叫一律是 `deck.<name>(key, …)`，第一個參數是 `data-key`（每頁唯一）。回傳 HTML 字串，可用 `+` 串接。忘了引用時，呼叫會直接報錯並提示路徑；只引用 js 沒引用 css，主控台會出錯誤訊息。
 
 ## 特殊元件規則
 

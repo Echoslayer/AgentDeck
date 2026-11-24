@@ -120,7 +120,7 @@ agent 先讀提供的素材，再把目的、使用方式與資源的必要問�
 
 ## 建立品牌版本（下游專案）
 
-AgentDeck 是上游框架；每份簡報以 `npx -y github:Echoslayer/AgentDeck init <位置>/<topic>` 建立自己的下游單位。下游的框架副本都在單位的 `agentdeck/` 內（上游路徑加上 `agentdeck/` 前綴）。`agentdeck/assets/theme/`、`resources/` 歸下游所有，核心與元件是可比對的副本，以 `diff`、`update core` 跟進上游（[ADR 0010](docs/adr/0010-theme-layer-and-downstream.md)、[ADR 0016](docs/adr/0016-registry-copy-and-contract-version.md)、[ADR 0017](docs/adr/0017-presentation-entry-layout.md)）。既有品牌可複製到各單位，不作跨資料夾播放依賴。
+AgentDeck 是上游框架；每份簡報以 `npx -y github:Echoslayer/AgentDeck init <位置>/<topic>` 建立自己的下游單位。下游的框架副本都在單位的 `agentdeck/` 內（上游路徑加上 `agentdeck/` 前綴）。`agentdeck/assets/theme/`、`resources/` 歸下游所有，核心與元件是可比對的副本，以 `diff`、`update core` 跟進上游（[ADR 0010](docs/adr/0010-theme-layer-and-downstream.md)、[ADR 0016](docs/adr/0016-registry-copy-and-contract-version.md)、[ADR 0017](docs/adr/0017-presentation-entry-layout.md)）。既有品牌可複製到各單位，不作跨資料夾播放依賴。常駐於同一宿主專案、不單獨搬移的一組簡報，可共用一個單位做成簡報樹：根 `index.html` 是總覽主幹，各份是 `branches/<name>/` 的分支，`update core` 只跑一次（[ADR 0040](docs/adr/0040-presentation-tree.md)）。
 
 ## 第三方套件與交付
 

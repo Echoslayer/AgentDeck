@@ -90,7 +90,7 @@ demo/
 
 ## 共同流程
 
-1. **建立主題**：`<CLI> init <位置>/<topic>` 後，於該單位 `<CLI> new <topic>`。另一獨立主題另行 `init`，不能放在此單位內共用框架；只有同一主體的候選／附件才用 `--related`，群組可用 `candidates`、`attachments` 或其他有效名稱。探索可先建立候選，主入口稍後再定。
+1. **建立主題**：`<CLI> init <位置>/<topic>` 後，於該單位 `<CLI> new <topic>`。另一獨立主題另行 `init`，不能放在此單位內共用框架；同一宿主專案內常駐的一組簡報可做成簡報樹（`--related branches`，見 `AGENTDECK.md`「簡報樹」）；其餘只有同一主體的候選／附件才用 `--related`，群組可用 `candidates`、`attachments` 或其他有效名稱。探索可先建立候選，主入口稍後再定。
 2. **企劃**：填 `resources/<topic>/plan.md`（對象、目的、素材、逐頁分鏡、元件、交付方式），標明每頁放主線或附件；人要求時先確認再動工（ADR 0018）。`plan.md` 不會被打包。
 3. **選呈現方式**：`<CLI> catalog` 看索引（上游可開 [`元件與互動範例`](../examples/index.html)）。現成元件以 `docs <name>` 讀 README 與追加說明，標準根入口可用 `use <name>` 完成接入；自訂或相關入口用 `add <name>` 取得後手動引用。互動組合以 `docs <範例> --code` 讀說明與程式後在主題內改寫。主題不得執行期引用 examples 或 playground。
 4. **製作**：主入口是根 `index.html`；內容、CSS、資料、圖片與人工修改放 `resources/<topic>/`。根入口引用 `agentdeck/assets/`、`resources/<topic>/`；動態素材依 [`AGENTDECK.md`](../AGENTDECK.md#相對路徑) 取得 story script 前綴。所有播放依賴位於同一單位內。
