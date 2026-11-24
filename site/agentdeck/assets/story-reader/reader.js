@@ -37,7 +37,11 @@ document.title = story.title;
 document.getElementById('story-label').textContent = story.label || story.title;
 const back = document.getElementById('story-back');
 back.hidden = !story.back;
-if (story.back) { back.textContent = story.back.label; back.setAttribute('href', story.back.href); }
+if (story.back) {
+  back.textContent = story.back.label; back.setAttribute('href', story.back.href);
+  // 分支單獨打包後 back 會指回自己；指向目前頁面時隱藏（docs/adr/0040）。
+  if (back.href.split('#')[0] === location.href.split('#')[0]) back.hidden = true;
+}
 document.getElementById('progress').max = pages.length;
 // 術語註：story.glossary = { 詞: '一句定義' }，頁面文字以 <dfn>詞</dfn> 標記（docs/adr/0037）。
 const readerGlossaryTerms = story.glossary ?? {};

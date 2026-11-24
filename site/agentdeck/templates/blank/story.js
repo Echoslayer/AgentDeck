@@ -11,7 +11,7 @@ const resource = p => resourceDir + p;
 const story = {
   title: 'AgentDeck 簡報範本',
   label: '作者或單位 / 主題名稱',
-  // back: { href: resource('../../index.html'), label: '返回主簡報' }, // 僅同主體候選／附件使用，交付另驗證
+  // back: { href: resource('../../index.html'), label: '返回主簡報' }, // 僅同主體候選／附件或簡報樹分支使用，交付另驗證
   pages: [
     deck.cover({ title: '主題名稱', meta: '姓名／單位<br>2026/9/30', instruction: '口頭說明：開場怎麼講。' }),
     {
