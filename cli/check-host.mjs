@@ -46,9 +46,29 @@ export function checkHost(tmp, run) {
   const exception = 'assets/theme/theme.js';
   const projectRules = '# project rules\r\n/local.tmp\r\n!/' + exception;
   writeText(ignore, projectRules);
+  const customDir = 'agentdeck/components/聽覺 demo';
+  for (const file of ['source.js', 'theme.css', 'icon.svg', 'tracked.js', 'visible.js']) {
+    writeText(path.join(book, customDir, file), file);
+  }
+  git('add', '--', customDir + '/tracked.js');
+  const customRules = '*.js\n*.css\n!visible.js\n';
+  writeText(path.join(book, customDir, '.gitignore'), customRules);
+  const rootIgnore = path.join(book, '.gitignore');
+  fs.appendFileSync(rootIgnore, '\n/agentdeck/components/\n');
+  const parentRuleLine = fs.readFileSync(rootIgnore, 'utf8').trimEnd().split('\n').length;
+  const parentReport = build('--inspect');
+  assert.equal(parentReport.status, 0, parentReport.stderr);
+  assert.ok(parentReport.stdout.includes(customDir + '/icon.svg\t.gitignore:' + parentRuleLine + '\t/agentdeck/components/'));
+  assert.ok(!parentReport.stdout.includes(customDir + '/tracked.js'));
+  fs.appendFileSync(rootIgnore, '!/agentdeck/components/\n');
   const preview = build('--inspect');
   assert.equal(preview.status, 0, preview.stderr);
   assert.match(preview.stdout, /可納管\t已追蹤\tassets\/deck\/deck-core.js/);
+  const warnings = preview.stdout.split(/\r?\n/).filter(line => line.startsWith('自製元件未追蹤且被忽略\t'));
+  assert.deepEqual(warnings.sort(), [
+    '自製元件未追蹤且被忽略\t' + customDir + '/source.js\t' + customDir + '/.gitignore:1\t*.js',
+    '自製元件未追蹤且被忽略\t' + customDir + '/theme.css\t' + customDir + '/.gitignore:2\t*.css',
+  ]);
   assert.equal(fs.readFileSync(ignore, 'utf8'), projectRules);
   const first = build('--adopt');
   assert.equal(first.status, 0, first.stderr);

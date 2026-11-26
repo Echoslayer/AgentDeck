@@ -11,7 +11,7 @@ const [book, flag, apply, ...extra] = process.argv.slice(2);
 const header = '# AgentDeck stock files (one literal path per line)';
 const footer = '# End AgentDeck stock files';
 const help = `npm run deck:build -- <簡報資料夾> [選項]
-  --inspect           列出可納管的框架檔、客製差異與 Git 狀態
+  --inspect           列出框架檔的 Git 狀態，以及忽略自製元件檔案的規則
   --adopt             把與鎖版相符的檔案加入該簡報的 .gitignore
   --untrack [--apply] 預覽取消 Git 追蹤的檔案；套用後保留本機副本
   --clean [--apply]   預覽可從本機清除的檔案；套用後再執行重建即可播放
@@ -47,13 +47,23 @@ function ignoreBlock(text) {
 function git(cwd, args, input, allowed = [0]) {
   const r = spawnSync('git', args, { cwd, input, encoding: 'utf8' });
   if (!allowed.includes(r.status)) throw Error(r.error?.message || r.stderr.trim() || 'Git failed');
-  return new Set(r.stdout.split('\0').filter(Boolean));
+  return r.stdout.split('\0').filter(Boolean);
+}
+
+function reportIgnoredComponents(fw) {
+  const files = git(fw, ['ls-files', '--others', '--ignored', '--exclude-standard', '-z', '--', 'components/']);
+  if (!files.length) return;
+  const fields = git(fw, ['check-ignore', '--verbose', '-z', '--stdin'], files.join('\0') + '\0', [0, 1]);
+  for (let i = 0; i < fields.length; i += 4) {
+    const [source, line, pattern, file] = fields.slice(i, i + 4);
+    console.log('自製元件未追蹤且被忽略\t' + path.basename(fw) + '/' + file + '\t' + source + ':' + line + '\t' + pattern);
+  }
 }
 
 function maintenance(fw, rows) {
-  const tracked = git(fw, ['ls-files', '-z', '--', '.']);
-  const staged = git(fw, ['diff', '--cached', '--no-renames', '--relative', '--name-only', '-z', '--', '.']);
-  const ignored = git(fw, ['check-ignore', '--no-index', '-z', '--stdin'], rows.map(r => r.file + '\0').join(''), [0, 1]);
+  const tracked = new Set(git(fw, ['ls-files', '-z', '--', '.']));
+  const staged = new Set(git(fw, ['diff', '--cached', '--no-renames', '--relative', '--name-only', '-z', '--', '.']));
+  const ignored = new Set(git(fw, ['check-ignore', '--no-index', '-z', '--stdin'], rows.map(r => r.file + '\0').join(''), [0, 1]));
   const targets = [];
   for (const row of rows) {
     const { file, same, managed, present, pinOK } = row;
@@ -70,7 +80,7 @@ function maintenance(fw, rows) {
   }
   console.log('保留來源：入口、resources/（含 edits.js）、自製元件、agentdeck.json 與 vendor.json。');
   console.log('另行管理：vendor/ 由 vendor.json 驗證；dist/ 存放交付包。');
-  if (flag === '--inspect') return;
+  if (flag === '--inspect') return reportIgnoredComponents(fw);
   console.log((apply ? '套用' : '預覽') + ' ' + flag + '：' + targets.length + ' 個檔案');
   if (!apply || !targets.length) return;
   if (rows.some(r => r.managed ? !r.pinOK || (r.present && !r.same) : !r.present))

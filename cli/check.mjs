@@ -12,6 +12,7 @@ import { markClicks } from './lib/export.mjs';
 import { hashFile, listFiles } from './lib/util.mjs';
 import { checkComponents } from './check-components.mjs';
 import { checkHost } from './check-host.mjs';
+import { checkLauncher } from './check-launcher.mjs';
 
 const UP = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const CLI = path.join(UP, 'cli', 'agentdeck.mjs');
@@ -462,6 +463,7 @@ try {
   await checkComponents({ run, tmp });
   step('use：共用接入、引用順序、重複執行、保護原檔與下載失敗重試', () => {});
   step('鎖版重建共用框架、保留自製元件與人工編輯', () => checkHost(tmp, run));
+  step('全域入口依各宿主鎖版重建，inspect 維持唯讀', () => checkLauncher(tmp));
   console.log(`\n全部通過（${passed} 項）`);
 } finally {
   fs.rmSync(tmp, { recursive: true, force: true });

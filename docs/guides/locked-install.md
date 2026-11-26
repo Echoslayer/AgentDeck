@@ -2,6 +2,20 @@
 
 在放置各本簡報的父資料夾建立一個 npm 專案。一次安裝供所有書重建，每棵樹仍在自己的資料夾播放，也可以獨立 `pack`。
 
+## 從書的資料夾啟動
+
+含有 `build` 和 `inspect` 的版本發布後，每台製作電腦安裝一次 `npm install --global github:Echoslayer/AgentDeck`。用 `agentdeck --help` 確認兩個指令都已列出。維護者要在發布前試用，可從本版的 AgentDeck checkout 安裝。已重建的簡報直接雙擊 HTML 即可播放。
+
+```powershell
+cd D:\book\presentations\mit-9-35-hearing
+agentdeck build
+agentdeck inspect
+```
+
+兩個指令也可從該書的分支目錄啟動。`build` 首次依上一層宿主的 npm v3 鎖檔安裝框架，完成後顯示可開啟的入口。`inspect` 使用已安裝的版本，全程唯讀。若宿主已有安裝且與鎖檔不符，依訊息在宿主目錄執行 `npm ci --omit=optional --ignore-scripts` 再重試。
+
+實際可用的重建與檢查功能由宿主鎖定的版本決定。MIT 9.35 使用的 `185219f` 已內附重建腳本；更早只在宿主放置 `build.mjs` 的專案仍可執行原有 npm script。[全域入口的版本選擇規則](../adr/0042-global-launcher.md)
+
 ## 設定宿主
 
 將 AgentDeck 加入 `dependencies`，指向 GitHub 上指定 release 對應的完整 commit。例：
@@ -44,6 +58,10 @@ npm run deck:build -- <書名>
 ```
 
 第一次需要連線取得鎖定的框架與該書的第三方套件。完成後直接開啟書的 `index.html`。檔案齊全時可離線重跑；`npm ci` 只在新環境或鎖檔變更時需要。要分發給讀者，在宿主執行 `npm exec --offline -- agentdeck pack --dir <書名>`。
+
+## 啟用自製元件
+
+把自製元件的 JS、CSS 與素材放在該書的 `agentdeck/components/<名稱>/`，並在使用它的簡報入口引用。提交前執行 `npm run deck:build -- <書名> --inspect`。若專案的 Git 規則隱藏了專區內尚未追蹤的檔案，報告會逐檔列出路徑、規則來源、行號及匹配的樣式。調整報告指出的規則，再把元件、素材與入口一起加入 Git。在乾淨 checkout 重建並開啟引用它的投影片，即可確認讀者會看到的結果。
 
 ## 客製與升版
 

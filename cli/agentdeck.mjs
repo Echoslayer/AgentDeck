@@ -20,6 +20,7 @@ import { downloadVendor } from './lib/vendor.mjs';
 import { zip } from './lib/zip.mjs';
 import { checkSpeech } from './lib/speech.mjs';
 import { exportEnv, exportPptx, checkRecords } from './lib/export.mjs';
+import { launchBook } from './lib/launcher.mjs';
 
 const HELP = `AgentDeck CLI（docs/adr/0016）
 
@@ -31,6 +32,8 @@ const HELP = `AgentDeck CLI（docs/adr/0016）
       --commit-vendor      vendor/ 進宿主 git（預設不進）
       --agents-hint        在宿主 AGENTS.md 加一行指引（--no-agents-hint 不加）
   status                   契約版本、副本與上游的差異摘要、套件狀態
+  build                    在書內依宿主鎖版重建，顯示 index.html
+  inspect                  在書內使用宿主已安裝的鎖版，唯讀檢查檔案狀態
   catalog [關鍵字…]        元件、範例、寫作指引的一行索引
   docs <名稱> [--code]     輸出元件／範例／指引／遷移說明的文件；--code 連同範例程式
   add <元件…> [--force]    複製元件到工作區並登記用到的套件
@@ -588,6 +591,15 @@ async function main() {
   if (cmd === 'init') return init(args, opts);
   const optionalWs = () => { try { return findWorkspace(opts); } catch (e) { if (e instanceof UserError) return null; throw e; } };
   switch (cmd) {
+    case 'build':
+    case 'inspect': {
+      if (args.length || Object.keys(opts).some(k => k !== 'dir')) fail(`用法：${cmd} [--dir <書內目錄>]`);
+      const ws = findWorkspace(opts);
+      requireDownstream(ws, cmd);
+      if (ws.legacy) fail(LEGACY);
+      process.exitCode = launchBook(cmd, ws.root);
+      return;
+    }
     case 'check': {
       if (args[0] !== 'speech' || args.length > 2) fail('用法：check speech [入口資料夾] [--replay 1|2]');
       const ws = findWorkspace(opts);

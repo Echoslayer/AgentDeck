@@ -19,6 +19,8 @@ agent 會先讀已授權素材，再一次詢問尚未確定、會影響方向�
 | C. 試做或驗證框架本身 | `AgentDeck/playground/<topic>/index.html`；該資料夾是獨立試驗單位 | `node cli/agentdeck.mjs init playground/<topic>` |
 | 同一個 Git 專案收錄多本書，希望減少重複提交的框架檔 | 各書保有自己的入口，父目錄共用一份 npm 鎖檔 | 依[多書鎖版指南](guides/locked-install.md)設定宿主，再逐書檢查與接入 |
 
+宿主設定完成後，製作者可在書的資料夾輸入 `agentdeck build` 重建，或用 `agentdeck inspect` 查檔案狀態。[安裝全域指令與 MIT 9.35 範例](guides/locked-install.md#從書的資料夾啟動)
+
 - **A**：`init` 只複製播放必需的核心（`assets/deck` 核心檔、`assets/story-reader/`、`templates/blank/`）、品牌 `assets/theme/`、`AGENTDECK.md`、`LICENSE`（框架 MIT 授權聲明）與 `vendor.json`，全部放進單位內的 `agentdeck/`，並寫入 `agentdeck/agentdeck.json`（契約版本、來源、每個副本的上游 commit 與雜湊）。元件、範例、指引留在上游，用到才取。`agentdeck/vendor/`、`dist/` 預設列入 `.gitignore`。需要 Node.js 18 以上；播放與交付的 zip 不需要。要沿用指定模板時加 `--theme <主題資料夾>` 取代預設主題；只有 PPT 模板時先依 `agentdeck docs theme-from-pptx` 轉成主題資料夾（[ADR 0019](adr/0019-theme-templates.md)）。
 - **B**：skill 原始檔在 [`skills/agentdeck/`](../skills/agentdeck/SKILL.md)，安裝到 `~\.copilot\skills\` 與 `~\.claude\skills\`，並寫入本機 AgentDeck 位置，讓 agent 可改用本機 CLI。只想給單一專案用，可加 `-Dest <repo>\.github\skills`。agent 被要求做簡報時會讀到它，找到 `agentdeck/agentdeck.json` 或照 A 建立工作區。
 - **C**：`init` 在上游內只允許被忽略的 `playground/` 作試驗單位，以及專案網站 `site/`（[ADR 0032](adr/0032-pages-site-unit.md)）；上游根與其他上游資料夾不能用來製作主題。Registry 的 `templates/blank/`、元件展示與 examples 仍可直接預覽。
