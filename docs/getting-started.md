@@ -17,6 +17,7 @@ agent 會先讀已授權素材，再一次詢問尚未確定、會影響方向�
 | A. 簡報跟著其他專案一起版本控制 | `<其他專案>/slides/<topic>/index.html`；該資料夾是完整獨立單位 | `npx -y github:Echoslayer/AgentDeck init <其他專案>/slides/<topic>` |
 | B. 在其他專案裡直接叫 agent 做簡報 | 由 agent 找到或建立工作區 | 先安裝 skill：`tools\install-skill.cmd` |
 | C. 試做或驗證框架本身 | `AgentDeck/playground/<topic>/index.html`；該資料夾是獨立試驗單位 | `node cli/agentdeck.mjs init playground/<topic>` |
+| 同一個 Git 專案收錄多本書，希望減少重複提交的框架檔 | 各書保有自己的入口，父目錄共用一份 npm 鎖檔 | 依[多書鎖版指南](guides/locked-install.md)設定宿主，再逐書檢查與接入 |
 
 - **A**：`init` 只複製播放必需的核心（`assets/deck` 核心檔、`assets/story-reader/`、`templates/blank/`）、品牌 `assets/theme/`、`AGENTDECK.md`、`LICENSE`（框架 MIT 授權聲明）與 `vendor.json`，全部放進單位內的 `agentdeck/`，並寫入 `agentdeck/agentdeck.json`（契約版本、來源、每個副本的上游 commit 與雜湊）。元件、範例、指引留在上游，用到才取。`agentdeck/vendor/`、`dist/` 預設列入 `.gitignore`。需要 Node.js 18 以上；播放與交付的 zip 不需要。要沿用指定模板時加 `--theme <主題資料夾>` 取代預設主題；只有 PPT 模板時先依 `agentdeck docs theme-from-pptx` 轉成主題資料夾（[ADR 0019](adr/0019-theme-templates.md)）。
 - **B**：skill 原始檔在 [`skills/agentdeck/`](../skills/agentdeck/SKILL.md)，安裝到 `~\.copilot\skills\` 與 `~\.claude\skills\`，並寫入本機 AgentDeck 位置，讓 agent 可改用本機 CLI。只想給單一專案用，可加 `-Dest <repo>\.github\skills`。agent 被要求做簡報時會讀到它，找到 `agentdeck/agentdeck.json` 或照 A 建立工作區。

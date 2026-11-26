@@ -92,10 +92,10 @@ export function upstreamCommit() {
     const lock = path.join(d, 'package-lock.json');
     if (!exists(lock)) continue;
     try {
-      for (const [k, v] of Object.entries(readJson(lock).packages ?? {})) {
-        const m = k.endsWith('node_modules/agentdeck') && String(v.resolved ?? '').match(/#([0-9a-f]{7,40})$/);
-        if (m) return (commitCache = m[1].slice(0, 12));
-      }
+      const installed = readJson(lock).packages?.[toPosix(path.relative(d, UP))];
+      const url = String(installed?.resolved ?? '');
+      const m = url.match(/#([0-9a-f]{7,40})$/) ?? url.match(/^https:\/\/codeload\.github\.com\/[^/]+\/[^/]+\/tar\.gz\/([0-9a-f]{40})$/i);
+      if (m) return (commitCache = m[1].slice(0, 12));
     } catch { /* 快取格式不明時不記錄 commit，雜湊仍可比對 */ }
   }
   return commitCache;

@@ -14,6 +14,8 @@
 
 **簡報樹**可以把同一門課或同一專案的多份簡報串起來。各分支共用一份 `story.sequence`，讀者就能從「投影片總覽」旁的「簡報樹」開啟星圖，點選或搜尋另一講。執行 `agentdeck docs 簡報樹` 可查看設定方式。[簡報樹製作指引](docs/guides/presentation-tree.md)
 
+**同一個 Git 專案有多本書？** 在簡報的父目錄鎖定一次 AgentDeck 版本，各書共用 npm 鎖檔重建。每本書提交自己的內容、素材、自製元件與設定。設定後執行 `npm run deck:build -- <書名> --inspect`，即可查哪些框架檔已進 Git、哪些可還原。[設定、清理與離線重建指南](docs/guides/locked-install.md)
+
 ## 目錄
 
 ```text

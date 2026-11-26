@@ -16,6 +16,8 @@ Design decisions are in [`docs/adr/`](docs/adr/README.md); the rules for making 
 
 A **presentation tree** connects decks in one course or project. When its branches share a `story.sequence`, readers can open **Presentation tree** beside **Slide overview** and pick a branch on the map or search by name. Run `agentdeck docs presentation-tree` for setup instructions. [Presentation tree guide (Traditional Chinese)](docs/guides/presentation-tree.md)
 
+**Keeping several books in one repository?** Pin AgentDeck once in the presentations directory and rebuild each book from the same npm lockfile. Commit each book’s content, assets, custom components, and configuration. Once configured, run `npm run deck:build -- <book> --inspect` to see which framework files Git tracks and which can be restored. [Setup, cleanup, and offline rebuilds (Traditional Chinese)](docs/guides/locked-install.md)
+
 ## Layout
 
 ```text

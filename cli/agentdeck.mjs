@@ -51,6 +51,7 @@ const HELP = `AgentDeck CLI（docs/adr/0016）
 
 工作區根目錄只放入口（index.html、相關群組）、resources/ 與 dist/；
 框架、元件、套件與記錄都在 ${FW}/（含 ${FW}/AGENTDECK.md、${FW}/${MARKER}）。
+多份簡報共用版本時，用 agentdeck docs locked-install 查安裝、Git 排除與清理指令。
 
 共同選項：--dir <工作區>（預設從目前資料夾往上找 ${FW}/${MARKER}）`;
 
