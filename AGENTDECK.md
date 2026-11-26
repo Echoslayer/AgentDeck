@@ -145,9 +145,25 @@ subagent 繼承同一資料、工具與預算邊界；宿主內平行工作不�
 - 匯出成圖片後連結失效，連結文字要寫出目標冊與編號，例如「→ 問題冊 B4」。
 - 改共用檔的欄位後，兩個入口都要播放驗證。
 
-**簡報樹**（ADR 0040）：一組常駐於同一宿主專案、不單獨搬走的簡報共用一個單位與一份框架，`update core`、`add` 只做一次。需要獨立搬移的仍各自 `init`。
+### 簡報樹
+
+一組常駐於同一宿主專案、不單獨搬走的簡報共用一個單位與一份框架（ADR 0040），`update core`、`add` 只做一次。需要獨立搬移的仍各自 `init`。
 
 - 主幹是根 `index.html`，一份有內容的總覽簡報，其中一頁是分支地圖，逐一連到 `branches/<name>/index.html`。
+- **星圖與搜尋是簡報樹的預設導覽。** 主幹和每個分支都在 `story.sequence` 引用同一份清單，第一筆是主幹，其後依閱讀順序列出分支。閱讀器會在「投影片總覽」旁顯示「簡報樹」按鈕。讀者可點星圖節點、依編號／名稱／分組搜尋，或按 Esc 回到原頁。單份簡報與單獨打包的分支首頁使用單份導覽。
+- 每筆填 `href`、`label`；可選的 `group` 是分組名稱。未分組的分支直接連到主幹。已有章節資料時從它產生清單與地圖；只有手寫目錄的舊樹，更新核心後將目錄整理成這份共用資料即可。
+- 例如在 `resources/course/sequence.js` 寫下列內容，在各入口的 `story.js` 之前載入，並在各自的 `story` 設 `sequence: courseSequence`。入口位於根目錄或分支時，都從共用腳本換算連結。
+
+  ```js
+  const treeRoot = document.currentScript.getAttribute('src').replace(/[^/]*$/, '') + '../../';
+  const courseSequence = [
+    { href: treeRoot + 'index.html', label: '課程總覽' },
+    { href: treeRoot + 'branches/optics/index.html', label: '眼球光學', group: '視覺' },
+    { href: treeRoot + 'branches/hearing/index.html', label: '聽覺', group: '聽覺與音樂' },
+  ];
+  ```
+
+- 講末按下一頁進入下一份首頁，講首按上一頁回到前一份末頁。清單首份的上一頁停用，末份的下一頁重播該份。
 - 分支以 `agentdeck new <name> --related branches` 建立，`story.back` 指回主幹。分支底下不再掛分支：原本自帶相關入口的，攤平為 `branches/<原名>-<子名>/`，兩冊要連動時照上方耦合規則。
 - 一棵樹一套主題；主題不同的不併入。
 - `use` 只接入根入口；分支加元件用 `add`，再手動在分支入口加引用。

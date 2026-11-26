@@ -40,9 +40,24 @@ back.hidden = !story.back;
 if (story.back) {
   back.textContent = story.back.label; back.setAttribute('href', story.back.href);
   // 分支單獨打包後 back 會指回自己；指向目前頁面時隱藏（docs/adr/0040）。
-  if (back.href.split('#')[0] === location.href.split('#')[0]) back.hidden = true;
+  if (entryPath(back.href) === entryPath(location.href)) back.hidden = true;
 }
 document.getElementById('progress').max = pages.length;
+// 分支順序由作者與地圖共用。單獨打包的分支不連到包外的相鄰簡報。
+const sequence = story.sequence ?? [];
+if (!Array.isArray(sequence) || !sequence.every(link => link && typeof link.href === 'string' && typeof link.label === 'string'
+  && (link.group === undefined || typeof link.group === 'string') && /^(file|https?):$/.test(new URL(link.href, document.baseURI).protocol))) {
+  throw new Error('story.sequence 需為 [{ href, label, group? }]，href 指向簡報入口');
+}
+function entryPath(href) {
+  const url = new URL(href, document.baseURI);
+  url.hash = url.search = '';
+  if (url.pathname.endsWith('/')) url.pathname += 'index.html';
+  return url.href;
+}
+const sequenceIndex = story.back && back.hidden ? -1 : sequence.findIndex(link => entryPath(link.href) === entryPath(location.href));
+const previousDeck = sequence[sequenceIndex - 1];
+const nextDeck = sequenceIndex >= 0 ? sequence[sequenceIndex + 1] : undefined;
 // 術語註：story.glossary = { 詞: '一句定義' }，頁面文字以 <dfn>詞</dfn> 標記（docs/adr/0037）。
 const readerGlossaryTerms = story.glossary ?? {};
 if (typeof readerGlossaryTerms !== 'object' || Array.isArray(readerGlossaryTerms) || !Object.values(readerGlossaryTerms).every(v => typeof v === 'string')) {
@@ -117,7 +132,7 @@ const pageFromHash = () => {
   try { id = decodeURIComponent(id); } catch { /* 非法編碼視為不符 */ }
   return pages.findIndex(p => p.id === id);
 };
-let current = Math.max(0, pageFromHash());
+let current = sequenceIndex >= 0 && location.hash === '#@last' ? pages.length - 1 : Math.max(0, pageFromHash());
 const answers = new Map();
 const states = new Map();
 let cleanup;
@@ -157,9 +172,14 @@ const futureHidden = () => pages[current].question?.hideFuturePreviews && !answe
 function renderPreviews() {
   const hideFuture = futureHidden();
   readerScrubber.sync(); // 換頁、作答、edits 修改都經過這裡
-  for (const [id, index, label] of [['prev', current - 1, uiText('← 上一步', '← Previous')], ['next', current === pages.length - 1 ? 0 : current + 1, current === pages.length - 1 ? uiText('↺ 重新看一次', '↺ Start over') : uiText('下一步 →', 'Next →')]]) {
-    const button = document.getElementById(id), hidden = id === 'next' && hideFuture && index > current;
-    const title = index < 0 ? uiText('從這裡開始', 'Start here') : hidden ? uiText('看看接下來發生什麼', 'See what happens next') : pages[index].title;
+  for (const [id, delta] of [['prev', -1], ['next', 1]]) {
+    const index = current + delta, neighbor = adjacentDeck(delta);
+    const restart = index === pages.length && !neighbor;
+    const label = delta < 0 ? uiText('← 上一步', '← Previous') : restart ? uiText('↺ 重新看一次', '↺ Start over') : uiText('下一步 →', 'Next →');
+    const title = delta > 0 && hideFuture && !restart ? uiText('看看接下來發生什麼', 'See what happens next')
+      : neighbor?.label ?? pages[restart ? 0 : index]?.title ?? uiText('從這裡開始', 'Start here');
+    const button = document.getElementById(id);
+    button.disabled = index < 0 && !neighbor;
     button.className = 'preview';
     button.innerHTML = `<span class="preview-copy"><small>${label}</small><strong>${title}</strong></span>`;
   }
@@ -191,7 +211,6 @@ function render() {
   root.innerHTML = pageMarkup(p);
   document.getElementById('position').textContent = `${current + 1} / ${pages.length}`;
   document.getElementById('progress').value = current + 1;
-  document.getElementById('prev').disabled = current === 0;
   document.querySelectorAll('#page [data-answer]').forEach(b => b.onclick = () => {
     answers.set(p.id, b.dataset.answer);
     feedback();
@@ -212,7 +231,18 @@ window.addEventListener('hashchange', () => {
   const i = pageFromHash();
   if (i >= 0 && i !== current) { current = i; show(); window.scrollTo(0, 0); }
 });
+function adjacentDeck(delta) {
+  if (delta < 0 && current === 0) return previousDeck;
+  if (delta > 0 && current === pages.length - 1) return nextDeck;
+}
 function move(delta) {
+  const neighbor = adjacentDeck(delta);
+  if (neighbor) {
+    const target = new URL(neighbor.href, document.baseURI);
+    target.hash = delta < 0 ? '@last' : '';
+    location.assign(target.href);
+    return;
+  }
   current = delta > 0 && current === pages.length - 1 ? 0 : Math.max(0, Math.min(pages.length - 1, current + delta));
   show();
   window.scrollTo(0, 0);
@@ -253,6 +283,11 @@ document.addEventListener('keydown', e => {
 const readerScrubber = createScrubber();
 const readerGlossary = createGlossary();
 const readerOverview = createOverview();
+if (sequenceIndex >= 0 && sequence.length > 1) {
+  const treeScript = document.createElement('script');
+  treeScript.src = new URL('tree-map.js', document.currentScript.src).href;
+  document.head.append(treeScript);
+}
 show();
 
 // 術語註：點擊／Enter 開卡片，滑鼠裝置另支援 hover；原生 popover 處理點外面與 Esc 關閉。

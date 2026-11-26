@@ -67,6 +67,7 @@ const { chromium } = require('playwright');
     assert.equal(await index(), 0);
     await page.keyboard.press('x');
     assert.equal(await index(), 1);
+    await page.waitForFunction(() => location.hash === '#' + encodeURIComponent(storyReader.page.id));
     await page.reload();
     assert.equal(await index(), 1); // hash 定位保留重新整理前的頁面
     await open();
@@ -118,7 +119,8 @@ const { chromium } = require('playwright');
     reader.on('pageerror', e => errors.push(e.message));
     await reader.goto(url);
     await reader.getByRole('button', { name: '設定', exact: true }).click();
-    assert.equal(await reader.locator('#reader-personal-settings').isVisible(), false);
+    assert.equal(await reader.locator('#edit-toggle').count(), 0);
+    assert.equal(await reader.getByLabel('換頁轉場', { exact: true }).count(), 1);
     await reader.keyboard.press('Escape');
     await reader.keyboard.press('d');
     assert.equal(await reader.evaluate(() => storyReader.index), 1);

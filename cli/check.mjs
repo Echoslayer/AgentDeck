@@ -196,6 +196,10 @@ try {
     assert.match(doc, /工作區已有副本/);
     assert.match(run(['docs', 'resolution-comparison', '--code'], ws), /compute\.js/);
     assert.match(run(['docs', 'visual-story'], ws), /Visual Story/);
+    for (const term of ['簡報樹', '星圖', '簡報樹星圖']) {
+      assert.match(run(['catalog', term], ws), /presentation-tree/);
+      assert.match(run(['docs', term], ws), /story\.sequence/);
+    }
     assert.match(run(['docs', '0-to-1'], ws), /契約 0 → 1/);
     run(['docs', 'nope'], ws, true);
   });

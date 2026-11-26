@@ -14,6 +14,8 @@ Design decisions are in [`docs/adr/`](docs/adr/README.md); the rules for making 
 
 > Detailed docs (ADRs, guides, `AGENTDECK.md`) are currently in Traditional Chinese.
 
+A **presentation tree** connects decks in one course or project. When its branches share a `story.sequence`, readers can open **Presentation tree** beside **Slide overview** and pick a branch on the map or search by name. Run `agentdeck docs presentation-tree` for setup instructions. [Presentation tree guide (Traditional Chinese)](docs/guides/presentation-tree.md)
+
 ## Layout
 
 ```text

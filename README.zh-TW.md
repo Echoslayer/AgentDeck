@@ -12,6 +12,8 @@
 
 專案目的與設計決策見 [`docs/adr/`](docs/adr/README.md)；製作簡報的規則見 [`AGENTDECK.md`](AGENTDECK.md)（上下游共用）；上游維護規則見 [`AGENTS.md`](AGENTS.md)；寫作方式的建議見 [`docs/guides/`](docs/guides/)。
 
+**簡報樹**可以把同一門課或同一專案的多份簡報串起來。各分支共用一份 `story.sequence`，讀者就能從「投影片總覽」旁的「簡報樹」開啟星圖，點選或搜尋另一講。執行 `agentdeck docs 簡報樹` 可查看設定方式。[簡報樹製作指引](docs/guides/presentation-tree.md)
+
 ## 目錄
 
 ```text

@@ -105,6 +105,7 @@ export function buildIndex() {
 
 // 名稱對應到上游的文件項目。
 export function resolveDoc(name) {
+  if (['簡報樹', '星圖', '簡報樹星圖'].includes(name)) name = 'presentation-tree';
   if (componentManifest(name)) return { kind: 'component', dir: path.join(COMPONENTS, name) };
   if (exampleNames().includes(name)) return { kind: 'example', dir: path.join(EXAMPLES, name) };
   if (guideNames().includes(name)) return { kind: 'guide', file: path.join(GUIDES, `${name}.md`) };
